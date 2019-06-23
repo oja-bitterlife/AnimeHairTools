@@ -122,7 +122,9 @@ class ANIME_HAIR_TOOLS_OT_material(bpy.types.Operator):
         selected_curves = get_selected_curve_objects()
         for curve_name in selected_curves:
             curve = selected_curves[curve_name]
-            curve.data.materials[curve.active_material_index] = bpy.data.materials[self.selected_material]
+            # append material slot
+            if len(curve.data.materials) > 0:
+                curve.data.materials[curve.active_material_index] = bpy.data.materials[self.selected_material]
 
         # update screen
 #        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
