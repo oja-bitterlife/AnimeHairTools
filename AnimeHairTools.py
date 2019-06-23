@@ -124,8 +124,8 @@ class ANIME_HAIR_TOOLS_OT_material(bpy.types.Operator):
             curve = selected_curves[curve_name]
             curve.data.materials[curve.active_material_index] = bpy.data.materials[self.selected_material]
 
-
-
+        # update screen
+#        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
         return{'FINISHED'}
 
     # use dialog
