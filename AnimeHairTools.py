@@ -39,25 +39,34 @@ class MY_PT_ui(bpy.types.Panel):
 
 # Bebel & Taper Setting
 # *******************************************************************************************
-class MY_OT_button(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.root_button"
-    bl_label = "Bevel & Taper Setting"
-
-    # create curve enum list
+# find all curves for enum item
+def create_curve_enum_items(self, context):
     curve_enum = [
         (NOTHING_ENUM, NOTHING_ENUM, ""),
         (REMOVE_ENUM, REMOVE_ENUM, ""),
     ]
+
     available_curves = get_available_curve_objects()
     for curve_name in available_curves:
         curve = available_curves[curve_name]
         curve_enum.append((curve.name, curve.name, ""))
 
-    selected_bevel: bpy.props.EnumProperty(name="Bevel Curve", items=curve_enum)
-    selected_taper: bpy.props.EnumProperty(name="Taper Curve", items=curve_enum)
+    return curve_enum
+
+
+class MY_OT_button(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.root_button"
+    bl_label = "Bevel & Taper Setting"
+
+    # create curve enum list
+    selected_bevel: bpy.props.EnumProperty(name="Bevel Curve", items=create_curve_enum_items)
+    selected_taper: bpy.props.EnumProperty(name="Taper Curve", items=create_curve_enum_items)
 
     # execute ok
     def execute(self, context):
+        # find all curves
+        available_curves = get_available_curve_objects()
+
         # set bevel & taper to selected curves
         selected_curves = get_selected_curve_objects()
         for curve_name in selected_curves:
@@ -70,7 +79,7 @@ class MY_OT_button(bpy.types.Operator):
                 elif self.selected_bevel == REMOVE_ENUM:
                     curve.data.bevel_object = None
                 else:
-                    curve.data.bevel_object = self.available_curves[self.selected_bevel]
+                    curve.data.bevel_object = available_curves[self.selected_bevel]
 
             # set selected taper
             if curve.name != self.selected_taper:  # no set myself
@@ -79,7 +88,7 @@ class MY_OT_button(bpy.types.Operator):
                 elif self.selected_taper == REMOVE_ENUM:
                     curve.data.taper_object = None
                 else:
-                    curve.data.taper_object = self.available_curves[self.selected_taper]
+                    curve.data.taper_object = available_curves[self.selected_taper]
 
 
         return{'FINISHED'}
