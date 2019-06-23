@@ -24,7 +24,8 @@ def get_available_curve_objects():
 
 # Main UI
 # *******************************************************************************************
-NOTHING_NAME = "(nothing)"  # noting selected item
+NOTHING_ENUM = "(nothing)"  # noting selected item
+REMOVE_ENUM = "(remove setted object)"  # noting selected item
 
 # 3DView Tools Panel
 class MY_PT_ui(bpy.types.Panel):
@@ -43,7 +44,10 @@ class MY_OT_button(bpy.types.Operator):
     bl_label = "Bevel & Taper Setting"
 
     # create curve enum list
-    curve_enum = [(NOTHING_NAME, NOTHING_NAME, "")]
+    curve_enum = [
+        (NOTHING_ENUM, NOTHING_ENUM, ""),
+        (REMOVE_ENUM, REMOVE_ENUM, ""),
+    ]
     available_curves = get_available_curve_objects()
     for curve_name in available_curves:
         curve = available_curves[curve_name]
@@ -60,20 +64,22 @@ class MY_OT_button(bpy.types.Operator):
             curve = selected_curves[curve_name]
 
             # set selected bevel
-            bevel_object_name = self.selected_bevel
-            if curve.name != bevel_object_name:  # not set myself
-                if self.selected_bevel == NOTHING_NAME:
+            if curve.name != self.selected_bevel:  # not set myself
+                if self.selected_bevel == NOTHING_ENUM:
+                    pass
+                elif self.selected_bevel == REMOVE_ENUM:
                     curve.data.bevel_object = None
                 else:
-                    curve.data.bevel_object = self.available_curves[bevel_object_name]
+                    curve.data.bevel_object = self.available_curves[self.selected_bevel]
 
             # set selected taper
-            taper_object_name = self.selected_taper
-            if curve.name != taper_object_name:  # no set myself
-                if self.selected_taper == NOTHING_NAME:
+            if curve.name != self.selected_taper:  # no set myself
+                if self.selected_taper == NOTHING_ENUM:
+                    pass
+                elif self.selected_taper == REMOVE_ENUM:
                     curve.data.taper_object = None
                 else:
-                    curve.data.taper_object = self.available_curves[taper_object_name]
+                    curve.data.taper_object = self.available_curves[self.selected_taper]
 
 
         return{'FINISHED'}
