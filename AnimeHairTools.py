@@ -118,16 +118,37 @@ class ANIME_HAIR_TOOLS_OT_material(bpy.types.Operator):
 
     # execute ok
     def execute(self, context):
+        # save active object
+        backup_active_object = bpy.context.active_object
+
         # set material to selected curves
         selected_curves = get_selected_curve_objects()
         for curve_name in selected_curves:
-            curve = selected_curves[curve_name]
-            # append material slot
-            if len(curve.data.materials) > 0:
-                curve.data.materials[curve.active_material_index] = bpy.data.materials[self.selected_material]
+            curve = selected_curves[curve_name]  # process curve
+            selected_material = bpy.data.materials[self.selected_material]
 
-        # update screen
-#        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+            # already in use?
+            use_slot_index = -1
+            for i, material in enumerate(curve.data.materials):
+                if material.name == selected_material.name:
+                    use_slot_index = i  # find already used
+                    break
+
+            # first appear
+            if use_slot_index == -1:
+                # create slot
+                bpy.context.view_layer.objects.active = curve
+                bpy.ops.object.material_slot_add()
+                use_slot_index = len(curve.material_slots)-1
+                curve.data.materials[use_slot_index] = selected_material
+
+            # select slot
+            for spline in curve.data.splines:
+                spline.material_index = use_slot_index
+
+        # restore active object
+        bpy.context.view_layer.objects.active = backup_active_object
+
         return{'FINISHED'}
 
     # use dialog
