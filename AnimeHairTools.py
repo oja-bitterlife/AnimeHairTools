@@ -139,10 +139,12 @@ class ANIME_HAIR_TOOLS_OT_material(bpy.types.Operator):
                 # create slot
                 bpy.context.view_layer.objects.active = curve
                 bpy.ops.object.material_slot_add()
+
+                # set material to empty slot
                 use_slot_index = len(curve.material_slots)-1
                 curve.data.materials[use_slot_index] = selected_material
 
-            # select slot
+            # apply material (select slot) to spline
             for spline in curve.data.splines:
                 spline.material_index = use_slot_index
 
