@@ -181,28 +181,34 @@ class ANIME_HAIR_TOOLS_OT_hook_empty(bpy.types.Operator):
 
             # process splines
             for spline in curve.data.splines:
-                # process points
+                # process spline points
                 for i, point in enumerate(spline.points):
                     if i == 0: continue  # first point is not process
                 
                     # create empty
                     location_co = curve.matrix_world @ point.co
                     bpy.ops.object.empty_add(type="PLAIN_AXES", location=location_co.xyz.to_tuple())
-                    empty = bpy.context.active_object
+                    hook_empties.append(bpy.context.active_object)
 
-                    empty.name = curve.name + ".auto_hook.{:0=3}".format(i)  # rename
-                    hook_empties.append(empty)
+                # process bezier points
+                for i, point in enumerate(spline.bezier_points):
+                    if i == 0: continue  # first point is not process
+                
+                    # create empty
+                    location_co = curve.matrix_world @ point.co
+                    bpy.ops.object.empty_add(type="PLAIN_AXES", location=location_co.xyz.to_tuple())
+                    hook_empties.append(bpy.context.active_object)
 
             # setup parent
             bpy.ops.object.select_all(action='DESELECT')
-            for empty in hook_empties:
+            for i, empty in enumerate(hook_empties):
+                empty.name = curve.name + ".auto_hook.{:0=3}".format(i)  # rename
                 empty.select_set(True)
             bpy.context.view_layer.objects.active = curve  # parent target
             bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
 
         # restore active object
         bpy.context.view_layer.objects.active = backup_active_object
-
 
         return{'FINISHED'}
 
