@@ -193,6 +193,9 @@ class ANIME_HAIR_TOOLS_OT_hook_empty(bpy.types.Operator):
         # restore active object
         bpy.context.view_layer.objects.active = backup_active_object
 
+        # deselect empty
+        bpy.ops.object.select_all(action='DESELECT')
+
         return{'FINISHED'}
 
     # use dialog
