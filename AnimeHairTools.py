@@ -176,6 +176,9 @@ class ANIME_HAIR_TOOLS_OT_hook_empty(bpy.types.Operator):
         for curve_name in selected_curves:
             curve = selected_curves[curve_name]  # process curve
 
+            # stock hook empties
+            hook_empties = []
+
             # process splines
             for spline in curve.data.splines:
                 # process points
@@ -183,18 +186,23 @@ class ANIME_HAIR_TOOLS_OT_hook_empty(bpy.types.Operator):
                     if i == 0: continue  # first point is not process
                 
                     # create empty
-                    bpy.ops.object.empty_add(type="PLAIN_AXES", location=point.co.xyz.to_tuple())
+                    location_co = curve.matrix_world @ point.co
+                    bpy.ops.object.empty_add(type="PLAIN_AXES", location=location_co.xyz.to_tuple())
                     empty = bpy.context.active_object
 
-                    # setup empty
                     empty.name = curve.name + ".auto_hook.{:0=3}".format(i)  # rename
-                    empty.parent = curve
+                    hook_empties.append(empty)
+
+            # setup parent
+            bpy.ops.object.select_all(action='DESELECT')
+            for empty in hook_empties:
+                empty.select_set(True)
+            bpy.context.view_layer.objects.active = curve  # parent target
+            bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
 
         # restore active object
         bpy.context.view_layer.objects.active = backup_active_object
 
-        # deselect empty
-        bpy.ops.object.select_all(action='DESELECT')
 
         return{'FINISHED'}
 
