@@ -200,15 +200,18 @@ class ANIME_HAIR_TOOLS_OT_hook_empty(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self)
 
 
+# remove hook object
+# *******************************************************************************************
 class ANIME_HAIR_TOOLS_OT_remove_hook(bpy.types.Operator):
     bl_idname = "anime_hair_tools.remove_hook"
     bl_label = "Remove Auto Hook"
 
     # execute ok
     def execute(self, context):
+        delete_target = []
+
         # set material to selected curves
         selected_curves = get_selected_curve_objects()
-        bpy.ops.object.select_all(action='DESELECT')  # all deselect for delete
         for curve_name in selected_curves:
             curve = selected_curves[curve_name]  # process curve
 
@@ -217,10 +220,13 @@ class ANIME_HAIR_TOOLS_OT_remove_hook(bpy.types.Operator):
             # remove child hooks
             for child in curve.children:
                 if child.type == "EMPTY" and child.name.find(remove_name) == 0:  # match to top
-                    child.select_set(True)
+                    delete_target.append(child)  # append target
 
-        # delete child emptys
-        bpy.ops.object.delete()
+        # delete target hook objects
+        bpy.ops.object.select_all(action='DESELECT')  # all deselect for delete
+        for target in delete_target:
+            target.select_set(True)
+        bpy.ops.object.delete()  # delete selected objects
                     
         return{'FINISHED'}
 
