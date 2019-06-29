@@ -36,6 +36,8 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
     def draw(self, context):
         self.layout.operator("anime_hair_tools.bevel_taper")
         self.layout.operator("anime_hair_tools.material")
+        self.layout.operator("anime_hair_tools.hook_empty")
+        self.layout.operator("anime_hair_tools.remove_hook")
 
 
 # Bebel & Taper Setting
@@ -125,12 +127,12 @@ class ANIME_HAIR_TOOLS_OT_material(bpy.types.Operator):
         selected_curves = get_selected_curve_objects()
         for curve_name in selected_curves:
             curve = selected_curves[curve_name]  # process curve
-            selected_material = bpy.data.materials[self.selected_material]
+            selected_material_data = bpy.data.materials[self.selected_material]
 
             # already in use?
             use_slot_index = -1
             for i, material in enumerate(curve.data.materials):
-                if material.name == selected_material.name:
+                if material.name == selected_material_data.name:
                     use_slot_index = i  # find already used
                     break
 
@@ -142,7 +144,7 @@ class ANIME_HAIR_TOOLS_OT_material(bpy.types.Operator):
 
                 # set material to empty slot
                 use_slot_index = len(curve.material_slots)-1
-                curve.data.materials[use_slot_index] = selected_material
+                curve.data.materials[use_slot_index] = selected_material_data
 
             # apply material (select slot) to spline
             for spline in curve.data.splines:
@@ -158,12 +160,83 @@ class ANIME_HAIR_TOOLS_OT_material(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self)
 
 
+# add hook object
+# *******************************************************************************************
+class ANIME_HAIR_TOOLS_OT_hook_empty(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.hook_empty"
+    bl_label = "Auto Hook Empty"
+
+    # execute ok
+    def execute(self, context):
+        # save active object
+        backup_active_object = bpy.context.active_object
+
+        # set material to selected curves
+        selected_curves = get_selected_curve_objects()
+        for curve_name in selected_curves:
+            curve = selected_curves[curve_name]  # process curve
+
+            # process splines
+            for spline in curve.data.splines:
+                # process points
+                for i, point in enumerate(spline.points):
+                    if i == 0: continue  # first point is not process
+                
+                    # create empty
+                    bpy.ops.object.empty_add(type="PLAIN_AXES", location=point.co.xyz.to_tuple())
+                    empty = bpy.context.active_object
+
+                    # setup empty
+                    empty.name = curve.name + ".auto_hook.{:0=3}".format(i)  # rename
+                    empty.parent = curve
+
+        # restore active object
+        bpy.context.view_layer.objects.active = backup_active_object
+
+        return{'FINISHED'}
+
+    # use dialog
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+
+class ANIME_HAIR_TOOLS_OT_remove_hook(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.remove_hook"
+    bl_label = "Remove Auto Hook"
+
+    # execute ok
+    def execute(self, context):
+        # set material to selected curves
+        selected_curves = get_selected_curve_objects()
+        bpy.ops.object.select_all(action='DESELECT')  # all deselect for delete
+        for curve_name in selected_curves:
+            curve = selected_curves[curve_name]  # process curve
+
+            remove_name = curve.name + ".auto_hook."
+
+            # remove child hooks
+            for child in curve.children:
+                if child.type == "EMPTY" and child.name.find(remove_name) == 0:  # match to top
+                    child.select_set(True)
+
+        # delete child emptys
+        bpy.ops.object.delete()
+                    
+        return{'FINISHED'}
+
+    # use dialog
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+
 # retister blender
 # *******************************************************************************************
 classes = (
     ANIME_HAIR_TOOLS_PT_ui,
     ANIME_HAIR_TOOLS_OT_bevel_taper,
     ANIME_HAIR_TOOLS_OT_material,
+    ANIME_HAIR_TOOLS_OT_hook_empty,
+    ANIME_HAIR_TOOLS_OT_remove_hook,
 )
 
 for cls in classes:
