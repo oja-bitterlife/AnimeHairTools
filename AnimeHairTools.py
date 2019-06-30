@@ -211,12 +211,12 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
             curve = selected_curves[curve_name]  # process curve
 
             # get segment locations in curve
-            hook_locations = self.get_hook_locations(curve)
+            hook_points = self.get_hook_points(curve)
 
             parent = root_bone_obj.data.edit_bones[0]  # find first bone
-            for i in range(len(hook_locations)-1):
-                bgn = hook_locations[i]
-                end = hook_locations[i+1]
+            for i in range(len(hook_points)-1):
+                bgn = curve.matrix_world @ hook_points[i].co
+                end = curve.matrix_world @ hook_points[i+1].co
                 parent = self.create_child_bone(curve.name, i, root_bone_obj, parent, bgn, end)
 
         # convirm edit_bone
@@ -227,10 +227,10 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
             curve = selected_curves[curve_name]  # process curve
 
             # get segment locations in curve
-            hook_locations = self.get_hook_locations(curve)
+            hook_points = self.get_hook_points(curve)
 
-            for i in range(len(hook_locations)-1):
-                self.create_hook(curve, i)
+            for i in range(len(hook_points)-1):
+                self.create_hook(curve, i, hook_points)
 
         # restore active object
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -244,22 +244,22 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self)
 
 
-    # return locations in curve
-    def get_hook_locations(self, curve):
-        # stock hook locations
-        hook_locations = []
+    # return points in curve
+    def get_hook_points(self, curve):
+        # stock hook points
+        hook_points = []
 
         # process splines
         for spline in curve.data.splines:
             # process spline points
             for point in spline.points:
-                hook_locations.append(curve.matrix_world @ point.co)
+                hook_points.append(point)
 
             # process bezier points
             for point in spline.bezier_points:
-                hook_locations.append(curve.matrix_world @ point.co)
+                hook_points.append(point)
     
-        return hook_locations
+        return hook_points
 
     def create_child_bone(self, base_name, i, root_bone_obj, parent, bgn, end):
         bone_name = base_name + ".hook_bone.{:0=3}".format(i)
@@ -280,7 +280,7 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
 
         return child_bone
 
-    def create_hook(self, curve, i):
+    def create_hook(self, curve, i, hook_points):
         hook_name = curve.name + ".hook_modifier.{:0=3}".format(i)
         bone_name = curve.name + ".hook_bone.{:0=3}".format(i)
 
@@ -294,7 +294,17 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
         modifier.object = bpy.data.objects[ANIME_HAIR_TOOLS_BONE_OBJ_NAME]
         modifier.subtarget = bone_name
 
-        # attach segment
+        # assign segment
+        bpy.context.view_layer.objects.active = curve
+        bpy.ops.object.mode_set(mode='EDIT')
+
+        
+        for p_no, p in enumerate(hook_points):
+            p.select = i+1 == p_no  # select top
+
+        bpy.ops.object.hook_assign(modifier=modifier.name)
+
+        bpy.ops.object.mode_set(mode='OBJECT')
 
 
 # retister blender
