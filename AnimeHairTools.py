@@ -217,8 +217,8 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
 
         # restore active object
         bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.select_all(action='DESELECT')
         bpy.context.view_layer.objects.active = backup_active_object
-        
 
         return{'FINISHED'}
 
@@ -250,8 +250,6 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
         # create non exist bone
         if bone_name not in root_bone_obj.data.bones.keys():
             bpy.ops.armature.bone_primitive_add(name=bone_name)
-            print(root_bone_obj.data.bones.keys())
-            print(root_bone_obj.data.edit_bones.keys())
 
         # find bone
         child_bone = root_bone_obj.data.edit_bones[bone_name]
