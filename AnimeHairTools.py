@@ -187,24 +187,6 @@ def setup_root_bone_object():
     return bpy.context.active_object
 
 
-# find bone from name
-def rec_find_bone(bone, bone_name):
-    if bone.name == bone_name:
-        return bone
-
-    # recursive find in children
-    for child in bone.children:
-        find = rec_find_bone(child, bone_name)
-        if find != None:
-            return find
-
-    return None
-
-def find_bone(bone_name):
-    bpy.context.view_layer.objects.active = bpy.data.objects[ANIME_HAIR_TOOLS_BONE_OBJ_NAME]
-    return rec_find_bone(bpy.context.active_bone, bone_name)
-
-
 # create auto hook bones
 class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
     bl_idname = "anime_hair_tools.auto_hook"
@@ -306,11 +288,14 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
         if hook_name not in curve.modifiers.keys():
             curve.modifiers.new(hook_name, type="HOOK");
 
-        # get data for modifier setup
-        mod = curve.modifiers[hook_name]
-        bone = find_bone(bone_name)
+        # modifier setup
+        modifier = curve.modifiers[hook_name]
 
-        print(bone)
+        modifier.object = bpy.data.objects[ANIME_HAIR_TOOLS_BONE_OBJ_NAME]
+        modifier.subtarget = bone_name
+
+        # attach segment
+
 
 # retister blender
 # *******************************************************************************************
