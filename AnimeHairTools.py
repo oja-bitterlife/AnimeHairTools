@@ -65,6 +65,7 @@ class ANIME_HAIR_TOOLS_OT_bevel_taper(bpy.types.Operator):
 
     # execute ok
     def execute(self, context):
+        bpy.ops.object.mode_set(mode='OBJECT')
         selected_curves = get_selected_curve_objects()
 
         # enum selected
@@ -120,6 +121,7 @@ class ANIME_HAIR_TOOLS_OT_material(bpy.types.Operator):
 
     # execute ok
     def execute(self, context):
+        bpy.ops.object.mode_set(mode='OBJECT')
         selected_curves = get_selected_curve_objects()
 
         # save active object
@@ -194,6 +196,7 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
 
     # execute ok
     def execute(self, context):
+        bpy.ops.object.mode_set(mode='OBJECT')
         selected_curves = get_selected_curve_objects()
 
         # save active object
@@ -298,10 +301,10 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
         bpy.context.view_layer.objects.active = curve
         bpy.ops.object.mode_set(mode='EDIT')
 
-        
         for p_no, p in enumerate(hook_points):
             p.select = i+1 == p_no  # select top
 
+        bpy.ops.object.hook_reset()  # important need (seg. fault)
         bpy.ops.object.hook_assign(modifier=modifier.name)
 
         bpy.ops.object.mode_set(mode='OBJECT')
