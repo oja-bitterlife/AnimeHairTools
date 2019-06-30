@@ -253,7 +253,12 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
 
         # find bone
         child_bone = root_bone_obj.data.edit_bones[bone_name]
+
+        # setup
         child_bone.parent = parent
+        child_bone.head = bgn.xyz
+        child_bone.tail = end.xyz
+
         return child_bone
 
 
