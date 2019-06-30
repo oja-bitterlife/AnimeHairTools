@@ -66,11 +66,12 @@ class ANIME_HAIR_TOOLS_OT_bevel_taper(bpy.types.Operator):
 
     # execute ok
     def execute(self, context):
+        selected_curves = get_selected_curve_objects()
+
         # enum selected
         available_curves = get_available_curve_objects()
 
         # set bevel & taper to selected curves
-        selected_curves = get_selected_curve_objects()
         for curve_name in selected_curves:
             curve = selected_curves[curve_name]
 
@@ -120,11 +121,12 @@ class ANIME_HAIR_TOOLS_OT_material(bpy.types.Operator):
 
     # execute ok
     def execute(self, context):
+        selected_curves = get_selected_curve_objects()
+
         # save active object
         backup_active_object = bpy.context.active_object
 
         # set material to selected curves
-        selected_curves = get_selected_curve_objects()
         for curve_name in selected_curves:
             curve = selected_curves[curve_name]  # process curve
             selected_material_data = bpy.data.materials[self.selected_material]
@@ -179,7 +181,7 @@ def setup_root_bone_object():
     bpy.context.active_object.data.name = ANIME_HAIR_TOOLS_BONE_OBJ_NAME
     bpy.context.active_object.data.bones[0].name = ANIME_HAIR_TOOLS_BONE_ROOT_NAME
 
-    return bpy.context.active_object.name
+    return bpy.context.active_object
 
 
 class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
@@ -188,21 +190,26 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
 
     # execute ok
     def execute(self, context):
+        selected_curves = get_selected_curve_objects()
+
         # save active object
         backup_active_object = bpy.context.active_object
 
         # bone
         root_bone_obj = setup_root_bone_object()
 
-        # set material to selected curves
-        selected_curves = get_selected_curve_objects()
+        # bone setup is edit-mode only
+        bpy.context.view_layer.objects.active = root_bone_obj
+        bpy.ops.object.mode_set(mode='EDIT')
+
+        # set bone to selected curves
         for curve_name in selected_curves:
             curve = selected_curves[curve_name]  # process curve
 
             # get segment locations in curve
             hook_locations = self.get_hook_locations(curve)
 
-            parent = root_bone_obj.data.bones[0]  # find first bone
+            parent = root_bone_obj.data.edit_bones[0]  # find first bone
             for i in range(len(hook_locations)-1):
                 bgn = hook_locations[i]
                 end = hook_locations[i+1]
@@ -238,12 +245,19 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
         return hook_locations
 
     def create_child_bone(self, base_name, i, root_bone_obj, parent, bgn, end):
-        print(root_bone_obj)
-
+        bone_name = base_name + ".hook_bone.{:0=3}".format(i)
+    
         # create non exist bone
-        bpy.context.view_layer.objects.active = root_bone_obj
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.armature.bone_primitive_add(name=base_name + ".hook_bone.{:0=3}".format(i))
+        if bone_name not in root_bone_obj.data.bones.keys():
+            bpy.ops.armature.bone_primitive_add(name=bone_name)
+            print(root_bone_obj.data.bones.keys())
+            print(root_bone_obj.data.edit_bones.keys())
+
+        # find bone
+        child_bone = root_bone_obj.data.edit_bones[bone_name]
+        child_bone.parent = parent
+        return child_bone
+
 
 
 # remove hook object
@@ -254,10 +268,11 @@ class ANIME_HAIR_TOOLS_OT_remove_hook(bpy.types.Operator):
 
     # execute ok
     def execute(self, context):
+        selected_curves = get_selected_curve_objects()
+
         delete_target = []
 
         # set material to selected curves
-        selected_curves = get_selected_curve_objects()
         for curve_name in selected_curves:
             curve = selected_curves[curve_name]  # process curve
 
