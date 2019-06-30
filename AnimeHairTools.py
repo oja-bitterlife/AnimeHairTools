@@ -29,7 +29,7 @@ REMOVE_ENUM = "(remove setted object)"  # noting selected item
 
 # 3DView Tools Panel
 class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
-    bl_label = "Anime Hair Tools"
+    bl_label = "Anime Hair Tools (for Curve)"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
   
@@ -181,12 +181,16 @@ def setup_root_bone_object():
     bpy.context.active_object.data.name = ANIME_HAIR_TOOLS_BONE_OBJ_NAME
     bpy.context.active_object.data.bones[0].name = ANIME_HAIR_TOOLS_BONE_ROOT_NAME
 
+    # other setup
+    bpy.context.active_object.show_in_front = True
+    bpy.context.active_object.data.display_type = 'STICK'
+
     return bpy.context.active_object
 
 
 class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
     bl_idname = "anime_hair_tools.auto_hook"
-    bl_label = "Create Auto Hook"
+    bl_label = "Create Auto Hook Bones"
 
     # execute ok
     def execute(self, context):
@@ -214,6 +218,8 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
                 bgn = hook_locations[i]
                 end = hook_locations[i+1]
                 parent = self.create_child_bone(curve.name, i, root_bone_obj, parent, bgn, end)
+
+                self.create_hook(curve, parent)
 
         # restore active object
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -256,7 +262,9 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
 
         # setup
         child_bone.parent = parent
-        child_bone.head = bgn.xyz
+        child_bone.use_connect = i != 0
+        if i == 0:
+            child_bone.head = bgn.xyz
         child_bone.tail = end.xyz
 
         return child_bone
@@ -267,7 +275,7 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
 # *******************************************************************************************
 class ANIME_HAIR_TOOLS_OT_remove_hook(bpy.types.Operator):
     bl_idname = "anime_hair_tools.remove_hook"
-    bl_label = "Remove Auto Hook"
+    bl_label = "Remove Auto Hook Bones"
 
     # execute ok
     def execute(self, context):
