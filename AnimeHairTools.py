@@ -162,7 +162,8 @@ class ANIME_HAIR_TOOLS_OT_material(bpy.types.Operator):
 
 # add hook object
 # *******************************************************************************************
-ANIME_HAIR_TOOLS_BONE_ROOT_NAME = "AnimeHairTools_BoneRoot"
+ANIME_HAIR_TOOLS_BONE_OBJ_NAME = "AHT_Armature"
+ANIME_HAIR_TOOLS_BONE_ROOT_NAME = "AHT_BoneRoot"
 
 # find/create bone root for anime hair tools
 def setup_root_bone():
@@ -172,8 +173,12 @@ def setup_root_bone():
 
     # new bone
     bpy.ops.object.armature_add(enter_editmode=False, location=(0, 0, 0))
-    bpy.context.active_object.name = ANIME_HAIR_TOOLS_BONE_ROOT_NAME
+    bpy.context.active_object.name = ANIME_HAIR_TOOLS_BONE_OBJ_NAME
+    bpy.context.active_object.data.name = ANIME_HAIR_TOOLS_BONE_OBJ_NAME
+    bpy.context.active_object.data.bones[0].name = ANIME_HAIR_TOOLS_BONE_ROOT_NAME
     return bpy.context.active_object.name
+
+# bpy.ops.armature.bone_primitive_add()
 
 
 class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
@@ -186,7 +191,7 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
         backup_active_object = bpy.context.active_object
 
         # bone
-        setup_root_bone()
+        bone_root = setup_root_bone()
 
         # set material to selected curves
         selected_curves = get_selected_curve_objects()
@@ -195,8 +200,12 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
 
             # get segment locations in curve
             hook_locations = self.get_hook_locations(curve)
-
-
+    
+            parent = bone_root
+            for i in range(len(hook_locations)-1):
+                bgn = hool_locations[i]
+                end = hool_locations[i+1]
+                parent = self.create_child_bone(curve.name, i, parent, bgn, end)
 
 
         # restore active object
@@ -225,6 +234,10 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
                 hook_locations.append(curve.matrix_world @ point.co)
     
         return hook_locations
+
+    def create_child_bone(self, base_name, i, parent, bgn, end):
+        bpy.context.view_layer.objects.active = parent
+        print(parent)
 
 
 # remove hook object
