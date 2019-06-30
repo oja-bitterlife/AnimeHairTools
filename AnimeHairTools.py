@@ -261,9 +261,9 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
 
         # setup
         child_bone.parent = parent
-        child_bone.use_connect = i != 0
+        child_bone.use_connect = i != 0  # no connect to root
         if i == 0:
-            child_bone.head = bgn.xyz
+            child_bone.head = bgn.xyz  # disconnected head setup
         child_bone.tail = end.xyz
 
         return child_bone
