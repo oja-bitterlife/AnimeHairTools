@@ -37,7 +37,6 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
         self.layout.operator("anime_hair_tools.bevel_taper")
         self.layout.operator("anime_hair_tools.material")
         self.layout.operator("anime_hair_tools.auto_hook")
-        self.layout.operator("anime_hair_tools.remove_hook")
 
 
 # Bebel & Taper Setting
@@ -270,43 +269,6 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
         return child_bone
 
 
-
-# remove hook object
-# *******************************************************************************************
-class ANIME_HAIR_TOOLS_OT_remove_hook(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.remove_hook"
-    bl_label = "Remove Auto Hook Bones"
-
-    # execute ok
-    def execute(self, context):
-        selected_curves = get_selected_curve_objects()
-
-        delete_target = []
-
-        # set material to selected curves
-        for curve_name in selected_curves:
-            curve = selected_curves[curve_name]  # process curve
-
-            remove_name = curve.name + ".auto_hook."
-
-            # remove child hooks
-            for child in curve.children:
-                if child.type == "EMPTY" and child.name.find(remove_name) == 0:  # match to top
-                    delete_target.append(child)  # append target
-
-        # delete target hook objects
-        bpy.ops.object.select_all(action='DESELECT')  # all deselect for delete
-        for target in delete_target:
-            target.select_set(True)
-        bpy.ops.object.delete()  # delete selected objects
-                    
-        return{'FINISHED'}
-
-    # use dialog
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
-
-
 # retister blender
 # *******************************************************************************************
 classes = (
@@ -314,7 +276,6 @@ classes = (
     ANIME_HAIR_TOOLS_OT_bevel_taper,
     ANIME_HAIR_TOOLS_OT_material,
     ANIME_HAIR_TOOLS_OT_auto_hook,
-    ANIME_HAIR_TOOLS_OT_remove_hook,
 )
 
 for cls in classes:
