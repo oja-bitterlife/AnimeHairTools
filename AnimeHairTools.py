@@ -218,7 +218,18 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
                 end = hook_locations[i+1]
                 parent = self.create_child_bone(curve.name, i, root_bone_obj, parent, bgn, end)
 
-                self.create_hook(curve, parent)
+        # convirm edit_bone
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        # set hook to selected curves
+        for curve_name in selected_curves:
+            curve = selected_curves[curve_name]  # process curve
+
+            # get segment locations in curve
+            hook_locations = self.get_hook_locations(curve)
+
+            for i in range(len(hook_locations)-1):
+                self.create_hook(curve, i)
 
         # restore active object
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -267,6 +278,16 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
         child_bone.tail = end.xyz
 
         return child_bone
+
+    def create_hook(self, curve, i):
+        hook_name = curve.name + ".hook_modifier.{:0=3}".format(i)
+        print(hook_name)
+        
+#        bpy.ops.object.modifier_add(type='HOOK')
+#        bpy.context.object.modifiers["Hook"].name = "Hook"
+
+        
+        pass
 
 
 # retister blender
