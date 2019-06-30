@@ -166,19 +166,20 @@ ANIME_HAIR_TOOLS_BONE_OBJ_NAME = "AHT_Armature"
 ANIME_HAIR_TOOLS_BONE_ROOT_NAME = "AHT_BoneRoot"
 
 # find/create bone root for anime hair tools
-def setup_root_bone():
+def setup_root_bone_object():
     # already created
-    if ANIME_HAIR_TOOLS_BONE_ROOT_NAME in bpy.data.objects.keys():
-        return bpy.data.objects[ANIME_HAIR_TOOLS_BONE_ROOT_NAME]
+    if ANIME_HAIR_TOOLS_BONE_OBJ_NAME in bpy.data.objects.keys():
+        return bpy.data.objects[ANIME_HAIR_TOOLS_BONE_OBJ_NAME]
 
-    # new bone
+    # create new bone
     bpy.ops.object.armature_add(enter_editmode=False, location=(0, 0, 0))
+
+    # set name
     bpy.context.active_object.name = ANIME_HAIR_TOOLS_BONE_OBJ_NAME
     bpy.context.active_object.data.name = ANIME_HAIR_TOOLS_BONE_OBJ_NAME
     bpy.context.active_object.data.bones[0].name = ANIME_HAIR_TOOLS_BONE_ROOT_NAME
-    return bpy.context.active_object.name
 
-# bpy.ops.armature.bone_primitive_add()
+    return bpy.context.active_object.name
 
 
 class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
@@ -191,7 +192,7 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
         backup_active_object = bpy.context.active_object
 
         # bone
-        bone_root = setup_root_bone()
+        root_bone_obj = setup_root_bone_object()
 
         # set material to selected curves
         selected_curves = get_selected_curve_objects()
@@ -200,16 +201,17 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
 
             # get segment locations in curve
             hook_locations = self.get_hook_locations(curve)
-    
-            parent = bone_root
-            for i in range(len(hook_locations)-1):
-                bgn = hool_locations[i]
-                end = hool_locations[i+1]
-                parent = self.create_child_bone(curve.name, i, parent, bgn, end)
 
+            parent = root_bone_obj.data.bones[0]  # find first bone
+            for i in range(len(hook_locations)-1):
+                bgn = hook_locations[i]
+                end = hook_locations[i+1]
+                parent = self.create_child_bone(curve.name, i, root_bone_obj, parent, bgn, end)
 
         # restore active object
+        bpy.ops.object.mode_set(mode='OBJECT')
         bpy.context.view_layer.objects.active = backup_active_object
+        
 
         return{'FINISHED'}
 
@@ -235,9 +237,13 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
     
         return hook_locations
 
-    def create_child_bone(self, base_name, i, parent, bgn, end):
-        bpy.context.view_layer.objects.active = parent
-        print(parent)
+    def create_child_bone(self, base_name, i, root_bone_obj, parent, bgn, end):
+        print(root_bone_obj)
+
+        # create non exist bone
+        bpy.context.view_layer.objects.active = root_bone_obj
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.armature.bone_primitive_add(name=base_name + ".hook_bone.{:0=3}".format(i))
 
 
 # remove hook object
