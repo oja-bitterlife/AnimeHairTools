@@ -36,7 +36,7 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
     def draw(self, context):
         self.layout.operator("anime_hair_tools.bevel_taper")
         self.layout.operator("anime_hair_tools.material")
-        self.layout.operator("anime_hair_tools.hook_empty")
+        self.layout.operator("anime_hair_tools.auto_hook")
         self.layout.operator("anime_hair_tools.remove_hook")
 
 
@@ -162,50 +162,42 @@ class ANIME_HAIR_TOOLS_OT_material(bpy.types.Operator):
 
 # add hook object
 # *******************************************************************************************
-class ANIME_HAIR_TOOLS_OT_hook_empty(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.hook_empty"
-    bl_label = "Auto Hook Empty"
+ANIME_HAIR_TOOLS_BONE_ROOT_NAME = "AnimeHairTools_BoneRoot"
+
+# find/create bone root for anime hair tools
+def setup_root_bone():
+    # already created
+    if ANIME_HAIR_TOOLS_BONE_ROOT_NAME in bpy.data.objects.keys():
+        return bpy.data.objects[ANIME_HAIR_TOOLS_BONE_ROOT_NAME]
+
+    # new bone
+    bpy.ops.object.armature_add(enter_editmode=False, location=(0, 0, 0))
+    bpy.context.active_object.name = ANIME_HAIR_TOOLS_BONE_ROOT_NAME
+    return bpy.context.active_object.name
+
+
+class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.auto_hook"
+    bl_label = "Create Auto Hook"
 
     # execute ok
     def execute(self, context):
         # save active object
         backup_active_object = bpy.context.active_object
 
+        # bone
+        setup_root_bone()
+
         # set material to selected curves
         selected_curves = get_selected_curve_objects()
         for curve_name in selected_curves:
             curve = selected_curves[curve_name]  # process curve
 
-            # stock hook empties
-            hook_empties = []
+            # get segment locations in curve
+            hook_locations = self.get_hook_locations(curve)
 
-            # process splines
-            for spline in curve.data.splines:
-                # process spline points
-                for i, point in enumerate(spline.points):
-                    if i == 0: continue  # first point is not process
-                
-                    # create empty
-                    location_co = curve.matrix_world @ point.co
-                    bpy.ops.object.empty_add(type="PLAIN_AXES", location=location_co.xyz.to_tuple())
-                    hook_empties.append(bpy.context.active_object)
 
-                # process bezier points
-                for i, point in enumerate(spline.bezier_points):
-                    if i == 0: continue  # first point is not process
-                
-                    # create empty
-                    location_co = curve.matrix_world @ point.co
-                    bpy.ops.object.empty_add(type="PLAIN_AXES", location=location_co.xyz.to_tuple())
-                    hook_empties.append(bpy.context.active_object)
 
-            # setup parent
-            bpy.ops.object.select_all(action='DESELECT')
-            for i, empty in enumerate(hook_empties):
-                empty.name = curve.name + ".auto_hook.{:0=3}".format(i)  # rename
-                empty.select_set(True)
-            bpy.context.view_layer.objects.active = curve  # parent target
-            bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
 
         # restore active object
         bpy.context.view_layer.objects.active = backup_active_object
@@ -215,6 +207,24 @@ class ANIME_HAIR_TOOLS_OT_hook_empty(bpy.types.Operator):
     # use dialog
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
+
+
+    # return locations in curve
+    def get_hook_locations(self, curve):
+        # stock hook locations
+        hook_locations = []
+
+        # process splines
+        for spline in curve.data.splines:
+            # process spline points
+            for point in spline.points:
+                hook_locations.append(curve.matrix_world @ point.co)
+
+            # process bezier points
+            for point in spline.bezier_points:
+                hook_locations.append(curve.matrix_world @ point.co)
+    
+        return hook_locations
 
 
 # remove hook object
@@ -258,7 +268,7 @@ classes = (
     ANIME_HAIR_TOOLS_PT_ui,
     ANIME_HAIR_TOOLS_OT_bevel_taper,
     ANIME_HAIR_TOOLS_OT_material,
-    ANIME_HAIR_TOOLS_OT_hook_empty,
+    ANIME_HAIR_TOOLS_OT_auto_hook,
     ANIME_HAIR_TOOLS_OT_remove_hook,
 )
 
