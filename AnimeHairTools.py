@@ -232,8 +232,8 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
             # get segment locations in curve
             hook_points = self.get_hook_points(curve)
 
-            for i in range(len(hook_points)-1):
-                self.create_hook(curve, i, hook_points)
+            for modifire_no in range(len(hook_points)-1):
+                self.create_hook(curve, modifire_no)
 
         # restore active object
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -283,9 +283,9 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
 
         return child_bone
 
-    def create_hook(self, curve, i, hook_points):
-        hook_name = curve.name + ".hook_modifier.{:0=3}".format(i)
-        bone_name = curve.name + ".hook_bone.{:0=3}".format(i)
+    def create_hook(self, curve, modifire_no):
+        hook_name = curve.name + ".hook_modifier.{:0=3}".format(modifire_no)
+        bone_name = curve.name + ".hook_bone.{:0=3}".format(modifire_no)
 
         # create hook modifier
         if hook_name not in curve.modifiers.keys():
@@ -301,10 +301,12 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
         bpy.context.view_layer.objects.active = curve
         bpy.ops.object.mode_set(mode='EDIT')
 
-        for p_no, p in enumerate(hook_points):
-            p.select = i+1 == p_no  # select top
+        # get points in edit mode
+        hook_points = self.get_hook_points(curve)
 
-        bpy.ops.object.hook_reset()  # important need (seg. fault)
+        # assign hook
+        for p_no, p in enumerate(hook_points):
+            p.select = p_no == modifire_no+1
         bpy.ops.object.hook_assign(modifier=modifier.name)
 
         bpy.ops.object.mode_set(mode='OBJECT')
