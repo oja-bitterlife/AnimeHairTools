@@ -340,13 +340,15 @@ class ANIME_HAIR_TOOLS_auto_hook_modifier:
 
         # get points in edit mode
         hook_points = get_curve_all_points(curve)
-        segment_count = len(points)-1  # bettween points
+        segment_count = len(hook_points)-1  # bettween points
 
         # assign hook
         for segment_no in range(segment_count):
+            # select is only assign target point
             for point_no, p in enumerate(hook_points):
                 p.select = point_no == segment_no+1
 
+            # assign to modifier
             hook_name = ANIME_HAIR_TOOLS_auto_hook_modifier.create_modifier_name(curve.name, segment_no)
             bpy.ops.object.hook_assign(modifier=hook_name)
 
@@ -370,19 +372,6 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
 
         # create hook
         ANIME_HAIR_TOOLS_auto_hook_modifier(selected_curve).execute(context)
-
-        """
-        # set hook to selected curves
-        for curve_name in selected_curves:
-            curve = selected_curves[curve_name]  # process curve
-
-            # get segment locations in curve
-            hook_points = self.get_hook_points(curve)
-
-            for modifire_no in range(len(hook_points)-1):
-                self.create_hook(curve, modifire_no)
-
-        """
 
         # restore active object
         bpy.ops.object.mode_set(mode='OBJECT')
