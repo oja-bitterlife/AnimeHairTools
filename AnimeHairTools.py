@@ -185,6 +185,12 @@ def get_curve_all_points(curve):
 
     return points
 
+# apply callback at each curves
+def apply_each_curves(selected_curves, callback):
+    for curve_name in selected_curves:
+        curve = selected_curves[curve_name]
+        callback(curve)
+
 
 # create bones with armature
 class ANIME_HAIR_TOOLS_auto_hook_bone:
@@ -199,9 +205,10 @@ class ANIME_HAIR_TOOLS_auto_hook_bone:
         # create root Armature for aht-bones
         self.root_armature = self._setup_root_armature()
 
-        # create bones for selected curves
+        # create bones for each selected curves
+        # -------------------------------------------------------------------------
         selected_curves = get_selected_curve_objects()
-        self.create_bone(selected_curves)
+        apply_each_curves(selected_curves, self.create_bones)
 
         return{'FINISHED'}
 
@@ -229,24 +236,21 @@ class ANIME_HAIR_TOOLS_auto_hook_bone:
 
         return root_armature
 
+
     # create bone for selected curves
-    def create_bone(self, selected_curves):
+    def create_bones(self, curve):
         # to edit-mode
         bpy.context.view_layer.objects.active = self.root_armature
         bpy.ops.object.mode_set(mode='EDIT')
 
-        # create bones for every curve
-        for curve_name in selected_curves:
-            curve = selected_curves[curve_name]
+        # get segment locations in curve
+        hook_points = get_curve_all_points(curve)
 
-            # get segment locations in curve
-            hook_points = get_curve_all_points(curve)
-
-            parent = self.root_armature.data.edit_bones[0]  # find first bone in edit-mode
-            for i in range(len(hook_points)-1):
-                bgn = curve.matrix_world @ hook_points[i].co
-                end = curve.matrix_world @ hook_points[i+1].co
-                parent = self._create_child_bone(curve.name, i, parent, bgn, end)
+        parent = self.root_armature.data.edit_bones[0]  # find first bone in edit-mode
+        for i in range(len(hook_points)-1):
+            bgn = curve.matrix_world @ hook_points[i].co
+            end = curve.matrix_world @ hook_points[i+1].co
+            parent = self._create_child_bone(curve.name, i, parent, bgn, end)
 
         # out of edit-mode
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -279,13 +283,6 @@ class ANIME_HAIR_TOOLS_auto_hook_modifier:
     def create_modifier_name(cls, base_name, no):
         return base_name + ".hook_modifier.{:0=3}".format(no)
 
-    # apply callback at each curves
-    def each_curves(self, selected_curves, callback):
-        for curve_name in selected_curves:
-            curve = selected_curves[curve_name]
-            callback(curve)
-
-
     # execute create auto-hook-modifier
     def execute(self, context):
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -293,10 +290,10 @@ class ANIME_HAIR_TOOLS_auto_hook_modifier:
         selected_curves = get_selected_curve_objects()
 
         # create hook modifiers
-        self.each_curves(selected_curves, self.create_modifiers)
+        apply_each_curves(selected_curves, self.create_modifiers)
 
         # assign point to modifier
-#        self.each_curves(selected_curves, self.assign_points)
+#        apply_each_curves(selected_curves, self.assign_points)
 
         return{'FINISHED'}
 
