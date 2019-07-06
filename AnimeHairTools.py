@@ -37,6 +37,7 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
         self.layout.operator("anime_hair_tools.bevel_taper")
         self.layout.operator("anime_hair_tools.material")
         self.layout.operator("anime_hair_tools.auto_hook")
+        self.layout.operator("anime_hair_tools.remove_settings")
 
 
 # Bebel & Taper Setting
@@ -365,13 +366,13 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
         backup_active_object = bpy.context.view_layer.objects.active
 
         bpy.ops.object.mode_set(mode='OBJECT')
-        selected_curve = get_selected_curve_objects()
+        selected_curves = get_selected_curve_objects()
         
         # create bones
-        ANIME_HAIR_TOOLS_auto_hook_bone(selected_curve).execute(context)
+        ANIME_HAIR_TOOLS_auto_hook_bone(selected_curves).execute(context)
 
         # create hook
-        ANIME_HAIR_TOOLS_auto_hook_modifier(selected_curve).execute(context)
+        ANIME_HAIR_TOOLS_auto_hook_modifier(selected_curves).execute(context)
 
         # restore active object
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -385,6 +386,80 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self)
 
 
+# Delete the setting added for management
+class ANIME_HAIR_TOOLS_OT_remove_settings(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.remove_settings"
+    bl_label = "Remove AHT Settings"
+
+    # execute ok
+    def execute(self, context):
+        backup_active_object = bpy.context.view_layer.objects.active
+
+        bpy.ops.object.mode_set(mode='OBJECT')
+        selected_curves = get_selected_curve_objects()
+
+        # remove added modifiers
+        apply_each_curves(selected_curves, self.remove_modifiers)
+
+        # remove added bones
+        apply_each_curves(selected_curves, self.remove_bones)
+
+        # restore active object
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.select_all(action='DESELECT')
+        bpy.context.view_layer.objects.active = backup_active_object
+
+        return{'FINISHED'}
+
+    # remove all hook modifiers
+    def remove_modifiers(self, curve):
+        bpy.context.view_layer.objects.active = curve
+
+        # create remove name
+        hook_name = ANIME_HAIR_TOOLS_auto_hook_modifier.create_modifier_name(curve.name, 0)
+        hook_name_base = hook_name[:-4]  # remove .000
+
+        # remove
+        for modifier in curve.modifiers:
+            if modifier.name.startswith(hook_name_base):
+                bpy.ops.object.modifier_remove(modifier=modifier.name)
+        
+    # remove all hook bones
+    def remove_bones(self, curve):
+        root_armature = None
+        if ANIME_HAIR_TOOLS_BONE_OBJ_NAME in bpy.data.objects.keys():
+            root_armature = bpy.data.objects[ANIME_HAIR_TOOLS_BONE_OBJ_NAME]
+
+        # if not exists noting to do
+        if root_armature == None:
+            return
+
+        # to edit-mode
+        bpy.context.view_layer.objects.active = root_armature
+        bpy.ops.object.mode_set(mode='EDIT')
+
+        # create remove name
+        bone_name = ANIME_HAIR_TOOLS_auto_hook_bone.create_bone_name(curve.name, 0)
+        bone_name_base = bone_name[:-4]  # remove .000
+
+        # deselect all
+        bpy.ops.armature.select_all(action='DESELECT')
+
+        # select remove target bones
+        for edit_bone in root_armature.data.edit_bones:
+            if edit_bone.name.startswith(bone_name_base):
+                edit_bone.select = True
+
+        # remove selected bones
+        bpy.ops.armature.delete()
+
+        # out of edit-mode
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+
+    # use dialog
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
 
 
 # retister blender
@@ -394,6 +469,7 @@ classes = (
     ANIME_HAIR_TOOLS_OT_bevel_taper,
     ANIME_HAIR_TOOLS_OT_material,
     ANIME_HAIR_TOOLS_OT_auto_hook,
+    ANIME_HAIR_TOOLS_OT_remove_settings,
 )
 
 for cls in classes:
