@@ -174,14 +174,10 @@ def get_curve_all_points(curve):
     # stock hook points
     points = []
 
-    # process splines
+    # process only splines (not process bezier_points)
     for spline in curve.data.splines:
         # process spline points
         for point in spline.points:
-            points.append(point)
-
-        # process bezier points
-        for point in spline.bezier_points:
             points.append(point)
 
     return points
@@ -365,6 +361,10 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
     def execute(self, context):
         backup_active_object = bpy.context.view_layer.objects.active
 
+        # no active object
+        if backup_active_object == None:
+            return{'FINISHED'}
+
         bpy.ops.object.mode_set(mode='OBJECT')
         selected_curves = get_selected_curve_objects()
         
@@ -394,6 +394,10 @@ class ANIME_HAIR_TOOLS_OT_remove_settings(bpy.types.Operator):
     # execute ok
     def execute(self, context):
         backup_active_object = bpy.context.view_layer.objects.active
+
+        # no active object
+        if backup_active_object == None:
+            return{'FINISHED'}
 
         bpy.ops.object.mode_set(mode='OBJECT')
         selected_curves = get_selected_curve_objects()
@@ -442,10 +446,8 @@ class ANIME_HAIR_TOOLS_OT_remove_settings(bpy.types.Operator):
         bone_name = ANIME_HAIR_TOOLS_auto_hook_bone.create_bone_name(curve.name, 0)
         bone_name_base = bone_name[:-4]  # remove .000
 
-        # deselect all
-        bpy.ops.armature.select_all(action='DESELECT')
-
         # select remove target bones
+        bpy.ops.armature.select_all(action='DESELECT')
         for edit_bone in root_armature.data.edit_bones:
             if edit_bone.name.startswith(bone_name_base):
                 edit_bone.select = True
