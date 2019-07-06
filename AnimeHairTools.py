@@ -168,7 +168,30 @@ class ANIME_HAIR_TOOLS_OT_material(bpy.types.Operator):
 ANIME_HAIR_TOOLS_BONE_OBJ_NAME = "AHT_Armature"
 ANIME_HAIR_TOOLS_BONE_ROOT_NAME = "AHT_BoneRoot"
 
+# return points in curve
+def get_curve_all_points(curve):
+    # stock hook points
+    points = []
+
+    # process splines
+    for spline in curve.data.splines:
+        # process spline points
+        for point in spline.points:
+            points.append(point)
+
+        # process bezier points
+        for point in spline.bezier_points:
+            points.append(point)
+
+    return points
+
+
+# create bones with armature
 class ANIME_HAIR_TOOLS_auto_hook_bone:
+    @classmethod
+    def create_bone_name(cls, base_name, no):
+        return base_name + ".hook_bone.{:0=3}".format(no)
+
     # execute create auto-hook-bones
     def execute(self, context):
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -217,7 +240,7 @@ class ANIME_HAIR_TOOLS_auto_hook_bone:
             curve = selected_curves[curve_name]
 
             # get segment locations in curve
-            hook_points = self._get_hook_points(curve)
+            hook_points = get_curve_all_points(curve)
 
             parent = self.root_armature.data.edit_bones[0]  # find first bone in edit-mode
             for i in range(len(hook_points)-1):
@@ -228,26 +251,9 @@ class ANIME_HAIR_TOOLS_auto_hook_bone:
         # out of edit-mode
         bpy.ops.object.mode_set(mode='OBJECT')
 
-    # return points in curve
-    def _get_hook_points(self, curve):
-        # stock hook points
-        hook_points = []
-
-        # process splines
-        for spline in curve.data.splines:
-            # process spline points
-            for point in spline.points:
-                hook_points.append(point)
-
-            # process bezier points
-            for point in spline.bezier_points:
-                hook_points.append(point)
-    
-        return hook_points
-
 
     def _create_child_bone(self, base_name, i, parent, bgn, end):
-        bone_name = base_name + ".hook_bone.{:0=3}".format(i)
+        bone_name = ANIME_HAIR_TOOLS_auto_hook_bone.create_bone_name(base_name, i)
     
         # create bone if not exists
         # -------------------------------------------------------------------------
@@ -267,53 +273,50 @@ class ANIME_HAIR_TOOLS_auto_hook_bone:
         return child_bone
 
 
-# create auto hook bones
-class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.auto_hook"
-    bl_label = "Create Auto Hook Bones"
-
-    # execute ok
+# create hook modifiers
+class ANIME_HAIR_TOOLS_auto_hook_modifier:
+    # execute create auto-hook-modifier
     def execute(self, context):
-        # create bone
-        ANIME_HAIR_TOOLS_auto_hook_bone().execute(context)
+        bpy.ops.object.mode_set(mode='OBJECT')
 
-        """
-        # set hook to selected curves
+        # create hook modifiers
+        selected_curves = get_selected_curve_objects()
+        self.create_modifiers(selected_curves)
+
+        return{'FINISHED'}
+
+    # create modifier every segment
+    def create_modifiers(self, selected_curves):
         for curve_name in selected_curves:
             curve = selected_curves[curve_name]  # process curve
 
             # get segment locations in curve
-            hook_points = self.get_hook_points(curve)
+            points = get_curve_all_points(curve)
 
-            for modifire_no in range(len(hook_points)-1):
-                self.create_hook(curve, modifire_no)
+            # create modifier for segment
+            for i in range(len(points)-1):
+                hook_name = curve.name + ".hook_modifier.{:0=3}".format(i)
 
-        # restore active object
-        bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.ops.object.select_all(action='DESELECT')
-        bpy.context.view_layer.objects.active = backup_active_object
-        """
+                # create not exists hook modifier
+                if hook_name not in curve.modifiers.keys():
+                    curve.modifiers.new(hook_name, type="HOOK");
 
-        return{'FINISHED'}
+                # (re)setup
+                # -------------------------------------------------------------------------
+                modifier = curve.modifiers[hook_name]
 
-    # use dialog
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
+                modifier.object = bpy.data.objects[ANIME_HAIR_TOOLS_BONE_OBJ_NAME]
+                modifier.subtarget = ANIME_HAIR_TOOLS_auto_hook_bone.create_bone_name(curve.name, i)
 
+                bpy.context.view_layer.objects.active = curve
+
+                move_up_count = curve.modifiers.keys().index(hook_name)
+                print(hook_name + ": " + str(move_up_count))
+                for j in range(move_up_count):
+                    bpy.ops.object.modifier_move_up(modifier=hook_name)
+#                bpy.ops.object.modifier_move_up(modifier="NurbsPath.003.hook_modifier.000")
 
     def create_hook(self, curve, modifire_no):
-        hook_name = curve.name + ".hook_modifier.{:0=3}".format(modifire_no)
-        bone_name = curve.name + ".hook_bone.{:0=3}".format(modifire_no)
-
-        # create hook modifier
-        if hook_name not in curve.modifiers.keys():
-            curve.modifiers.new(hook_name, type="HOOK");
-
-        # modifier setup
-        modifier = curve.modifiers[hook_name]
-
-        modifier.object = bpy.data.objects[ANIME_HAIR_TOOLS_BONE_OBJ_NAME]
-        modifier.subtarget = bone_name
 
         # assign segment
         bpy.context.view_layer.objects.active = curve
@@ -328,6 +331,48 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
         bpy.ops.object.hook_assign(modifier=modifier.name)
 
         bpy.ops.object.mode_set(mode='OBJECT')
+
+
+# create auto hook bones
+class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.auto_hook"
+    bl_label = "Create Auto Hook Bones"
+
+    # execute ok
+    def execute(self, context):
+        backup_active_object = bpy.context.view_layer.objects.active
+        
+        # create bones
+        ANIME_HAIR_TOOLS_auto_hook_bone().execute(context)
+
+        # create hook
+        ANIME_HAIR_TOOLS_auto_hook_modifier().execute(context)
+
+        """
+        # set hook to selected curves
+        for curve_name in selected_curves:
+            curve = selected_curves[curve_name]  # process curve
+
+            # get segment locations in curve
+            hook_points = self.get_hook_points(curve)
+
+            for modifire_no in range(len(hook_points)-1):
+                self.create_hook(curve, modifire_no)
+
+        """
+
+        # restore active object
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.select_all(action='DESELECT')
+        bpy.context.view_layer.objects.active = backup_active_object
+
+        return{'FINISHED'}
+
+    # use dialog
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+
 
 
 # retister blender
