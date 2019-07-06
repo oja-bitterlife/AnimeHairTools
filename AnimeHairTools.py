@@ -198,10 +198,13 @@ class ANIME_HAIR_TOOLS_auto_hook_bone:
     def create_bone_name(cls, base_name, no):
         return base_name + ".hook_bone.{:0=3}".format(no)
 
+    def __init__(self, selected_curves):
+        self.selected_curves = selected_curves
+
     # execute create auto-hook-bones
     def execute(self, context):
         bpy.ops.object.mode_set(mode='OBJECT')
-        selected_curves = get_selected_curve_objects()
+        selected_curves = self.selected_curves
 
         # create root Armature for aht-bones
         self.root_armature = self._setup_root_armature()
@@ -283,10 +286,13 @@ class ANIME_HAIR_TOOLS_auto_hook_modifier:
     def create_modifier_name(cls, base_name, no):
         return base_name + ".hook_modifier.{:0=3}".format(no)
 
+    def __init__(self, selected_curves):
+        self.selected_curves = selected_curves
+
     # execute create auto-hook-modifier
     def execute(self, context):
         bpy.ops.object.mode_set(mode='OBJECT')
-        selected_curves = get_selected_curve_objects()
+        selected_curves = self.selected_curves
 
         # create hook modifiers
         apply_each_curves(selected_curves, self.create_modifiers)
@@ -358,12 +364,15 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
     # execute ok
     def execute(self, context):
         backup_active_object = bpy.context.view_layer.objects.active
+
+        bpy.ops.object.mode_set(mode='OBJECT')
+        selected_curve = get_selected_curve_objects()
         
         # create bones
-        ANIME_HAIR_TOOLS_auto_hook_bone().execute(context)
+        ANIME_HAIR_TOOLS_auto_hook_bone(selected_curve).execute(context)
 
         # create hook
-        ANIME_HAIR_TOOLS_auto_hook_modifier().execute(context)
+        ANIME_HAIR_TOOLS_auto_hook_modifier(selected_curve).execute(context)
 
         """
         # set hook to selected curves
