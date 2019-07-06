@@ -66,6 +66,10 @@ class ANIME_HAIR_TOOLS_OT_bevel_taper(bpy.types.Operator):
 
     # execute ok
     def execute(self, context):
+        # no active object
+        if bpy.context.view_layer.objects.active == None:
+            return{'FINISHED'}
+
         bpy.ops.object.mode_set(mode='OBJECT')
         selected_curves = get_selected_curve_objects()
 
@@ -122,6 +126,10 @@ class ANIME_HAIR_TOOLS_OT_material(bpy.types.Operator):
 
     # execute ok
     def execute(self, context):
+        # no active object
+        if bpy.context.view_layer.objects.active == None:
+            return{'FINISHED'}
+
         bpy.ops.object.mode_set(mode='OBJECT')
         selected_curves = get_selected_curve_objects()
 
@@ -359,11 +367,11 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
 
     # execute ok
     def execute(self, context):
-        backup_active_object = bpy.context.view_layer.objects.active
-
         # no active object
-        if backup_active_object == None:
+        if bpy.context.view_layer.objects.active == None:
             return{'FINISHED'}
+
+        backup_active_object = bpy.context.view_layer.objects.active
 
         bpy.ops.object.mode_set(mode='OBJECT')
         selected_curves = get_selected_curve_objects()
@@ -393,11 +401,11 @@ class ANIME_HAIR_TOOLS_OT_remove_settings(bpy.types.Operator):
 
     # execute ok
     def execute(self, context):
-        backup_active_object = bpy.context.view_layer.objects.active
-
         # no active object
-        if backup_active_object == None:
+        if bpy.context.view_layer.objects.active == None:
             return{'FINISHED'}
+
+        backup_active_object = bpy.context.view_layer.objects.active
 
         bpy.ops.object.mode_set(mode='OBJECT')
         selected_curves = get_selected_curve_objects()
