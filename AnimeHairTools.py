@@ -203,21 +203,17 @@ class ANIME_HAIR_TOOLS_auto_hook_bone:
 
     # execute create auto-hook-bones
     def execute(self, context):
-        bpy.ops.object.mode_set(mode='OBJECT')
-        selected_curves = self.selected_curves
-
         # create root Armature for aht-bones
-        self.root_armature = self._setup_root_armature()
+        self.root_armature = self.create_root_armature()
 
         # create bones for each selected curves
-        # -------------------------------------------------------------------------
-        apply_each_curves(selected_curves, self.create_bones)
+        apply_each_curves(self.selected_curves, self.create_bones)
 
         return{'FINISHED'}
 
 
     # find/create bone root for anime hair tools
-    def _setup_root_armature(self):
+    def create_root_armature(self):
         # already created?
         # -------------------------------------------------------------------------
         if ANIME_HAIR_TOOLS_BONE_OBJ_NAME in bpy.data.objects.keys():
@@ -258,7 +254,7 @@ class ANIME_HAIR_TOOLS_auto_hook_bone:
         # out of edit-mode
         bpy.ops.object.mode_set(mode='OBJECT')
 
-
+    # create chain child bone
     def _create_child_bone(self, base_name, i, parent, bgn, end):
         bone_name = ANIME_HAIR_TOOLS_auto_hook_bone.create_bone_name(base_name, i)
     
@@ -291,14 +287,11 @@ class ANIME_HAIR_TOOLS_auto_hook_modifier:
 
     # execute create auto-hook-modifier
     def execute(self, context):
-        bpy.ops.object.mode_set(mode='OBJECT')
-        selected_curves = self.selected_curves
-
         # create hook modifiers
-        apply_each_curves(selected_curves, self.create_modifiers)
+        apply_each_curves(self.selected_curves, self.create_modifiers)
 
         # assign point to modifier
-#        apply_each_curves(selected_curves, self.assign_points)
+#        apply_each_curves(self.selected_curves, self.assign_points)
 
         return{'FINISHED'}
 
