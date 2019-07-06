@@ -275,49 +275,75 @@ class ANIME_HAIR_TOOLS_auto_hook_bone:
 
 # create hook modifiers
 class ANIME_HAIR_TOOLS_auto_hook_modifier:
+    @classmethod
+    def create_modifier_name(cls, base_name, no):
+        return base_name + ".hook_modifier.{:0=3}".format(no)
+
+    # apply callback at each curves
+    def each_curves(self, selected_curves, callback):
+        for curve_name in selected_curves:
+            curve = selected_curves[curve_name]
+            callback(curve)
+
+
     # execute create auto-hook-modifier
     def execute(self, context):
         bpy.ops.object.mode_set(mode='OBJECT')
 
-        # create hook modifiers
         selected_curves = get_selected_curve_objects()
-        self.create_modifiers(selected_curves)
+
+        # create hook modifiers
+        self.each_curves(selected_curves, self.create_modifiers)
+
+        # assign point to modifier
+#        self.each_curves(selected_curves, self.assign_points)
 
         return{'FINISHED'}
 
-    # create modifier every segment
-    def create_modifiers(self, selected_curves):
+
+
+    # create modifier
+    def _create_modifier(self, curve, no):
+        hook_name = ANIME_HAIR_TOOLS_auto_hook_modifier.create_modifier_name(curve.name, no)
+
+        # create not exists hook modifier
+        if hook_name not in curve.modifiers.keys():
+            curve.modifiers.new(hook_name, type="HOOK");
+
+        # (re)setup
+        # -------------------------------------------------------------------------
+        modifier = curve.modifiers[hook_name]
+
+        modifier.object = bpy.data.objects[ANIME_HAIR_TOOLS_BONE_OBJ_NAME]
+        modifier.subtarget = ANIME_HAIR_TOOLS_auto_hook_bone.create_bone_name(curve.name, no)
+
+        return modifier
+
+    # create modifier every segment and sort
+    def create_modifiers(self, curve):
+        # get segment locations in curve
+        points = get_curve_all_points(curve)
+        segment_count = len(points)-1  # bettween points
+
+        # create modifier for segment
+        for i in range(segment_count-1, -1, -1):  # asc sorting
+            modifier = self._create_modifier(curve, i)
+
+            # sort modifier
+            # -------------------------------------------------------------------------
+            move_up_count = curve.modifiers.keys().index(modifier.name)
+
+            bpy.context.view_layer.objects.active = curve  # for modifier_move_up
+            for j in range(move_up_count):
+                bpy.ops.object.modifier_move_up(modifier=modifier.name)
+
+
+    def assign_points(self, curve, modifire_no):
         for curve_name in selected_curves:
-            curve = selected_curves[curve_name]  # process curve
+            curve = selected_curves[curve_name]
+            self._create_modifier(curve)
 
-            # get segment locations in curve
-            points = get_curve_all_points(curve)
-
-            # create modifier for segment
-            for i in range(len(points)-2, -1, -1):
-                hook_name = curve.name + ".hook_modifier.{:0=3}".format(i)
-
-                # create not exists hook modifier
-                if hook_name not in curve.modifiers.keys():
-                    curve.modifiers.new(hook_name, type="HOOK");
-
-                # (re)setup
-                # -------------------------------------------------------------------------
-                modifier = curve.modifiers[hook_name]
-
-                modifier.object = bpy.data.objects[ANIME_HAIR_TOOLS_BONE_OBJ_NAME]
-                modifier.subtarget = ANIME_HAIR_TOOLS_auto_hook_bone.create_bone_name(curve.name, i)
-
-                bpy.context.view_layer.objects.active = curve
-
-                move_up_count = curve.modifiers.keys().index(hook_name)
-                print(hook_name + ": " + str(move_up_count))
-                for j in range(move_up_count):
-                    bpy.ops.object.modifier_move_up(modifier=hook_name)
-
-
-    def create_hook(self, curve, modifire_no):
-
+    def assign_points(self, curve, modifire_no):
         # assign segment
         bpy.context.view_layer.objects.active = curve
         bpy.ops.object.mode_set(mode='EDIT')
