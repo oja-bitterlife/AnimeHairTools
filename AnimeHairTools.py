@@ -169,9 +169,19 @@ ANIME_HAIR_TOOLS_BONE_OBJ_NAME = "AHT_Armature"
 ANIME_HAIR_TOOLS_BONE_ROOT_NAME = "AHT_BoneRoot"
 
 class ANIME_HAIR_TOOLS_auto_hook_bone:
-    def __init__(self):
-        # create root bone
+    # execute create auto-hook-bones
+    def execute(self, context):
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        # create root Armature for aht-bones
         self.root_armature = self._setup_root_armature()
+
+        # create bones for selected curves
+        selected_curves = get_selected_curve_objects()
+        self.create_bone(selected_curves)
+
+        return{'FINISHED'}
+
 
     # find/create bone root for anime hair tools
     def _setup_root_armature(self):
@@ -264,12 +274,8 @@ class ANIME_HAIR_TOOLS_OT_auto_hook(bpy.types.Operator):
 
     # execute ok
     def execute(self, context):
-        bpy.ops.object.mode_set(mode='OBJECT')
-        selected_curves = get_selected_curve_objects()
-
         # create bone
-        ahb = ANIME_HAIR_TOOLS_auto_hook_bone()
-        ahb.create_bone(selected_curves)
+        ANIME_HAIR_TOOLS_auto_hook_bone().execute(context)
 
         """
         # set hook to selected curves
