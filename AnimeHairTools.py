@@ -294,7 +294,7 @@ class ANIME_HAIR_TOOLS_auto_hook_modifier:
             points = get_curve_all_points(curve)
 
             # create modifier for segment
-            for i in range(len(points)-1):
+            for i in range(len(points)-2, -1, -1):
                 hook_name = curve.name + ".hook_modifier.{:0=3}".format(i)
 
                 # create not exists hook modifier
@@ -314,7 +314,7 @@ class ANIME_HAIR_TOOLS_auto_hook_modifier:
                 print(hook_name + ": " + str(move_up_count))
                 for j in range(move_up_count):
                     bpy.ops.object.modifier_move_up(modifier=hook_name)
-#                bpy.ops.object.modifier_move_up(modifier="NurbsPath.003.hook_modifier.000")
+
 
     def create_hook(self, curve, modifire_no):
 
