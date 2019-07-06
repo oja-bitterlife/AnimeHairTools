@@ -243,7 +243,7 @@ class ANIME_HAIR_TOOLS_auto_hook_bone:
         bpy.ops.object.mode_set(mode='EDIT')
 
         # get points in edit mode
-        hook_points = get_curve_all_points(curve)  # need in edit-mode
+        hook_points = get_curve_all_points(curve)
 
         parent = self.root_armature.data.edit_bones[0]  # find first bone in edit-mode
         for i in range(len(hook_points)-1):
@@ -291,7 +291,7 @@ class ANIME_HAIR_TOOLS_auto_hook_modifier:
         apply_each_curves(self.selected_curves, self.create_modifiers)
 
         # assign point to modifier
-#        apply_each_curves(self.selected_curves, self.assign_points)
+        apply_each_curves(self.selected_curves, self.assign_points)
 
         return{'FINISHED'}
 
@@ -339,12 +339,16 @@ class ANIME_HAIR_TOOLS_auto_hook_modifier:
         bpy.ops.object.mode_set(mode='EDIT')
 
         # get points in edit mode
-        hook_points = self.get_hook_points(curve)
+        hook_points = get_curve_all_points(curve)
+        segment_count = len(points)-1  # bettween points
 
         # assign hook
-        for p_no, p in enumerate(hook_points):
-            p.select = p_no == modifire_no+1
-        bpy.ops.object.hook_assign(modifier=modifier.name)
+        for segment_no in range(segment_count):
+            for point_no, p in enumerate(hook_points):
+                p.select = point_no == segment_no+1
+
+            hook_name = ANIME_HAIR_TOOLS_auto_hook_modifier.create_modifier_name(curve.name, segment_no)
+            bpy.ops.object.hook_assign(modifier=hook_name)
 
         bpy.ops.object.mode_set(mode='OBJECT')
 
