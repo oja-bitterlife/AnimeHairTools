@@ -303,7 +303,7 @@ class ANIME_HAIR_TOOLS_auto_hook_modifier:
 
 
     # create modifier
-    def _create_modifier(self, curve, no):
+    def _create_modifier(self, segment_count, curve, no):
         hook_name = ANIME_HAIR_TOOLS_auto_hook_modifier.create_modifier_name(curve.name, no)
 
         # create not exists hook modifier
@@ -315,6 +315,8 @@ class ANIME_HAIR_TOOLS_auto_hook_modifier:
         modifier = curve.modifiers[hook_name]
 
         modifier.object = bpy.data.objects[ANIME_HAIR_TOOLS_BONE_OBJ_NAME]
+        if(segment_count-1 <= no):
+            no = segment_count-2  # edge limit
         modifier.subtarget = ANIME_HAIR_TOOLS_auto_hook_bone.create_bone_name(curve.name, no)
 
         return modifier
@@ -323,11 +325,11 @@ class ANIME_HAIR_TOOLS_auto_hook_modifier:
     def create_modifiers(self, curve):
         # get segment locations in curve
         points = get_curve_all_points(curve)
-        segment_count = len(points)-1  # bettween points
+        segment_count = len(points)  # bettween points
 
         # create modifier for segment
         for i in range(segment_count-1, -1, -1):  # asc sorting
-            modifier = self._create_modifier(curve, i)
+            modifier = self._create_modifier(segment_count, curve, i)
 
             # sort modifier
             # -------------------------------------------------------------------------
@@ -345,13 +347,13 @@ class ANIME_HAIR_TOOLS_auto_hook_modifier:
 
         # get points in edit mode
         hook_points = get_curve_all_points(curve)
-        segment_count = len(hook_points)-1  # bettween points
+        segment_count = len(hook_points)  # bettween points
 
         # assign hook
         for segment_no in range(segment_count):
             # select is only assign target point
             for point_no, p in enumerate(hook_points):
-                p.select = point_no == segment_no+1
+                p.select = point_no == segment_no
 
             # assign to modifier
             hook_name = ANIME_HAIR_TOOLS_auto_hook_modifier.create_modifier_name(curve.name, segment_no)
