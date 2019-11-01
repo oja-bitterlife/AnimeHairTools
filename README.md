@@ -12,5 +12,11 @@
 
 マテリアルがすでにSlotにあればそれを使う。SlotになければSlotを追加してそこにマテリアルを設定して使う。
 
-## 残り予定
-・起点以外のセグメントにemptyを作ってhookして子にしてぶら下げる
+## Create Bone and Constraint
+
+座標と回転のコントロール用にボーンを１つ作成し、選択中のCurveにContraintをつけてボーンをターゲットに設定する。
+
+## Remove AHT Constraints
+
+選択中のCurveから、ATH\_で始まるConstraintを全て削除する
+
