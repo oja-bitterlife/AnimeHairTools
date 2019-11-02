@@ -226,9 +226,9 @@ class ANIME_HAIR_TOOLS_create_bone:
 
         # add constraint
         constraint = root_armature.constraints.new('COPY_LOCATION')
-        constraint.name = "ATH_transform";
+        constraint.name = "AHT_transform";
         constraint = root_armature.constraints.new('COPY_ROTATION')
-        constraint.name = "ATH_rotation";
+        constraint.name = "AHT_rotation";
 
         # set transform
         bpy.ops.object.select_all(action='DESELECT')
@@ -265,7 +265,7 @@ class ANIME_HAIR_TOOLS_create_constraint:
         constraint = curve.constraints.new('COPY_LOCATION')
 
         # setting
-        constraint.name = "ATH_transform";
+        constraint.name = "AHT_transform";
         constraint.target = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
         constraint.subtarget = ANIME_HAIR_TOOLS_BONEROOT_NAME
 
@@ -276,7 +276,7 @@ class ANIME_HAIR_TOOLS_create_constraint:
         constraint = curve.constraints.new('COPY_ROTATION')
 
         # setting
-        constraint.name = "ATH_rotation";
+        constraint.name = "AHT_rotation";
         constraint.target = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
         constraint.subtarget = ANIME_HAIR_TOOLS_BONEROOT_NAME
 
@@ -337,7 +337,7 @@ class ANIME_HAIR_TOOLS_OT_remove_constraint(bpy.types.Operator):
     @classmethod
     def remove_constraints(cls, curve):
         for constraint in curve.constraints:
-            if(constraint.name[:4] == "ATH_"):
+            if(constraint.name[:4] == "AHT_"):
                 curve.constraints.remove(constraint)
 
     # use dialog
@@ -348,7 +348,7 @@ class ANIME_HAIR_TOOLS_OT_remove_constraint(bpy.types.Operator):
 # Delete the constraints added for management
 class ANIME_HAIR_TOOLS_OT_select_shapekey(bpy.types.Operator):
     bl_idname = "anime_hair_tools.add_shapekey"
-    bl_label = "Select Shape Key (ATH)"
+    bl_label = "Select Shape Key (AHT)"
 
     # execute ok
     def execute(self, context):
@@ -361,7 +361,7 @@ class ANIME_HAIR_TOOLS_OT_select_shapekey(bpy.types.Operator):
 
     # select or add shapekey every curve
     def add_or_select_shapekeys(self, curve):
-        select_name = "ATH"
+        select_name = "AHT"
         select_value = 1
 
         shape_keys = curve.data.shape_keys
