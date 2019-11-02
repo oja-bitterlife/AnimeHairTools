@@ -38,12 +38,14 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
     bl_label = "Anime Hair Tools (for Curve)"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
+    bl_category = "AHT"
   
     def draw(self, context):
         self.layout.operator("anime_hair_tools.bevel_taper")
         self.layout.operator("anime_hair_tools.material")
-        self.layout.operator("anime_hair_tools.create_bone_and_constraint")
+        self.layout.operator("anime_hair_tools.create_bone_and_constraints")
         self.layout.operator("anime_hair_tools.remove_constraint")
+        self.layout.operator("anime_hair_tools.add_shapekey")
 
 
 # Bebel & Taper Setting
@@ -282,7 +284,7 @@ class ANIME_HAIR_TOOLS_create_constraint:
 
 # create constraints and controll bone
 class ANIME_HAIR_TOOLS_OT_create_bone_and_constraint(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.create_bone_and_constraint"
+    bl_idname = "anime_hair_tools.create_bone_and_constraints"
     bl_label = "Create Bone and Constraint"
 
     # execute ok
@@ -343,6 +345,47 @@ class ANIME_HAIR_TOOLS_OT_remove_constraint(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self)
 
 
+# Delete the constraints added for management
+class ANIME_HAIR_TOOLS_OT_select_shapekey(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.add_shapekey"
+    bl_label = "Select Shape Key (ATH)"
+
+    # execute ok
+    def execute(self, context):
+        selected_curves = get_selected_curve_objects()
+
+        # remove constraints
+        apply_each_curves(selected_curves, self.add_or_select_shapekeys)
+
+        return{'FINISHED'}
+
+    # select or add shapekey every curve
+    def add_or_select_shapekeys(self, curve):
+        select_name = "ATH"
+        select_value = 0.5
+
+        shape_keys = curve.data.shape_keys
+
+        # check Basis
+        if(shape_keys == None):
+            curve.shape_key_add(name="Basis");
+
+        # check keyname
+        if(select_name not in shape_keys.key_blocks.keys()):
+            curve.shape_key_add(name=select_name);
+
+        # select shapekey
+        shapekey_index = shape_keys.key_blocks.find(select_name)
+        curve.active_shape_key_index = shapekey_index
+        
+        # change value
+        curve.active_shape_key.value = select_value
+
+    # use dialog
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+
 # retister blender
 # *******************************************************************************************
 classes = (
@@ -351,6 +394,7 @@ classes = (
     ANIME_HAIR_TOOLS_OT_material,
     ANIME_HAIR_TOOLS_OT_create_bone_and_constraint,
     ANIME_HAIR_TOOLS_OT_remove_constraint,
+    ANIME_HAIR_TOOLS_OT_select_shapekey,
 )
 
 for cls in classes:
