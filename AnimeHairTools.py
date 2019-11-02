@@ -362,13 +362,14 @@ class ANIME_HAIR_TOOLS_OT_select_shapekey(bpy.types.Operator):
     # select or add shapekey every curve
     def add_or_select_shapekeys(self, curve):
         select_name = "ATH"
-        select_value = 0.5
+        select_value = 1
 
         shape_keys = curve.data.shape_keys
 
         # check Basis
         if(shape_keys == None):
             curve.shape_key_add(name="Basis");
+            shape_keys = curve.data.shape_keys
 
         # check keyname
         if(select_name not in shape_keys.key_blocks.keys()):
