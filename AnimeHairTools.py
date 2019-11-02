@@ -45,7 +45,8 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
         self.layout.operator("anime_hair_tools.material")
         self.layout.operator("anime_hair_tools.create_bone_and_constraints")
         self.layout.operator("anime_hair_tools.remove_constraint")
-        self.layout.operator("anime_hair_tools.add_shapekey")
+        self.layout.operator("anime_hair_tools.select_shapekey")
+        self.layout.operator("anime_hair_tools.reset_shape_value")
 
 
 # Bebel & Taper Setting
@@ -347,7 +348,7 @@ class ANIME_HAIR_TOOLS_OT_remove_constraint(bpy.types.Operator):
 
 # Delete the constraints added for management
 class ANIME_HAIR_TOOLS_OT_select_shapekey(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.add_shapekey"
+    bl_idname = "anime_hair_tools.select_shapekey"
     bl_label = "Select Shape Key (AHT)"
 
     # execute ok
@@ -387,6 +388,41 @@ class ANIME_HAIR_TOOLS_OT_select_shapekey(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self)
 
 
+# Delete the constraints added for management
+class ANIME_HAIR_TOOLS_OT_reset_shape_value(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.reset_shape_value"
+    bl_label = "Reset AHT Shape Value"
+
+    # execute ok
+    def execute(self, context):
+        selected_curves = get_selected_curve_objects()
+
+        # remove constraints
+        apply_each_curves(selected_curves, self.reset_shape_value)
+
+        return{'FINISHED'}
+
+    # select or add shapekey every curve
+    def reset_shape_value(self, curve):
+        select_name = "AHT"
+        select_value = 0
+
+        shape_keys = curve.data.shape_keys
+
+        # check Basis
+        if(shape_keys != None):
+            # select shapekey
+            shapekey_index = shape_keys.key_blocks.find(select_name)
+            curve.active_shape_key_index = shapekey_index
+            
+            # change value
+            curve.active_shape_key.value = select_value
+
+    # use dialog
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+
 # retister blender
 # *******************************************************************************************
 classes = (
@@ -396,6 +432,7 @@ classes = (
     ANIME_HAIR_TOOLS_OT_create_bone_and_constraint,
     ANIME_HAIR_TOOLS_OT_remove_constraint,
     ANIME_HAIR_TOOLS_OT_select_shapekey,
+    ANIME_HAIR_TOOLS_OT_reset_shape_value,
 )
 
 for cls in classes:
