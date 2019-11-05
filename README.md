@@ -18,5 +18,13 @@
 
 ## Remove AHT Constraints
 
-選択中のCurveから、ATH\_で始まるConstraintを全て削除する
+選択中のCurveから、AHT\_で始まるConstraintを全て削除する
+
+## Select Shape Key
+
+選択中のCurveで、AHTという名前のShapeKeyがなければ作成し、選択状態にしてValueの値を1.0にする。
+
+## Reset AHT Shape Value
+
+選択中のCurveで、AHTという名前のShapeKeyを選択状態にしてValueの値を0.0にする。
 
