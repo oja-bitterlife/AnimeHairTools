@@ -21,11 +21,12 @@ Editboxの出し方がわからなかったので、ShepeKeyの値はとりあ�
 
 ## Create Bone and Constraint
 
-座標と回転のコントロール用にボーンを１つ作成し、選択中のCurveにContraintをつけてボーンをターゲットに設定する。
+座標と回転のコントロール用にボーンを１つ作成し、選択中のCurveにContraintをつけてボーンをターゲットに設定する。追加されるConstraintは全て名前がAHT_で始まります。
 
 ## Remove AHT Constraints
 
-選択中のCurveから、AHT\_で始まるConstraintを全て削除する
+選択中のCurveから、AHT\_で始まるConstraintを全て削除する。
+「Create Bone and Constraint」で作成したConstraintの削除用。
 
 ## Select Shape Key
 
