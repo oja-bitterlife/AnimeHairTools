@@ -9,6 +9,12 @@
 Editboxの出し方がわからなかったので、ShepeKeyの値はとりあえず選択(+Valueを1.0に)と、リセット(Valueを0.0に)を用意してしのぎました。
 出し方が分かったらShapeKeyの名前とValueの値を設定できるようにしたいところです。
 
+まだインストーラとかないので、普通にスクリプトタブからファイルを取り込んで実行しないと動きません。
+プラグインが起動すると、３Dビュー上にAHTというメニューが追加されます。
+
+<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/3d-view.jpg">
+
+
 ## Bevel & Taper Setting
 
 選択中のCurveにBevelとTaperを一括で設定する。
