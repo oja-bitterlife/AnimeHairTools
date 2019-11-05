@@ -24,7 +24,7 @@
 
 選択中のCurveで、AHTという名前のShapeKeyがなければ作成し、選択状態にしてValueの値を1.0にする。
 
-# Reset AHT Shape Value
+## Reset AHT Shape Value
 
 選択中のCurveで、AHTという名前のShapeKeyを選択状態にしてValueの値を0.0にする。
 
