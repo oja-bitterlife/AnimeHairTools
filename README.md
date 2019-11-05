@@ -1,10 +1,17 @@
 # AnimeHairTools
 
-アニメ風の髪の毛をCurveで作るのに手数を減らしたい、そんなツール。
+アニメ風の髪の毛をCurve(Path)で作るのに手数を減らしたい、そんなツールです。
+
+セブンちゃんを作るのに使用しました。
+
+<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/seven-chan.jpg">
+
+Editboxの出し方がわからなかったので、ShepeKeyの値はとりあえず選択(+Valueを1.0に)と、リセット(Valueを0.0に)を用意してしのぎました。
+出し方が分かったらShapeKeyの名前とValueの値を設定できるようにしたいところです。
 
 ## Bevel & Taper Setting
 
-選択中のCurveにBevelとTaperを一括で設定する。メイン機能。
+選択中のCurveにBevelとTaperを一括で設定する。
 
 ## Material Setting
 
