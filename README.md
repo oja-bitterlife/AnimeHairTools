@@ -19,26 +19,19 @@ Editboxの出し方がわからなかったので、ShepeKeyの値はとりあ�
 
 選択中のCurveにBevelとTaperを一括で設定する。
 
-## Material Setting
+## Create Bone and Hook
 
-選択中のCurveのMaterialを一括で変更する。
+最初に座標と回転のコントロール用にボーンを１つ作成し、ターゲットのないConstraintを２つ追加します。スクリプトが完了したらここに顔のボーンを設定してください。
 
-マテリアルがすでにSlotにあればそれを使う。SlotになければSlotを追加してそこにマテリアルを設定して使う。
+その後Curveごとにコントロールポイント間の連結Boneが作成され、自動でCurveのPointにHookされます。
 
-## Create Bone and Constraint
+最後に選択中のCurveにRotatationのContraintが追加され、ターゲットにコントロール用ボーンを設定します。
 
-座標と回転のコントロール用にボーンを１つ作成し、選択中のCurveにContraintをつけてボーンをターゲットに設定する。追加されるConstraintは全て名前がAHT_で始まります。
+## Remove AHT Bone and Hook
 
-## Remove AHT Constraints
+選択中のCurveから次のアイテムを削除します
+「Create Bone and Hook」で自動生成されたものの削除用。
 
-選択中のCurveから、AHT\_で始まるConstraintを全て削除する。
-「Create Bone and Constraint」で作成したConstraintの削除用。
-
-## Select Shape Key
-
-選択中のCurveで、AHTという名前のShapeKeyがなければ作成し、選択状態にしてValueの値を1.0にする。
-
-## Reset AHT Shape Value
-
-選択中のCurveで、AHTという名前のShapeKeyを選択状態にしてValueの値を0.0にする。
-
+* Curveの名前から始まるBoneを全て削除する
+* Curveの名前から始まるHookを全て削除する
+* AHT_rotationという名前のConstraintを削除する
