@@ -11,7 +11,7 @@
 
 <img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/3d-view.jpg">
 
-使い方は、髪の毛用のCurve(path)を選択して「Create Bone and Hook」ボタンを押してください。自動でArmatureができるのでPoseモードにすれば動くはずです。
+使い方は、髪の毛用のCurve(Path)を選択して「Create Bone and Hook」ボタンを押してください。自動でArmatureができるのでPoseモードにすれば動くはずです。Curve(Bezier)は未対応です。
 
 
 ## Bevel & Taper Setting
