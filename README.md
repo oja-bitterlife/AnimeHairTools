@@ -17,7 +17,7 @@ Editboxの出し方がわからなかったので、ShepeKeyの値はとりあ�
 
 ## Bevel & Taper Setting
 
-選択中のCurveにBevelとTaperを一括で設定する。
+選択中のCurveにBevelとTaperを一括で設定します。
 
 ## Create Bone and Hook
 
