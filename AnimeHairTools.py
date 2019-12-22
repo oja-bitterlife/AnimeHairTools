@@ -388,6 +388,9 @@ class ANIME_HAIR_TOOLS_OT_remove_bone_and_hook(bpy.types.Operator):
 
         selected_curves = get_selected_curve_objects()
 
+        # remove added constraints
+        apply_each_curves(selected_curves, self.remove_constraints)
+
         # remove added modifiers
         apply_each_curves(selected_curves, self.remove_modifiers)
 
@@ -400,6 +403,11 @@ class ANIME_HAIR_TOOLS_OT_remove_bone_and_hook(bpy.types.Operator):
         bpy.context.view_layer.objects.active = backup_active_object
 
         return{'FINISHED'}
+
+    # remove all constraint
+    def remove_constraints(self, curve):
+        c = curve.constraints["AHT_rotation"]
+        curve.constraints.remove(c)
 
     # remove all hook modifiers
     def remove_modifiers(self, curve):
