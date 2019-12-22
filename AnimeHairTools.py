@@ -2,7 +2,7 @@ import bpy, math
 from mathutils import Vector
 
 # curve functions
-# *******************************************************************************************
+# ===========================================================================================
 # return the selected cuve objects
 def get_selected_curve_objects():
     selected_curves = {}
@@ -35,7 +35,7 @@ def get_curve_all_points(curve):
 
 
 # Main UI
-# *******************************************************************************************
+# ===========================================================================================
 NOTHING_ENUM = "(nothing)"  # noting selected item
 REMOVE_ENUM = "(remove setted object)"  # noting selected item
 
@@ -53,7 +53,7 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
 
 
 # Bebel & Taper Setting
-# *******************************************************************************************
+# ===========================================================================================
 # find all curves for enum item
 def create_curve_enum_items(self, context):
     curve_enum = [
@@ -68,6 +68,8 @@ def create_curve_enum_items(self, context):
 
     return curve_enum
 
+# setup curve bebel and taper
+# *******************************************************************************************
 class ANIME_HAIR_TOOLS_OT_bevel_taper(bpy.types.Operator):
     bl_idname = "anime_hair_tools.bevel_taper"
     bl_label = "Bevel & Taper Setting"
@@ -118,12 +120,38 @@ class ANIME_HAIR_TOOLS_OT_bevel_taper(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self)
 
 
-# add hook object
+# add bone and hook
+# ===========================================================================================
 # *******************************************************************************************
 ANIME_HAIR_TOOLS_ARMATURE_NAME = "AHT_Armature"
 ANIME_HAIR_TOOLS_BONEROOT_NAME = "AHT_BoneRoot"
 
+# create constraint
+# -------------------------------------------------------------------------------------------
+class ANIME_HAIR_TOOLS_create_constraint:
+    @classmethod
+    def create_modifier_name(cls, base_name, no):
+        return base_name + ".hook_modifier.{:0=3}".format(no)
+
+    def __init__(self, selected_curves):
+        self.selected_curves = selected_curves
+
+
+    # execute create constraints
+    def execute(self, context):
+        # create hook modifiers
+        apply_each_curves(self.selected_curves, self.create_constraint)
+
+    # add constraint to bone_root
+    def create_constraint(self, curve):
+        if "AHT_rotation" not in curve.constraints:
+            constraint = curve.constraints.new('COPY_ROTATION')
+            constraint.name = "AHT_rotation";
+            constraint.target = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
+            constraint.subtarget = ANIME_HAIR_TOOLS_BONEROOT_NAME
+
 # create bones with armature
+# -------------------------------------------------------------------------------------------
 class ANIME_HAIR_TOOLS_create_bone:
     @classmethod
     def create_bone_name(cls, base_name, no):
@@ -194,7 +222,7 @@ class ANIME_HAIR_TOOLS_create_bone:
         # -------------------------------------------------------------------------
         root_matrix = self.root_armature.matrix_world.inverted() @ curve.matrix_world
 
-        parent = self.root_armature.data.edit_bones[0]  # find first bone in edit-mode
+        parent = None  # hair root is free
         for i in range(len(hook_points)-1):
             bgn = root_matrix @ hook_points[i].co
             end = root_matrix @ hook_points[i+1].co
@@ -220,11 +248,11 @@ class ANIME_HAIR_TOOLS_create_bone:
         if i == 0:
             child_bone.head = bgn.xyz  # disconnected head setup
         child_bone.tail = end.xyz
-        
+    
         return child_bone
 
-
 # create hook modifiers
+# -------------------------------------------------------------------------------------------
 class ANIME_HAIR_TOOLS_create_hook:
     @classmethod
     def create_modifier_name(cls, base_name, no):
@@ -285,8 +313,6 @@ class ANIME_HAIR_TOOLS_create_hook:
         bpy.context.view_layer.objects.active = curve
         bpy.ops.object.mode_set(mode='EDIT')
 
-#        curve.data.splines[0].points
-
         # get points in edit mode
         segment_count = len(get_curve_all_points(curve))  # bettween points
 
@@ -305,7 +331,9 @@ class ANIME_HAIR_TOOLS_create_hook:
 
         bpy.ops.object.mode_set(mode='OBJECT')
 
+
 # create constraints and controll bone
+# -------------------------------------------------------------------------------------------
 class ANIME_HAIR_TOOLS_OT_create_bone_and_hook(bpy.types.Operator):
     bl_idname = "anime_hair_tools.create_bone_and_hook"
     bl_label = "Create Bone and Hook"
@@ -321,6 +349,9 @@ class ANIME_HAIR_TOOLS_OT_create_bone_and_hook(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='OBJECT')
         selected_curves = get_selected_curve_objects()
         
+        # create constraint
+        ANIME_HAIR_TOOLS_create_constraint(selected_curves).execute(context)
+
         # create bones
         ANIME_HAIR_TOOLS_create_bone(selected_curves).execute(context)
 
@@ -340,6 +371,7 @@ class ANIME_HAIR_TOOLS_OT_create_bone_and_hook(bpy.types.Operator):
 
 
 # Delete the constraints added for management
+# *******************************************************************************************
 class ANIME_HAIR_TOOLS_OT_remove_bone_and_hook(bpy.types.Operator):
     bl_idname = "anime_hair_tools.remove_bone_and_hook"
     bl_label = "Remove AHT Bone and Hook"
@@ -419,7 +451,7 @@ class ANIME_HAIR_TOOLS_OT_remove_bone_and_hook(bpy.types.Operator):
 
 
 # retister blender
-# *******************************************************************************************
+# ===========================================================================================
 classes = (
     ANIME_HAIR_TOOLS_PT_ui,
     ANIME_HAIR_TOOLS_OT_bevel_taper,
