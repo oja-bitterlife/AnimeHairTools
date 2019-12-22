@@ -126,30 +126,6 @@ class ANIME_HAIR_TOOLS_OT_bevel_taper(bpy.types.Operator):
 ANIME_HAIR_TOOLS_ARMATURE_NAME = "AHT_Armature"
 ANIME_HAIR_TOOLS_BONEROOT_NAME = "AHT_BoneRoot"
 
-# create constraint
-# -------------------------------------------------------------------------------------------
-class ANIME_HAIR_TOOLS_create_constraint:
-    @classmethod
-    def create_modifier_name(cls, base_name, no):
-        return base_name + ".hook_modifier.{:0=3}".format(no)
-
-    def __init__(self, selected_curves):
-        self.selected_curves = selected_curves
-
-
-    # execute create constraints
-    def execute(self, context):
-        # create hook modifiers
-        apply_each_curves(self.selected_curves, self.create_constraint)
-
-    # add constraint to bone_root
-    def create_constraint(self, curve):
-        if "AHT_rotation" not in curve.constraints:
-            constraint = curve.constraints.new('COPY_ROTATION')
-            constraint.name = "AHT_rotation";
-            constraint.target = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
-            constraint.subtarget = ANIME_HAIR_TOOLS_BONEROOT_NAME
-
 # create bones with armature
 # -------------------------------------------------------------------------------------------
 class ANIME_HAIR_TOOLS_create_bone:
@@ -191,7 +167,7 @@ class ANIME_HAIR_TOOLS_create_bone:
 
         # other setup
         root_armature.show_in_front = True
-        root_armature.data.display_type = 'STICK'
+        root_armature.data.display_type = 'WIRE'
 
         # add constraint root_bone (after setting Target to face bone)
         constraint = root_armature.constraints.new('COPY_LOCATION')
@@ -331,6 +307,29 @@ class ANIME_HAIR_TOOLS_create_hook:
 
         bpy.ops.object.mode_set(mode='OBJECT')
 
+# create constraint
+# -------------------------------------------------------------------------------------------
+class ANIME_HAIR_TOOLS_create_constraint:
+    @classmethod
+    def create_modifier_name(cls, base_name, no):
+        return base_name + ".hook_modifier.{:0=3}".format(no)
+
+    def __init__(self, selected_curves):
+        self.selected_curves = selected_curves
+
+
+    # execute create constraints
+    def execute(self, context):
+        # create hook modifiers
+        apply_each_curves(self.selected_curves, self.create_constraint)
+
+    # add constraint to bone_root
+    def create_constraint(self, curve):
+        if "AHT_rotation" not in curve.constraints:
+            constraint = curve.constraints.new('COPY_ROTATION')
+            constraint.name = "AHT_rotation";
+            constraint.target = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
+            constraint.subtarget = ANIME_HAIR_TOOLS_BONEROOT_NAME
 
 # create constraints and controll bone
 # -------------------------------------------------------------------------------------------
@@ -349,14 +348,14 @@ class ANIME_HAIR_TOOLS_OT_create_bone_and_hook(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='OBJECT')
         selected_curves = get_selected_curve_objects()
         
-        # create constraint
-        ANIME_HAIR_TOOLS_create_constraint(selected_curves).execute(context)
-
         # create bones
         ANIME_HAIR_TOOLS_create_bone(selected_curves).execute(context)
 
         # create hook
         ANIME_HAIR_TOOLS_create_hook(selected_curves).execute(context)
+
+        # create constraint
+        ANIME_HAIR_TOOLS_create_constraint(selected_curves).execute(context)
 
         # restore active object
         bpy.ops.object.mode_set(mode='OBJECT')
