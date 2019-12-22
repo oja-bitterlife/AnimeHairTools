@@ -28,6 +28,12 @@ def apply_each_curves(selected_curves, callback):
         callback(curve)
 
 
+# return points in curve
+def get_curve_all_points(curve):
+    # probably spline points is [0] only
+    return curve.data.splines[0].points
+
+
 # Main UI
 # *******************************************************************************************
 NOTHING_ENUM = "(nothing)"  # noting selected item
@@ -42,11 +48,8 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
   
     def draw(self, context):
         self.layout.operator("anime_hair_tools.bevel_taper")
-        self.layout.operator("anime_hair_tools.material")
-        self.layout.operator("anime_hair_tools.create_bone_and_constraints")
-        self.layout.operator("anime_hair_tools.remove_constraint")
-        self.layout.operator("anime_hair_tools.select_shapekey")
-        self.layout.operator("anime_hair_tools.reset_shape_value")
+        self.layout.operator("anime_hair_tools.create_bone_and_hook")
+        self.layout.operator("anime_hair_tools.remove_bone_and_hook")
 
 
 # Bebel & Taper Setting
@@ -115,72 +118,6 @@ class ANIME_HAIR_TOOLS_OT_bevel_taper(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self)
 
 
-# Material Setting
-# *******************************************************************************************
-# find all curves for enum item
-def create_material_enum_items(self, context):
-    material_enum = []
-
-    for material in bpy.data.materials:
-        material_enum.append( (material.name, material.name, "") )
-
-    return material_enum
-
-class ANIME_HAIR_TOOLS_OT_material(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.material"
-    bl_label = "Material Setting"
-
-    # create material enum list
-    selected_material: bpy.props.EnumProperty(name="Material", items=create_material_enum_items)
-
-    # execute ok
-    def execute(self, context):
-        # no active object
-        if bpy.context.view_layer.objects.active == None:
-            return{'FINISHED'}
-
-        bpy.ops.object.mode_set(mode='OBJECT')
-        selected_curves = get_selected_curve_objects()
-
-        # save active object
-        backup_active_object = bpy.context.active_object
-
-        # set material to selected curves
-        for curve_name in selected_curves:
-            curve = selected_curves[curve_name]  # process curve
-            selected_material_data = bpy.data.materials[self.selected_material]
-
-            # already in use?
-            use_slot_index = -1
-            for i, material in enumerate(curve.data.materials):
-                if material.name == selected_material_data.name:
-                    use_slot_index = i  # find already used
-                    break
-
-            # first appear
-            if use_slot_index == -1:
-                # create slot
-                bpy.context.view_layer.objects.active = curve
-                bpy.ops.object.material_slot_add()
-
-                # set material to empty slot
-                use_slot_index = len(curve.material_slots)-1
-                curve.data.materials[use_slot_index] = selected_material_data
-
-            # apply material (select slot) to spline
-            for spline in curve.data.splines:
-                spline.material_index = use_slot_index
-
-        # restore active object
-        bpy.context.view_layer.objects.active = backup_active_object
-
-        return{'FINISHED'}
-
-    # use dialog
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
-
-
 # add hook object
 # *******************************************************************************************
 ANIME_HAIR_TOOLS_ARMATURE_NAME = "AHT_Armature"
@@ -200,6 +137,9 @@ class ANIME_HAIR_TOOLS_create_bone:
         # create root Armature for aht-bones
         self.root_armature = self.create_root_armature()
 
+        # create bones for each selected curves
+        apply_each_curves(self.selected_curves, self.create_bones)
+
         return{'FINISHED'}
 
 
@@ -209,7 +149,7 @@ class ANIME_HAIR_TOOLS_create_bone:
         # -------------------------------------------------------------------------
         if ANIME_HAIR_TOOLS_ARMATURE_NAME in bpy.data.objects.keys():
             root_armature = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
-            return bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
+            return bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]  # return already created
 
         # create new bone
         # -------------------------------------------------------------------------
@@ -225,7 +165,7 @@ class ANIME_HAIR_TOOLS_create_bone:
         root_armature.show_in_front = True
         root_armature.data.display_type = 'STICK'
 
-        # add constraint
+        # add constraint root_bone (after setting Target to face bone)
         constraint = root_armature.constraints.new('COPY_LOCATION')
         constraint.name = "AHT_transform";
         constraint = root_armature.constraints.new('COPY_ROTATION')
@@ -241,52 +181,134 @@ class ANIME_HAIR_TOOLS_create_bone:
 
         return root_armature
 
+    # create bone for selected curves
+    def create_bones(self, curve):
+        # to edit-mode
+        bpy.context.view_layer.objects.active = self.root_armature
+        bpy.ops.object.mode_set(mode='EDIT')
+
+        # get points in edit mode
+        hook_points = get_curve_all_points(curve)
+
+        # create bone chain
+        # -------------------------------------------------------------------------
+        root_matrix = self.root_armature.matrix_world.inverted() @ curve.matrix_world
+
+        parent = self.root_armature.data.edit_bones[0]  # find first bone in edit-mode
+        for i in range(len(hook_points)-1):
+            bgn = root_matrix @ hook_points[i].co
+            end = root_matrix @ hook_points[i+1].co
+            parent = self._create_child_bone(curve.name, i, parent, bgn, end)
+
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+    # create chain child bone
+    def _create_child_bone(self, base_name, i, parent, bgn, end):
+        bone_name = ANIME_HAIR_TOOLS_create_bone.create_bone_name(base_name, i)
+
+        # create bone if not exists
+        # -------------------------------------------------------------------------
+        if bone_name not in self.root_armature.data.bones.keys():
+            bpy.ops.armature.bone_primitive_add(name=bone_name)
+
+        # (re)setup
+        # -------------------------------------------------------------------------
+        child_bone = self.root_armature.data.edit_bones[bone_name]
+
+        child_bone.parent = parent
+        child_bone.use_connect = i != 0  # not connect to root
+        if i == 0:
+            child_bone.head = bgn.xyz  # disconnected head setup
+        child_bone.tail = end.xyz
+        
+        return child_bone
 
 
 # create hook modifiers
-class ANIME_HAIR_TOOLS_create_constraint:
+class ANIME_HAIR_TOOLS_create_hook:
+    @classmethod
+    def create_modifier_name(cls, base_name, no):
+        return base_name + ".hook_modifier.{:0=3}".format(no)
+
     def __init__(self, selected_curves):
         self.selected_curves = selected_curves
 
     # execute create constraints
     def execute(self, context):
-        # create translate constraint
-        apply_each_curves(self.selected_curves, self.create_translate)
+        # create hook modifiers
+        apply_each_curves(self.selected_curves, self.create_modifiers)
 
-        # create rotation constraint
-        apply_each_curves(self.selected_curves, self.create_rotate)
+        # assign point to modifier
+        apply_each_curves(self.selected_curves, self.assign_points)
 
         return{'FINISHED'}
 
+    # create modifier
+    def _create_modifier(self, segment_count, curve, no):
+        hook_name = ANIME_HAIR_TOOLS_create_hook.create_modifier_name(curve.name, no)
 
-    # create translate constraint every cureve
-    @classmethod
-    def create_translate(cls, curve):
-        # create 
-        constraint = curve.constraints.new('COPY_LOCATION')
+        # create not exists hook modifier
+        if hook_name not in curve.modifiers.keys():
+            curve.modifiers.new(hook_name, type="HOOK");
 
-        # setting
-        constraint.name = "AHT_transform";
-        constraint.target = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
-        constraint.subtarget = ANIME_HAIR_TOOLS_BONEROOT_NAME
+        # (re)setup
+        # -------------------------------------------------------------------------
+        modifier = curve.modifiers[hook_name]
 
-    # create rotate constraint every cureve
-    @classmethod
-    def create_rotate(cls, curve):
-        # create 
-        constraint = curve.constraints.new('COPY_ROTATION')
+        modifier.object = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
+        if(segment_count-1 <= no):
+            no = segment_count-2  # edge limit
+        modifier.subtarget = ANIME_HAIR_TOOLS_create_bone.create_bone_name(curve.name, no)
 
-        # setting
-        constraint.name = "AHT_rotation";
-        constraint.target = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
-        constraint.subtarget = ANIME_HAIR_TOOLS_BONEROOT_NAME
+        return modifier
 
+    # create modifier every segment and sort
+    def create_modifiers(self, curve):
+        # get segment locations in curve
+        points = get_curve_all_points(curve)
+        segment_count = len(points)  # bettween points
 
+        # create modifier for segment
+        for i in range(segment_count-1, -1, -1):  # asc sorting
+            modifier = self._create_modifier(segment_count, curve, i)
+
+            # sort modifier
+            # -------------------------------------------------------------------------
+            move_up_count = curve.modifiers.keys().index(modifier.name)
+
+            bpy.context.view_layer.objects.active = curve  # for modifier_move_up
+            for j in range(move_up_count):
+                bpy.ops.object.modifier_move_up(modifier=modifier.name)
+
+    def assign_points(self, curve):
+        # assign segment
+        bpy.context.view_layer.objects.active = curve
+        bpy.ops.object.mode_set(mode='EDIT')
+
+#        curve.data.splines[0].points
+
+        # get points in edit mode
+        segment_count = len(get_curve_all_points(curve))  # bettween points
+
+        # assign hook
+        for segment_no in range(segment_count):
+            # need for each assign
+            hook_points = get_curve_all_points(curve)
+
+            # select is only assign target point
+            for point_no, p in enumerate(hook_points):
+                p.select = segment_no == point_no
+                
+            # assign to modifier
+            hook_name = ANIME_HAIR_TOOLS_create_hook.create_modifier_name(curve.name, segment_no)
+            bpy.ops.object.hook_assign(modifier=hook_name)
+
+        bpy.ops.object.mode_set(mode='OBJECT')
 
 # create constraints and controll bone
-class ANIME_HAIR_TOOLS_OT_create_bone_and_constraint(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.create_bone_and_constraints"
-    bl_label = "Create Bone and Constraint"
+class ANIME_HAIR_TOOLS_OT_create_bone_and_hook(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.create_bone_and_hook"
+    bl_label = "Create Bone and Hook"
 
     # execute ok
     def execute(self, context):
@@ -298,15 +320,12 @@ class ANIME_HAIR_TOOLS_OT_create_bone_and_constraint(bpy.types.Operator):
 
         bpy.ops.object.mode_set(mode='OBJECT')
         selected_curves = get_selected_curve_objects()
-
-        # clear old constraints
-        apply_each_curves(selected_curves, ANIME_HAIR_TOOLS_OT_remove_constraint.remove_constraints)
         
         # create bones
         ANIME_HAIR_TOOLS_create_bone(selected_curves).execute(context)
 
         # create hook
-        ANIME_HAIR_TOOLS_create_constraint(selected_curves).execute(context)
+        ANIME_HAIR_TOOLS_create_hook(selected_curves).execute(context)
 
         # restore active object
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -321,106 +340,82 @@ class ANIME_HAIR_TOOLS_OT_create_bone_and_constraint(bpy.types.Operator):
 
 
 # Delete the constraints added for management
-class ANIME_HAIR_TOOLS_OT_remove_constraint(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.remove_constraint"
-    bl_label = "Remove AHT Constraints"
+class ANIME_HAIR_TOOLS_OT_remove_bone_and_hook(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.remove_bone_and_hook"
+    bl_label = "Remove AHT Bone and Hook"
 
     # execute ok
     def execute(self, context):
+        # no active object
+        if bpy.context.view_layer.objects.active == None:
+            return{'FINISHED'}
+
+        backup_active_object = bpy.context.view_layer.objects.active
+
+        bpy.ops.object.mode_set(mode='OBJECT')
+
         selected_curves = get_selected_curve_objects()
 
-        # remove constraints
-        apply_each_curves(selected_curves, self.remove_constraints)
+        # remove added modifiers
+        apply_each_curves(selected_curves, self.remove_modifiers)
+
+        # remove added bones
+        apply_each_curves(selected_curves, self.remove_bones)
+
+        # restore active object
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.select_all(action='DESELECT')
+        bpy.context.view_layer.objects.active = backup_active_object
 
         return{'FINISHED'}
 
-    # remove constraints every curve
-    @classmethod
-    def remove_constraints(cls, curve):
-        for constraint in curve.constraints:
-            if(constraint.name[:4] == "AHT_"):
-                curve.constraints.remove(constraint)
+    # remove all hook modifiers
+    def remove_modifiers(self, curve):
+        bpy.context.view_layer.objects.active = curve
+
+        # create remove name
+        hook_name = ANIME_HAIR_TOOLS_create_hook.create_modifier_name(curve.name, 0)
+        hook_name_base = hook_name[:-4]  # remove .000
+
+        # remove
+        for modifier in curve.modifiers:
+            if modifier.name.startswith(hook_name_base):
+                bpy.ops.object.modifier_remove(modifier=modifier.name)
+
+    # remove all hook bones
+    def remove_bones(self, curve):
+        root_armature = None
+        if ANIME_HAIR_TOOLS_ARMATURE_NAME in bpy.data.objects.keys():
+            root_armature = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
+
+        # if not exists noting to do
+        if root_armature == None:
+            return
+
+        # to edit-mode
+        bpy.context.view_layer.objects.active = root_armature
+        bpy.ops.object.mode_set(mode='EDIT')
+
+        # create remove name
+        bone_name = ANIME_HAIR_TOOLS_create_bone.create_bone_name(curve.name, 0)
+        bone_name_base = bone_name[:-4]  # remove .000
+
+        # select remove target bones
+        bpy.ops.armature.select_all(action='DESELECT')
+        for edit_bone in root_armature.data.edit_bones:
+            if edit_bone.name.startswith(bone_name_base):
+                edit_bone.select = True
+
+        # remove selected bones
+        bpy.ops.armature.delete()
+
+        # out of edit-mode
+        bpy.ops.object.mode_set(mode='OBJECT')
 
     # use dialog
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
 
-
-# Delete the constraints added for management
-class ANIME_HAIR_TOOLS_OT_select_shapekey(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.select_shapekey"
-    bl_label = "Select Shape Key (AHT)"
-
-    # execute ok
-    def execute(self, context):
-        selected_curves = get_selected_curve_objects()
-
-        # remove constraints
-        apply_each_curves(selected_curves, self.add_or_select_shapekeys)
-
-        return{'FINISHED'}
-
-    # select or add shapekey every curve
-    def add_or_select_shapekeys(self, curve):
-        select_name = "AHT"
-        select_value = 1
-
-        shape_keys = curve.data.shape_keys
-
-        # check Basis
-        if(shape_keys == None):
-            curve.shape_key_add(name="Basis");
-            shape_keys = curve.data.shape_keys
-
-        # check keyname
-        if(select_name not in shape_keys.key_blocks.keys()):
-            curve.shape_key_add(name=select_name);
-
-        # select shapekey
-        shapekey_index = shape_keys.key_blocks.find(select_name)
-        curve.active_shape_key_index = shapekey_index
-        
-        # change value
-        curve.active_shape_key.value = select_value
-
-    # use dialog
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
-
-
-# Delete the constraints added for management
-class ANIME_HAIR_TOOLS_OT_reset_shape_value(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.reset_shape_value"
-    bl_label = "Reset AHT Shape Value"
-
-    # execute ok
-    def execute(self, context):
-        selected_curves = get_selected_curve_objects()
-
-        # remove constraints
-        apply_each_curves(selected_curves, self.reset_shape_value)
-
-        return{'FINISHED'}
-
-    # select or add shapekey every curve
-    def reset_shape_value(self, curve):
-        select_name = "AHT"
-        select_value = 0
-
-        shape_keys = curve.data.shape_keys
-
-        # check Basis
-        if(shape_keys != None):
-            # select shapekey
-            shapekey_index = shape_keys.key_blocks.find(select_name)
-            curve.active_shape_key_index = shapekey_index
-            
-            # change value
-            curve.active_shape_key.value = select_value
-
-    # use dialog
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
 
 
 # retister blender
@@ -428,11 +423,8 @@ class ANIME_HAIR_TOOLS_OT_reset_shape_value(bpy.types.Operator):
 classes = (
     ANIME_HAIR_TOOLS_PT_ui,
     ANIME_HAIR_TOOLS_OT_bevel_taper,
-    ANIME_HAIR_TOOLS_OT_material,
-    ANIME_HAIR_TOOLS_OT_create_bone_and_constraint,
-    ANIME_HAIR_TOOLS_OT_remove_constraint,
-    ANIME_HAIR_TOOLS_OT_select_shapekey,
-    ANIME_HAIR_TOOLS_OT_reset_shape_value,
+    ANIME_HAIR_TOOLS_OT_create_bone_and_hook,
+    ANIME_HAIR_TOOLS_OT_remove_bone_and_hook,
 )
 
 for cls in classes:
