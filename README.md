@@ -4,9 +4,8 @@
 
 Curveのコントロールポイント上にボーンを配置しフックを設定するので、ボーンを使ってCurveを簡単に動かせます。
 
-|<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/seven-chan.jpg" width="256px" height="256px">
-|<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/maribe.jpg" width="256px" height="256px">
-|
+|<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/seven-chan.jpg" width="256px" height="256px">|<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/maribe.jpg" width="256px" height="256px">|
+| --- | --- |
 
 まだインストーラとかないので、普通にスクリプトタブからファイルを取り込んで実行しないと動きません。
 プラグインが起動すると、３Dビュー上にAHTというメニューが追加されます。
