@@ -48,4 +48,6 @@ AHT_AarmatureのObjectConstraintにTransformとrotationが付いているので�
 
 <img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/ATH_Armature_setup.jpg" width="50%" height="50%">
 
+対象にするCurveを選んででオリジンを３Dカーソルの位置に移動させておきます。
+
 ここまで終わっていれば、髪の毛のCurveを選択して CreateBone and Hook ボタンを押せばボーンが正しく入るはずです。
