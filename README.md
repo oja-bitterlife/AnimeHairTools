@@ -45,4 +45,6 @@ AHT_Aarmatureというアーマチュアができているので、ボーンの�
 
 AHT_AarmatureのObjectConstraintにTransformとrotationが付いているので、頭のボーンを設定しておきます。この時点で首から後ろに向かってボーンが伸びるように設定されるはずです。
 
+<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/ATH_Armature_setup.jpg">
+
 ここまで終わっていれば、髪の毛のCurveを選択して CreateBone and Hook ボタンを押せばボーンが正しく入るはずです。
