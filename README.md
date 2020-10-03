@@ -2,9 +2,9 @@
 
 アニメ風の髪の毛をCurve(Path)で作るのに手数を減らしたい、そんなツールです。
 
-セブンちゃんを作るのに使用しました。
+Curveのコントロールポイント上にボーンを配置しフックを設定するので、ボーンを使ってCurveを簡単に動かせます。
 
-<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/seven-chan.jpg">
+|<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/maribe.jpg" width="256px" height="256px">|<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/emeruda.jpg" width="256px" height="256px">|<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/sorano.jpg" width="256px" height="256px">|
 
 まだインストーラとかないので、普通にスクリプトタブからファイルを取り込んで実行しないと動きません。
 プラグインが起動すると、３Dビュー上にAHTというメニューが追加されます。
@@ -46,5 +46,7 @@ AHT_Aarmatureというアーマチュアができているので、ボーンの�
 AHT_AarmatureのObjectConstraintにTransformとrotationが付いているので、頭のボーンを設定しておきます。この時点で首から後ろに向かってボーンが伸びるように設定されるはずです。
 
 <img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/ATH_Armature_setup.jpg" width="50%" height="50%">
+
+対象にするCurveを選んででオリジンを３Dカーソルの位置に移動させておきます。
 
 ここまで終わっていれば、髪の毛のCurveを選択して CreateBone and Hook ボタンを押せばボーンが正しく入るはずです。
