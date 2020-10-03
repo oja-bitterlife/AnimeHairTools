@@ -10,7 +10,7 @@ Curveのコントロールポイント上にボーンを配置しフックを設
 |<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/maribe.jpg" width="256px" height="256px">|<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/emeruda.jpg" width="256px" height="256px">|<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/sorano.jpg" width="256px" height="256px">|
 
 まだインストーラとかないので、普通にスクリプトタブからファイルを取り込んで実行しないと動きません。
-プラグインが起動すると、３Dビュー上にAHTというメニューが追加されます。
+プラグインが起動すると、オブジェクトモード時に３Dビュー上にAHTというメニューが追加されます。
 
 <img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/3d-view.jpg">
 
