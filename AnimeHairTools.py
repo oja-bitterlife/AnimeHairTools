@@ -1,6 +1,9 @@
 import bpy, math
 from mathutils import Vector
 
+from . import ArmatureManager
+
+
 # curve functions
 # ===========================================================================================
 # return the selected cuve objects
@@ -33,22 +36,6 @@ def get_curve_all_points(curve):
     # probably spline points is [0] only
     return curve.data.splines[0].points
 
-
-# Main UI
-# ===========================================================================================
-NOTHING_ENUM = "(nothing)"  # noting selected item
-REMOVE_ENUM = "(remove setted object)"  # noting selected item
-
-# 3DView Tools Panel
-class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
-    bl_label = "Anime Hair Tools (for Curve)"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "AHT"
-  
-    def draw(self, context):
-        self.layout.operator("anime_hair_tools.create_bone_and_hook")
-        self.layout.operator("anime_hair_tools.remove_bone_and_hook")
 
 
 # add bone and hook
@@ -385,5 +372,24 @@ class ANIME_HAIR_TOOLS_OT_remove_bone_and_hook(bpy.types.Operator):
     # use dialog
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
+
+
+# Main UI
+# ===========================================================================================
+NOTHING_ENUM = "(nothing)"  # noting selected item
+REMOVE_ENUM = "(remove setted object)"  # noting selected item
+
+# 3DView Tools Panel
+class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
+    bl_label = "Anime Hair Tools (for Curve)"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "AHT"
+  
+    def draw(self, context):
+        ArmatureManager.ui_draw(context, self.layout.box())
+
+        self.layout.operator("anime_hair_tools.create_bone_and_hook")
+        self.layout.operator("anime_hair_tools.remove_bone_and_hook")
 
 
