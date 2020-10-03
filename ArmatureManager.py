@@ -6,23 +6,26 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
     bl_idname = "anime_hair_tools.setup_armature"
     bl_label = "Setup Armature and RootBone"
 
+    # コンストレイントにつける名前
     CONSTRAINT_TRANSFORM_NAME = "AHT_transform"
     CONSTRAINT_ROTATION_NAME = "AHT_rotation"
 
-    # execute ok
+    # execute
     def execute(self, context):
         scene = context.scene
-        # ない時だけ新たに作る
-        # -------------------------------------------------------------------------
         # armature
+        # -------------------------------------------------------------------------
+        # ない時だけ新たに作る
         if scene.AHT_armature_name not in bpy.data.objects.keys():
             self.create_armature(context)
         armature = bpy.data.objects[scene.AHT_armature_name]
 
         # root_bone
+        # -------------------------------------------------------------------------
         armature.data.bones[0].name = scene.AHT_root_bone_name
 
         # constraint target
+        # -------------------------------------------------------------------------
         for constraint in armature.constraints:
             if constraint.name == self.CONSTRAINT_TRANSFORM_NAME or constraint.name == self.CONSTRAINT_ROTATION_NAME:
                 # Armature未設定
@@ -35,7 +38,7 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
                     constraint.target = target_armature
 
                     # boneの設定
-#                    constraint.subtarget = target_armature
+                    constraint.subtarget = scene.AHT_constraint_target_name.bone
 
         return{'FINISHED'}
 
@@ -71,18 +74,20 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='OBJECT')
 
 
-
 def ui_draw(context, layout):
     layout.label(text="Armature and Bone Setting:")
     box = layout.box()
 
+    # ATHのArmatureの設定
     box.prop(context.scene, "AHT_armature_name", text="Armature")
     box.prop(context.scene, "AHT_root_bone_name", text="RootBone")
 
+    # コンストレイント先設定
     box.label(text="Constraint Target:")
     box.prop(context.scene.AHT_constraint_target_name, "armature", text="Armature")
     box.prop(context.scene.AHT_constraint_target_name, "bone", text="Bone")
 
+    # 実行
     box.operator("anime_hair_tools.setup_armature")
 
 

@@ -56,52 +56,12 @@ class ANIME_HAIR_TOOLS_create_bone:
 
     # execute create auto-hook-bones
     def execute(self, context):
-        # create root Armature for aht-bones
-        self.root_armature = self.create_root_armature()
+        self.root_armature = bpy.data.objects[context.scene.AHT_armature_name]
 
         # create bones for each selected curves
         apply_each_curves(self.selected_curves, self.create_bones)
 
         return{'FINISHED'}
-
-
-    # find/create bone root for anime hair tools
-    def create_root_armature(self):
-        # already created?
-        # -------------------------------------------------------------------------
-        if ANIME_HAIR_TOOLS_ARMATURE_NAME in bpy.data.objects.keys():
-            root_armature = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
-            return bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]  # return already created
-
-        # create new bone
-        # -------------------------------------------------------------------------
-        bpy.ops.object.armature_add(enter_editmode=False, location=(0, 0, 0))
-        root_armature = bpy.context.active_object
-
-        # set name
-        root_armature.name = ANIME_HAIR_TOOLS_ARMATURE_NAME
-        root_armature.data.name = ANIME_HAIR_TOOLS_ARMATURE_NAME
-        root_armature.data.bones[0].name = ANIME_HAIR_TOOLS_ROOTBONE_NAME
-
-        # other setup
-        root_armature.show_in_front = True
-        root_armature.data.display_type = 'WIRE'
-
-        # add constraint root_bone (after setting Target to face bone)
-        constraint = root_armature.constraints.new('COPY_LOCATION')
-        constraint.name = "AHT_transform";
-        constraint = root_armature.constraints.new('COPY_ROTATION')
-        constraint.name = "AHT_rotation";
-
-        # set transform
-        bpy.ops.object.select_all(action='DESELECT')
-        bpy.context.view_layer.objects.active = root_armature
-        bpy.ops.object.mode_set(mode='EDIT')
-        root_armature.data.edit_bones[0].select = True
-        root_armature.data.edit_bones[0].tail = (0, 0, -1)
-        bpy.ops.object.mode_set(mode='OBJECT')
-
-        return root_armature
 
     # create bone for selected curves
     def create_bones(self, curve):
