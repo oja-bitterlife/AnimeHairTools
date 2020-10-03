@@ -6,21 +6,36 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
     bl_idname = "anime_hair_tools.setup_armature"
     bl_label = "Setup Armature and RootBone"
 
+    CONSTRAINT_TRANSFORM_NAME = "AHT_transform"
+    CONSTRAINT_ROTATION_NAME = "AHT_rotation"
+
     # execute ok
     def execute(self, context):
         scene = context.scene
         # ない時だけ新たに作る
         # -------------------------------------------------------------------------
         # armature
-        if scene.armature_name not in bpy.data.objects.keys():
+        if scene.AHT_armature_name not in bpy.data.objects.keys():
             self.create_armature(context)
+        armature = bpy.data.objects[scene.AHT_armature_name]
 
         # root_bone
-        armature = bpy.data.objects[scene.armature_name]
-        armature.data.bones[0].name = scene.root_bone_name
+        armature.data.bones[0].name = scene.AHT_root_bone_name
 
         # constraint target
+        for constraint in armature.constraints:
+            if constraint.name == self.CONSTRAINT_TRANSFORM_NAME or constraint.name == self.CONSTRAINT_ROTATION_NAME:
+                # Armature未設定
+                if scene.AHT_constraint_target_name.armature == "_empty_for_delete":
+                    # Armatureの削除
+                    constraint.target = None
+                else:
+                    # Armatureの設定
+                    target_armature = bpy.data.objects[scene.AHT_constraint_target_name.armature]
+                    constraint.target = target_armature
 
+                    # boneの設定
+#                    constraint.subtarget = target_armature
 
         return{'FINISHED'}
 
@@ -34,8 +49,8 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
         armature = bpy.context.active_object
 
         # set name
-        armature.name = scene.armature_name
-        armature.data.name = scene.armature_name
+        armature.name = scene.AHT_armature_name
+        armature.data.name = scene.AHT_armature_name
 
         # other setup
         armature.show_in_front = True
@@ -43,9 +58,9 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
 
         # add constraint root_bone (after setting Target to face bone)
         constraint = armature.constraints.new('COPY_LOCATION')
-        constraint.name = "AHT_transform"
+        constraint.name = self.CONSTRAINT_TRANSFORM_NAME
         constraint = armature.constraints.new('COPY_ROTATION')
-        constraint.name = "AHT_rotation"
+        constraint.name = self.CONSTRAINT_ROTATION_NAME
 
         # set transform
         bpy.ops.object.select_all(action='DESELECT')
@@ -59,22 +74,39 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
 
 def ui_draw(context, layout):
     layout.label(text="Armature and Bone Setting:")
+    box = layout.box()
 
-    layout.prop(context.scene, "AHT_armature_name", text="Armature")
-    layout.prop(context.scene, "AHT_root_bone_name", text="RootBone")
+    box.prop(context.scene, "AHT_armature_name", text="Armature")
+    box.prop(context.scene, "AHT_root_bone_name", text="RootBone")
 
-    layout.prop(context.scene.AHT_constraint_target_name, "armature", text="ConstraintTarget")
+    box.label(text="Constraint Target:")
+    box.prop(context.scene.AHT_constraint_target_name, "armature", text="Armature")
+    box.prop(context.scene.AHT_constraint_target_name, "bone", text="Bone")
 
-    layout.operator("anime_hair_tools.setup_armature")
+    box.operator("anime_hair_tools.setup_armature")
 
 
 def get_armature_list(self, context):
-    return [(obj.name, obj.name, "") for obj in context.scene.objects if obj.type == "ARMATURE" and obj.name != context.scene.armature_name]
+    armature_list = [(obj.name, obj.name, "") for obj in context.scene.objects if obj.type == "ARMATURE" and obj.name != context.scene.AHT_armature_name]
+    armature_list.insert(0, ("_empty_for_delete", "", ""))  # 空も設定できるように
+    return armature_list
+
+def get_bone_list(self, context):
+    scene = context.scene
+
+    # armature未設定
+    if scene.AHT_constraint_target_name.armature == "_empty_for_delete":
+        return []
+
+    armature = bpy.data.objects[context.scene.AHT_constraint_target_name.armature]
+    return [(bone.name, bone.name, "") for bone in armature.data.bones]
+
+
 
 # コンストレイント先
 class ConstraintTargetProperty(bpy.types.PropertyGroup):
     armature: bpy.props.EnumProperty(items=get_armature_list)
-    bone: bpy.props.StringProperty( name="Bone" )
+    bone: bpy.props.EnumProperty(items=get_bone_list)
 
 # =================================================================================================
 def register():

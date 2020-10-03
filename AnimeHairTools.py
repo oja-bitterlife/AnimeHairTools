@@ -387,7 +387,7 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
     bl_category = "AHT"
   
     def draw(self, context):
-        ArmatureManager.ui_draw(context, self.layout.box())
+        ArmatureManager.ui_draw(context, self.layout)
 
         self.layout.operator("anime_hair_tools.create_bone_and_hook")
         self.layout.operator("anime_hair_tools.remove_bone_and_hook")
