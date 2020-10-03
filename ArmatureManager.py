@@ -1,6 +1,7 @@
 import bpy
 
 
+# AHT用のArmatureのセットアップを行う
 # =================================================================================================
 class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
     bl_idname = "anime_hair_tools.setup_armature"
@@ -42,11 +43,11 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
 
         return{'FINISHED'}
 
-    # find/create bone root for anime hair tools
+    # ATH用のArmatureを作成する。root_bone付き
     def create_armature(self, context):
         scene = context.scene
 
-        # create new bone
+        # Armatureの作成
         # -------------------------------------------------------------------------
         bpy.ops.object.armature_add(enter_editmode=False, location=(0, 0, 0))
         armature = bpy.context.active_object
@@ -56,16 +57,20 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
         armature.data.name = scene.AHT_armature_name
 
         # other setup
-        armature.show_in_front = True
-        armature.data.display_type = 'WIRE'
+        # -------------------------------------------------------------------------
+        armature.show_in_front = True  # 常に手前
+        armature.data.display_type = 'WIRE'  # WIRE表示
 
+        # コンストレイントを追加
+        # -------------------------------------------------------------------------
         # add constraint root_bone (after setting Target to face bone)
         constraint = armature.constraints.new('COPY_LOCATION')
         constraint.name = self.CONSTRAINT_TRANSFORM_NAME
         constraint = armature.constraints.new('COPY_ROTATION')
         constraint.name = self.CONSTRAINT_ROTATION_NAME
 
-        # set transform
+        # 見やすいように奥向きに設定しておく
+        # -------------------------------------------------------------------------
         bpy.ops.object.select_all(action='DESELECT')
         bpy.context.view_layer.objects.active = armature
         bpy.ops.object.mode_set(mode='EDIT')
@@ -74,6 +79,8 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='OBJECT')
 
 
+# UI描画設定
+# =================================================================================================
 def ui_draw(context, layout):
     layout.label(text="Armature and Bone Setting:")
     box = layout.box()
@@ -91,7 +98,7 @@ def ui_draw(context, layout):
     box.operator("anime_hair_tools.setup_armature")
 
 
-# コンストレイント先リストデータ
+# コンストレイント設定用データ
 # =================================================================================================
 # コンストレイント先のArmatureの候補
 def get_armature_list(self, context):
