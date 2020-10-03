@@ -16,10 +16,6 @@ Curveのコントロールポイント上にボーンを配置しフックを設
 使い方は、髪の毛用のCurve(Path)を選択して「Create Bone and Hook」ボタンを押してください。自動でArmatureができるのでPoseモードにすれば動くはずです。Curve(Bezier)は未対応です。
 
 
-## Bevel & Taper Setting
-
-選択中のCurveにBevelとTaperを一括で設定します。
-
 ## Create Bone and Hook
 
 最初に座標と回転のコントロール用にボーンを１つ作成し、ターゲットのないConstraintを２つ追加します。スクリプトが完了したらここに顔のボーンを設定してください。
