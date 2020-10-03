@@ -42,7 +42,7 @@ def get_curve_all_points(curve):
 # ===========================================================================================
 # *******************************************************************************************
 ANIME_HAIR_TOOLS_ARMATURE_NAME = "AHT_Armature"
-ANIME_HAIR_TOOLS_BONEROOT_NAME = "AHT_BoneRoot"
+ANIME_HAIR_TOOLS_ROOTBONE_NAME = "AHT_RootBone"
 
 # create bones with armature
 # -------------------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ class ANIME_HAIR_TOOLS_create_bone:
         # set name
         root_armature.name = ANIME_HAIR_TOOLS_ARMATURE_NAME
         root_armature.data.name = ANIME_HAIR_TOOLS_ARMATURE_NAME
-        root_armature.data.bones[0].name = ANIME_HAIR_TOOLS_BONEROOT_NAME
+        root_armature.data.bones[0].name = ANIME_HAIR_TOOLS_ROOTBONE_NAME
 
         # other setup
         root_armature.show_in_front = True
@@ -241,13 +241,13 @@ class ANIME_HAIR_TOOLS_create_constraint:
         # create hook modifiers
         apply_each_curves(self.selected_curves, self.create_constraint)
 
-    # add constraint to bone_root
+    # add constraint to root_bone
     def create_constraint(self, curve):
         if "AHT_rotation" not in curve.constraints:
             constraint = curve.constraints.new('COPY_ROTATION')
             constraint.name = "AHT_rotation";
             constraint.target = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
-            constraint.subtarget = ANIME_HAIR_TOOLS_BONEROOT_NAME
+            constraint.subtarget = ANIME_HAIR_TOOLS_ROOTBONE_NAME
 
 # create constraints and controll bone
 # -------------------------------------------------------------------------------------------
