@@ -31,6 +31,7 @@ class ChildBone:
         for curve_obj in selected_curve_objs:
             cls._create_curve_bones(context, armature, curve_obj)  # Curve１本１本処理する
 
+
         # OBJECTモードに戻すのを忘れないように
         bpy.ops.object.mode_set(mode='OBJECT')
 
@@ -41,35 +42,30 @@ class ChildBone:
         # -------------------------------------------------------------------------
         root_matrix = armature.matrix_world.inverted() @ curve_obj.matrix_world
 
+        # spline単位で処理
         parent = None  # hair root is free
         for spline in curve_obj.data.splines:
+            # 頂点ごとにボーンを作成する
             for i in range(len(spline.points)-1):
+                # Bone生成
+                bone_name = cls.make_bone_name(curve_obj.name, i)
+                bpy.ops.armature.bone_primitive_add(name=bone_name)
+                new_bone = armature.data.edit_bones[bone_name]
+
+                # Bone設定
+                new_bone.parent = parent
+
+                new_bone.use_connect = i != 0  # not connect to root
+
                 bgn = root_matrix @ spline.points[i].co
                 end = root_matrix @ spline.points[i+1].co
-                parent = cls._create_child_bone(curve_obj.name, i, parent, bgn, end)
+                if i == 0:
+                    new_bone.head = bgn.xyz  # disconnected head setup
+                new_bone.tail = end.xyz
 
+                # 自分を親にして次をつなげていく
+                parent = new_bone
 
-    # create chain child bone
-    @classmethod
-    def _create_child_bone(cls, base_name, i, parent, bgn, end):
-        bone_name = cls.make_bone_name(base_name, i)
-
-        # create bone if not exists
-        # -------------------------------------------------------------------------
-        bpy.ops.armature.bone_primitive_add(name=bone_name)
-
-        # (re)setup
-        # -------------------------------------------------------------------------
-#        child_bone = self.root_armature.data.edit_bones[bone_name]
-
-#        child_bone.parent = parent
-#        child_bone.use_connect = i != 0  # not connect to root
-#        if i == 0:
-#            child_bone.head = bgn.xyz  # disconnected head setup
-#        child_bone.tail = end.xyz
-    
-#        return child_bone
-        return None
 
 
 # create constraints and controll bone
