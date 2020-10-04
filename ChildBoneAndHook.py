@@ -18,7 +18,7 @@ class ANIME_HAIR_TOOLS_OT_create_bone_and_hook(bpy.types.Operator):
             return{'FINISHED'}
 
         # 一旦今までのものを削除
-        HookManager.HookManager.remove(context, selected_curve_objs)  # Hookを削除
+        HookManager.remove(context, selected_curve_objs)  # Hookを削除
         ChildBoneManager.remove(context, selected_curve_objs)  # ボーンを削除
 
         # 作り直す
@@ -27,7 +27,7 @@ class ANIME_HAIR_TOOLS_OT_create_bone_and_hook(bpy.types.Operator):
         ChildBoneManager.create(context, selected_curve_objs)
 
         # create hook
-        HookManager.HookManager.create(context, selected_curve_objs)
+        HookManager.create(context, selected_curve_objs)
 
         return{'FINISHED'}
 
@@ -51,7 +51,7 @@ class ANIME_HAIR_TOOLS_OT_remove_bone_and_hook(bpy.types.Operator):
             return{'FINISHED'}
 
         # remove modifiers
-        HookManager.HookManager.remove(context, selected_curve_objs)  # Hookを削除
+        HookManager.remove(context, selected_curve_objs)  # Hookを削除
 
         # remove child bones
         if bpy.data.objects.get(context.scene.AHT_armature_name) != None:  # ATHのArmatureがあるときだけBoneを消せる

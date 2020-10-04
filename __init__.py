@@ -12,7 +12,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 bl_info = {
-    "name" : "ApplyCurveMirror",
+    "name" : "AnimeHairTools",
     "author" : "oja",
     "description" : "",
     "blender" : (2, 80, 0),

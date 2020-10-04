@@ -1,11 +1,12 @@
 
 import bpy
 
-from . import CurveInfo, HookManager
+from . import HookManager
 
 
 HOOK_BONE_PREFIX = "AHT_HookBone"
 HOOK_BONE_SEPALATER = "@"
+
 
 # name utility
 # =================================================================================================

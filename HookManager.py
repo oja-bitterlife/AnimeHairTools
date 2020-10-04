@@ -6,6 +6,7 @@ from . import ChildBoneManager
 HOOK_MODIFIRE_PREFIX = "AHT_HookModifire"
 HOOK_MODIFIRE_SEPALATER = "@"
 
+
 # name utility
 # =================================================================================================
 def make_modifier_basename(base_name):
@@ -37,15 +38,13 @@ def create(context, selected_curve_objs):
                 # setup
                 # -------------------------------------------------------------------------
                 new_modifier.object = armature
-                new_modifier.subtarget = ChildBoneManager.ChildBone.make_bone_name(curve_obj.name, spline_no, target_bone_no)
+                new_modifier.subtarget = ChildBoneManager.make_bone_name(curve_obj.name, spline_no, target_bone_no)
 
                 # ついでにHook
                 new_modifier.vertex_indices_set([hook_offset + target_bone_no+1])
 
             # hook用のpointのindexが取れないので、計算で出してみる用
             hook_offset += len(spline.points)
-
-    return{'FINISHED'}
 
 
 # Hookの削除
