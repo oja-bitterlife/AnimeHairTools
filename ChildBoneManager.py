@@ -9,10 +9,6 @@ class ChildBone:
     HOOK_BONE_PREFIX = "AHT_HookBone"
 
     @classmethod
-    def make_bone_name(cls, base_name, no):
-        return cls.HOOK_BONE_PREFIX + "." + base_name + ".{:0=3}".format(no)
-
-    @classmethod
     def create(cls, context, selected_curve_objs):
         armature = bpy.data.objects[context.scene.AHT_armature_name]
         bpy.context.view_layer.objects.active = armature
@@ -43,12 +39,12 @@ class ChildBone:
         root_matrix = armature.matrix_world.inverted() @ curve_obj.matrix_world
 
         # spline単位で処理
-        parent = None  # hair root is free
-        for spline in curve_obj.data.splines:
+        for spline_no, spline in enumerate(curve_obj.data.splines):
             # 頂点ごとにボーンを作成する
+            parent = None  # hair root is free
             for i in range(len(spline.points)-1):
                 # Bone生成
-                bone_name = cls.make_bone_name(curve_obj.name, i)
+                bone_name = cls.HOOK_BONE_PREFIX + "." + curve_obj.name + "_{}.{:0=3}".format(spline_no, i)
                 bpy.ops.armature.bone_primitive_add(name=bone_name)
                 new_bone = armature.data.edit_bones[bone_name]
 
