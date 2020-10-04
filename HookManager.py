@@ -23,9 +23,10 @@ class HookManager:
 
         # Curve全部に付ける
         for curve_obj in selected_curve_objs:
+            hook_offset = 0  # 複数curveに対応
+
             # spline単位で処理
             for spline_no, spline in enumerate(curve_obj.data.splines):
-
                 # 頂点ごとにHookを作成する
                 for target_bone_no in range(len(spline.points)-1):
                     hook_name = cls.make_modifier_name(curve_obj.name, spline_no, target_bone_no)
@@ -40,8 +41,10 @@ class HookManager:
                     new_modifier.subtarget = ChildBoneManager.ChildBone.make_bone_name(curve_obj.name, spline_no, target_bone_no)
 
                     # ついでにHook
-                    new_modifier.vertex_indices_set([target_bone_no+1])
+                    new_modifier.vertex_indices_set([hook_offset + target_bone_no+1])
 
+                # hook用のpointのindexが取れないので、計算で出してみる用
+                hook_offset += len(spline.points)
 
         return{'FINISHED'}
 
