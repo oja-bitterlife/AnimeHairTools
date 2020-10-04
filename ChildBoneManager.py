@@ -17,14 +17,14 @@ class ChildBone:
         bpy.context.view_layer.objects.active = armature
         bpy.ops.object.mode_set(mode='EDIT')
 
-        # 一旦今までのボーンを削除
-        bpy.ops.armature.select_all(action='DESELECT')
-        for bone in armature.data.edit_bones:
-            bone.select = bone.name.startswith(cls.HOOK_BONE_PREFIX + ".")
-        bpy.ops.armature.delete()
-
         # Curveごとに回す
         for curve_obj in selected_curve_objs:
+            # 一旦今までのボーンを削除
+            bpy.ops.armature.select_all(action='DESELECT')
+            for bone in armature.data.edit_bones:
+                bone.select = bone.name.startswith(cls.HOOK_BONE_PREFIX + "." + curve_obj.name + "_")
+            bpy.ops.armature.delete()
+
             cls._create_curve_bones(context, armature, curve_obj)  # Curve１本１本処理する
 
 
@@ -44,7 +44,7 @@ class ChildBone:
             parent = None  # hair root is free
             for i in range(len(spline.points)-1):
                 # Bone生成
-                bone_name = cls.HOOK_BONE_PREFIX + "." + curve_obj.name + "_{}.{:0=3}".format(spline_no, i)
+                bone_name = cls.HOOK_BONE_PREFIX + "." + curve_obj.name + "@{}.{:0=3}".format(spline_no, i)
                 bpy.ops.armature.bone_primitive_add(name=bone_name)
                 new_bone = armature.data.edit_bones[bone_name]
 
