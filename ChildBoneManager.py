@@ -1,12 +1,21 @@
 
 import bpy
 
-from . import CurveInfo
+from . import CurveInfo, HookManager
 
 # create bones with armature
 # -------------------------------------------------------------------------------------------
 class ChildBone:
     HOOK_BONE_PREFIX = "AHT_HookBone"
+    HOOK_BONE_SEPALATER = "@"
+
+    @classmethod
+    def make_bone_basename(cls, base_name):
+        return cls.HOOK_BONE_PREFIX + "." + base_name
+
+    @classmethod
+    def make_bone_name(cls, base_name, spline_no, point_no):
+        return cls.make_bone_basename(base_name) + cls.HOOK_BONE_SEPALATER + "{}.{:0=3}".format(spline_no, point_no)
 
     @classmethod
     def create(cls, context, selected_curve_objs):
@@ -37,7 +46,7 @@ class ChildBone:
             parent = armature.data.edit_bones[context.scene.AHT_root_bone_name]  # 最初はRootBoneが親
             for i in range(len(spline.points)-1):
                 # Bone生成
-                bone_name = cls.HOOK_BONE_PREFIX + "." + curve_obj.name + "@{}.{:0=3}".format(spline_no, i)
+                bone_name = cls.make_bone_name(curve_obj.name, spline_no, i)
                 bpy.ops.armature.bone_primitive_add(name=bone_name)
                 new_bone = armature.data.edit_bones[bone_name]
 
@@ -70,18 +79,15 @@ class ChildBone:
 
         # 消すべきBoneを選択
         for curve_obj in selected_curve_objs:
+            bone_basename = cls.make_bone_basename(curve_obj.name) + cls.HOOK_BONE_SEPALATER
             for bone in armature.data.edit_bones:
-                bone.select = bone.name.startswith(cls.HOOK_BONE_PREFIX + "." + curve_obj.name + "@")
+                bone.select = bone.name.startswith(bone_basename)
 
         # 一括削除
         bpy.ops.armature.delete()
 
         # OBJECTモードに戻すのを忘れないように
         bpy.ops.object.mode_set(mode='OBJECT')
-
-
-class HookConstraint:
-    pass
 
 
 # create constraints and controll bone
@@ -97,15 +103,17 @@ class ANIME_HAIR_TOOLS_OT_create_bone_and_hook(bpy.types.Operator):
         if len(selected_curve_objs) == 0:
             return{'FINISHED'}
 
+        # 一旦今までのものを削除
+        HookManager.HookManager.remove(context, selected_curve_objs)  # Hookを削除
+        ChildBone.remove(context, selected_curve_objs)  # ボーンを削除
+
+        # 作り直す
+        # ---------------------------------------------------------------------
         # create bones
-        ChildBone.remove(context, selected_curve_objs)  # 一旦今までのボーンを削除
         ChildBone.create(context, selected_curve_objs)
 
         # create hook
-#        ANIME_HAIR_TOOLS_create_hook(selected_curves).execute(context)
-
-        # create constraint
-#        ANIME_HAIR_TOOLS_create_constraint(selected_curves).execute(context)
+        HookManager.HookManager.create(context, selected_curve_objs)
 
         return{'FINISHED'}
 
@@ -114,11 +122,12 @@ class ANIME_HAIR_TOOLS_OT_create_bone_and_hook(bpy.types.Operator):
     def poll(cls, context):
         return bpy.data.objects.get(context.scene.AHT_armature_name) != None
 
+
 # Delete the constraints added for management
 # *******************************************************************************************
 class ANIME_HAIR_TOOLS_OT_remove_bone_and_hook(bpy.types.Operator):
     bl_idname = "anime_hair_tools.remove_bone_and_hook"
-    bl_label = "Remove Child Bone and Hook"
+    bl_label = "Remove ChildBone and Hook"
 
     # execute ok
     def execute(self, context):
@@ -127,69 +136,14 @@ class ANIME_HAIR_TOOLS_OT_remove_bone_and_hook(bpy.types.Operator):
         if len(selected_curve_objs) == 0:
             return{'FINISHED'}
 
-        # remove added constraints
-#        apply_each_curves(selected_curves, self.remove_constraints)
+        # remove modifiers
+        HookManager.HookManager.remove(context, selected_curve_objs)  # Hookを削除
 
-        # remove added modifiers
-#        apply_each_curves(selected_curves, self.remove_modifiers)
-
-        # remove added bones
-        ChildBone.remove(context, selected_curve_objs)  # 一旦今までのボーンを削除
+        # remove child bones
+        if bpy.data.objects.get(context.scene.AHT_armature_name) != None:  # ATHのArmatureがあるときだけBoneを消せる
+            ChildBone.remove(context, selected_curve_objs)  # ボーンを削除
 
         return{'FINISHED'}
-
-    # remove all constraint
-    def remove_constraints(self, curve):
-        c = curve.constraints["AHT_rotation"]
-        curve.constraints.remove(c)
-
-    # remove all hook modifiers
-    def remove_modifiers(self, curve):
-        bpy.context.view_layer.objects.active = curve
-
-        # create remove name
-        hook_name = ANIME_HAIR_TOOLS_create_hook.create_modifier_name(curve.name, 0)
-        hook_name_base = hook_name[:-4]  # remove .000
-
-        # remove
-        for modifier in curve.modifiers:
-            if modifier.name.startswith(hook_name_base):
-                bpy.ops.object.modifier_remove(modifier=modifier.name)
-
-    # remove all hook bones
-    def remove_bones(self, curve):
-        root_armature = None
-        if ANIME_HAIR_TOOLS_ARMATURE_NAME in bpy.data.objects.keys():
-            root_armature = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
-
-        # if not exists noting to do
-        if root_armature == None:
-            return
-
-        # to edit-mode
-        bpy.context.view_layer.objects.active = root_armature
-        bpy.ops.object.mode_set(mode='EDIT')
-
-        # create remove name
-        bone_name = ANIME_HAIR_TOOLS_create_bone.create_bone_name(curve.name, 0)
-        bone_name_base = bone_name[:-4]  # remove .000
-
-        # select remove target bones
-        bpy.ops.armature.select_all(action='DESELECT')
-        for edit_bone in root_armature.data.edit_bones:
-            if edit_bone.name.startswith(bone_name_base):
-                edit_bone.select = True
-
-        # remove selected bones
-        bpy.ops.armature.delete()
-
-        # out of edit-mode
-        bpy.ops.object.mode_set(mode='OBJECT')
-
-    # ATH_Armatureを先に作る必要がある
-    @classmethod
-    def poll(cls, context):
-        return bpy.data.objects.get(context.scene.AHT_armature_name) != None
 
 
 # UI描画設定
