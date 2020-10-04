@@ -1,7 +1,7 @@
 import bpy, math
 from mathutils import Vector
 
-from . import ArmatureManager
+from . import ArmatureManager, BoneManager
 
 
 # curve functions
@@ -205,7 +205,7 @@ class ANIME_HAIR_TOOLS_create_constraint:
     def create_constraint(self, curve):
         if "AHT_rotation" not in curve.constraints:
             constraint = curve.constraints.new('COPY_ROTATION')
-            constraint.name = "AHT_rotation";
+            constraint.name = "AHT_rotation"
             constraint.target = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
             constraint.subtarget = ANIME_HAIR_TOOLS_ROOTBONE_NAME
 
@@ -348,8 +348,5 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
   
     def draw(self, context):
         ArmatureManager.ui_draw(context, self.layout)
-
-        self.layout.operator("anime_hair_tools.create_bone_and_hook")
-        self.layout.operator("anime_hair_tools.remove_bone_and_hook")
-
+        BoneManager.ui_draw(context, self.layout)
 

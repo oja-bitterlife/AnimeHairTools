@@ -46,11 +46,16 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
     # ATH用のArmatureを作成する。root_bone付き
     def create_armature(self, context):
         scene = context.scene
+#        armature.users_collection = armature.users_scene[0].collection  # Collectionの中に入って迷子にならないように、先頭に出しておく
 
         # Armatureの作成
         # -------------------------------------------------------------------------
         bpy.ops.object.armature_add(enter_editmode=False, location=(0, 0, 0))
         armature = bpy.context.active_object
+
+        # Collectionの中に入って迷子にならないように、先頭に出しておく
+        armature.users_scene[0].collection.objects.link(armature)  # TOPレベルからリンク
+        armature.users_collection[0].objects.unlink(armature)  # 現在のコレクションからunlink
 
         # set name
         armature.name = scene.AHT_armature_name
@@ -82,7 +87,7 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
 # UI描画設定
 # =================================================================================================
 def ui_draw(context, layout):
-    layout.label(text="Armature and Bone Setting:")
+    layout.label(text="Armature and RootBone Setting:")
     box = layout.box()
 
     # ATHのArmatureの設定
@@ -126,8 +131,9 @@ class ConstraintTargetProperty(bpy.types.PropertyGroup):
 
 # =================================================================================================
 def register():
+    # Armature設定用
     bpy.types.Scene.AHT_armature_name = bpy.props.StringProperty(name = "armature name", default="AHT_Armature")
     bpy.types.Scene.AHT_root_bone_name = bpy.props.StringProperty(name = "bone root name", default="AHT_RootBone")
 
-#    bpy.types.Scene.constraint_target_name = bpy.props.EnumProperty(items=get_armature_list)
+    # Constraint設定用
     bpy.types.Scene.AHT_constraint_target_name = bpy.props.PointerProperty(type=ConstraintTargetProperty)
