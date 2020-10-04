@@ -1,7 +1,7 @@
 import bpy, math
 from mathutils import Vector
 
-from . import ArmatureManager, BoneManager
+from . import ArmatureManager, ChildBoneManager
 
 
 # curve functions
@@ -44,66 +44,6 @@ def get_curve_all_points(curve):
 ANIME_HAIR_TOOLS_ARMATURE_NAME = "AHT_Armature"
 ANIME_HAIR_TOOLS_ROOTBONE_NAME = "AHT_RootBone"
 
-# create bones with armature
-# -------------------------------------------------------------------------------------------
-class ANIME_HAIR_TOOLS_create_bone:
-    @classmethod
-    def create_bone_name(cls, base_name, no):
-        return base_name + ".hook_bone.{:0=3}".format(no)
-
-    def __init__(self, selected_curves):
-        self.selected_curves = selected_curves
-
-    # execute create auto-hook-bones
-    def execute(self, context):
-        self.root_armature = bpy.data.objects[context.scene.AHT_armature_name]
-
-        # create bones for each selected curves
-        apply_each_curves(self.selected_curves, self.create_bones)
-
-        return{'FINISHED'}
-
-    # create bone for selected curves
-    def create_bones(self, curve):
-        # to edit-mode
-        bpy.context.view_layer.objects.active = self.root_armature
-        bpy.ops.object.mode_set(mode='EDIT')
-
-        # get points in edit mode
-        hook_points = get_curve_all_points(curve)
-
-        # create bone chain
-        # -------------------------------------------------------------------------
-        root_matrix = self.root_armature.matrix_world.inverted() @ curve.matrix_world
-
-        parent = None  # hair root is free
-        for i in range(len(hook_points)-1):
-            bgn = root_matrix @ hook_points[i].co
-            end = root_matrix @ hook_points[i+1].co
-            parent = self._create_child_bone(curve.name, i, parent, bgn, end)
-
-        bpy.ops.object.mode_set(mode='OBJECT')
-
-    # create chain child bone
-    def _create_child_bone(self, base_name, i, parent, bgn, end):
-        bone_name = ANIME_HAIR_TOOLS_create_bone.create_bone_name(base_name, i)
-
-        # create bone if not exists
-        # -------------------------------------------------------------------------
-        if bone_name not in self.root_armature.data.bones.keys():
-            bpy.ops.armature.bone_primitive_add(name=bone_name)
-
-        # (re)setup
-        # -------------------------------------------------------------------------
-        child_bone = self.root_armature.data.edit_bones[bone_name]
-
-        child_bone.parent = parent
-        child_bone.use_connect = i != 0  # not connect to root
-        if i == 0:
-            child_bone.head = bgn.xyz  # disconnected head setup
-        child_bone.tail = end.xyz
-    
-        return child_bone
 
 # create hook modifiers
 # -------------------------------------------------------------------------------------------
@@ -131,7 +71,7 @@ class ANIME_HAIR_TOOLS_create_hook:
 
         # create not exists hook modifier
         if hook_name not in curve.modifiers.keys():
-            curve.modifiers.new(hook_name, type="HOOK");
+            curve.modifiers.new(hook_name, type="HOOK")
 
         # (re)setup
         # -------------------------------------------------------------------------
@@ -140,7 +80,8 @@ class ANIME_HAIR_TOOLS_create_hook:
         modifier.object = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
         if(segment_count-1 <= no):
             no = segment_count-2  # edge limit
-        modifier.subtarget = ANIME_HAIR_TOOLS_create_bone.create_bone_name(curve.name, no)
+#        modifier.subtarget = ANIME_HAIR_TOOLS_create_bone.create_bone_name(curve.name, no)
+        ChildBone.create(bpy.context)
 
         return modifier
 
@@ -209,42 +150,6 @@ class ANIME_HAIR_TOOLS_create_constraint:
             constraint.target = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
             constraint.subtarget = ANIME_HAIR_TOOLS_ROOTBONE_NAME
 
-# create constraints and controll bone
-# -------------------------------------------------------------------------------------------
-class ANIME_HAIR_TOOLS_OT_create_bone_and_hook(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.create_bone_and_hook"
-    bl_label = "Create Bone and Hook"
-
-    # execute ok
-    def execute(self, context):
-        # no active object
-        if bpy.context.view_layer.objects.active == None:
-            return{'FINISHED'}
-
-        backup_active_object = bpy.context.view_layer.objects.active
-
-        bpy.ops.object.mode_set(mode='OBJECT')
-        selected_curves = get_selected_curve_objects()
-        
-        # create bones
-        ANIME_HAIR_TOOLS_create_bone(selected_curves).execute(context)
-
-        # create hook
-        ANIME_HAIR_TOOLS_create_hook(selected_curves).execute(context)
-
-        # create constraint
-        ANIME_HAIR_TOOLS_create_constraint(selected_curves).execute(context)
-
-        # restore active object
-        bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.ops.object.select_all(action='DESELECT')
-        bpy.context.view_layer.objects.active = backup_active_object
-
-        return{'FINISHED'}
-
-    # use dialog
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
 
 
 # Delete the constraints added for management
@@ -348,5 +253,5 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
   
     def draw(self, context):
         ArmatureManager.ui_draw(context, self.layout)
-        BoneManager.ui_draw(context, self.layout)
+        ChildBoneManager.ui_draw(context, self.layout)
 

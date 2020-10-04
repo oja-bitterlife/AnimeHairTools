@@ -3,5 +3,5 @@ import bpy
 # curve functions
 # ===========================================================================================
 # return the selected cuve objects
-def get_all():
-    return [obj for obj in bpy.context.selected_objects if obj.type == "CURVE"]
+def get_selected_objects(context):
+    return [obj for obj in context.selected_objects if obj.type == "CURVE"]
