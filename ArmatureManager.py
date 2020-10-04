@@ -46,7 +46,6 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
     # ATH用のArmatureを作成する。root_bone付き
     def create_armature(self, context):
         scene = context.scene
-#        armature.users_collection = armature.users_scene[0].collection  # Collectionの中に入って迷子にならないように、先頭に出しておく
 
         # Armatureの作成
         # -------------------------------------------------------------------------
