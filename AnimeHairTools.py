@@ -151,94 +151,6 @@ class ANIME_HAIR_TOOLS_create_constraint:
             constraint.subtarget = ANIME_HAIR_TOOLS_ROOTBONE_NAME
 
 
-
-# Delete the constraints added for management
-# *******************************************************************************************
-class ANIME_HAIR_TOOLS_OT_remove_bone_and_hook(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.remove_bone_and_hook"
-    bl_label = "Remove AHT Bone and Hook"
-
-    # execute ok
-    def execute(self, context):
-        # no active object
-        if bpy.context.view_layer.objects.active == None:
-            return{'FINISHED'}
-
-        backup_active_object = bpy.context.view_layer.objects.active
-
-        bpy.ops.object.mode_set(mode='OBJECT')
-
-        selected_curves = get_selected_curve_objects()
-
-        # remove added constraints
-        apply_each_curves(selected_curves, self.remove_constraints)
-
-        # remove added modifiers
-        apply_each_curves(selected_curves, self.remove_modifiers)
-
-        # remove added bones
-        apply_each_curves(selected_curves, self.remove_bones)
-
-        # restore active object
-        bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.ops.object.select_all(action='DESELECT')
-        bpy.context.view_layer.objects.active = backup_active_object
-
-        return{'FINISHED'}
-
-    # remove all constraint
-    def remove_constraints(self, curve):
-        c = curve.constraints["AHT_rotation"]
-        curve.constraints.remove(c)
-
-    # remove all hook modifiers
-    def remove_modifiers(self, curve):
-        bpy.context.view_layer.objects.active = curve
-
-        # create remove name
-        hook_name = ANIME_HAIR_TOOLS_create_hook.create_modifier_name(curve.name, 0)
-        hook_name_base = hook_name[:-4]  # remove .000
-
-        # remove
-        for modifier in curve.modifiers:
-            if modifier.name.startswith(hook_name_base):
-                bpy.ops.object.modifier_remove(modifier=modifier.name)
-
-    # remove all hook bones
-    def remove_bones(self, curve):
-        root_armature = None
-        if ANIME_HAIR_TOOLS_ARMATURE_NAME in bpy.data.objects.keys():
-            root_armature = bpy.data.objects[ANIME_HAIR_TOOLS_ARMATURE_NAME]
-
-        # if not exists noting to do
-        if root_armature == None:
-            return
-
-        # to edit-mode
-        bpy.context.view_layer.objects.active = root_armature
-        bpy.ops.object.mode_set(mode='EDIT')
-
-        # create remove name
-        bone_name = ANIME_HAIR_TOOLS_create_bone.create_bone_name(curve.name, 0)
-        bone_name_base = bone_name[:-4]  # remove .000
-
-        # select remove target bones
-        bpy.ops.armature.select_all(action='DESELECT')
-        for edit_bone in root_armature.data.edit_bones:
-            if edit_bone.name.startswith(bone_name_base):
-                edit_bone.select = True
-
-        # remove selected bones
-        bpy.ops.armature.delete()
-
-        # out of edit-mode
-        bpy.ops.object.mode_set(mode='OBJECT')
-
-    # use dialog
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
-
-
 # Main UI
 # ===========================================================================================
 NOTHING_ENUM = "(nothing)"  # noting selected item
@@ -255,3 +167,7 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
         ArmatureManager.ui_draw(context, self.layout)
         ChildBoneManager.ui_draw(context, self.layout)
 
+    # オブジェクトモード時のみ利用可能に
+    @classmethod
+    def poll(cls, context):
+        return (context.mode == "OBJECT")
