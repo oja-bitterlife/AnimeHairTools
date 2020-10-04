@@ -18,6 +18,7 @@ class ANIME_HAIR_TOOLS_OT_create_bone_and_hook(bpy.types.Operator):
             return{'FINISHED'}
 
         # 一旦今までのものを削除
+        # ---------------------------------------------------------------------
         HookManager.remove(context, selected_curve_objs)  # Hookを削除
         ChildBoneManager.remove(context, selected_curve_objs)  # ボーンを削除
 

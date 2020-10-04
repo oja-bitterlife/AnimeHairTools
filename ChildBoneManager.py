@@ -70,7 +70,6 @@ def _create_curve_bones(context, armature, curve_obj):
 # =================================================================================================
 def remove(context, selected_curve_objs):
     armature = bpy.data.objects[context.scene.AHT_armature_name]
-    bpy.context.view_layer.objects.active = armature
 
     # to edit-mode
     bpy.context.view_layer.objects.active = armature

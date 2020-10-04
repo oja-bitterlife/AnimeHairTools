@@ -52,6 +52,9 @@ def create(context, selected_curve_objs):
 def remove(context, selected_curve_objs):
     # 選択中のCurveに適用
     for curve_obj in selected_curve_objs:
+        # 処理するCurveをActiveにしておく必要があるっぽい
+        bpy.context.view_layer.objects.active = curve_obj
+
         # CurveオブジェクトについているすべてのATH用モディファイアを消す
         hook_basename = make_modifier_basename(curve_obj.name) + HOOK_MODIFIRE_SEPALATER
         for modifier in curve_obj.modifiers:
