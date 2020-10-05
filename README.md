@@ -27,7 +27,7 @@ Curve以外のオブジェクトが選択されていても無視するので、
 
 ※bezieは自分が髪の毛には使わないので今の所非対応にしてます。
 
-## Armature and Bone Setting
+### Armature and Bone Setting
 
 ツール用のArmatureを作成します。髪の毛のBoneは顔のボーンに追従することが多いはずなので、Constraint Target には通常、顔のBoneを設定しておきます。そうすると、顔の位置にRootBoneが生成されます。
 
@@ -36,13 +36,13 @@ Curve以外のオブジェクトが選択されていても無視するので、
 
 あとからConstraint先を変えてこのボタンを押すと、今までのBoneの座標がおかしくなりますが、Create ChildBone And Settings ボタンを押し直せばBoneが生成され直すので、慌てず再度Boneを作り直してください。
 
-## Create ChildBone and Hook
+### Create ChildBone and Hook
 
 選択中のCurveごとにコントロールポイント間の連結Boneが作成され、自動でHook Modifierが生成されCurveのPointにHookされます。
 
 実行前にRemoveが実行されるので、やり直すときは単純にこのボタンを押し直すだけですみます。
 
-## Remove AnimeHairTools Bone and Hook
+### Remove AnimeHairTools Bone and Hook
 
 選択中のCurveから Create ChildBone and Hook で自動生成されたものを削除します。
 
