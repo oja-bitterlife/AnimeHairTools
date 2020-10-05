@@ -1,7 +1,7 @@
 
 import bpy
 
-from . import Naming, ArmatureEditMode
+from . import Naming, ArmatureMode
 
 
 # ボーン作成
@@ -11,15 +11,14 @@ def create(context, selected_curve_objs):
     bpy.context.view_layer.objects.active = armature
 
     # to edit-mode
-    bpy.context.view_layer.objects.active = armature
-    bpy.ops.object.mode_set(mode='EDIT')
+    state_backup = ArmatureMode.to_edit_mode(context, armature)
 
     # Curveごとに回す
     for curve_obj in selected_curve_objs:
         _create_curve_bones(context, armature, curve_obj)  # Curve１本１本処理する
 
     # OBJECTモードに戻すのを忘れないように
-    bpy.ops.object.mode_set(mode='OBJECT')
+    ArmatureMode.return_obuject_mode(state_backup)
 
 
 # create bone chain
@@ -59,7 +58,7 @@ def remove(context, selected_curve_objs):
     armature = bpy.data.objects[context.scene.AHT_armature_name]
 
     # to edit-mode
-    state_backup = ArmatureEditMode.to_edit_mode(context, armature)
+    state_backup = ArmatureMode.to_edit_mode(context, armature)
 
     # 一旦全部選択解除
     bpy.ops.armature.select_all(action='DESELECT')
@@ -74,4 +73,4 @@ def remove(context, selected_curve_objs):
     bpy.ops.armature.delete()
 
     # OBJECTモードに戻すのを忘れないように
-    ArmatureEditMode.return_obuject_mode(state_backup)
+    ArmatureMode.return_obuject_mode(state_backup)
