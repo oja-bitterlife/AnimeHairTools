@@ -48,3 +48,9 @@ Curve以外のオブジェクトが選択されていても無視するので、
 
 * ArmaturよりBoneの削除
 * CurveよりHook Modifierの削除
+
+## 変更を全部消したい
+
+全オブジェクトを選択して Remove AnimeHairTools Bone and Hook ボタンで ChildBone と Hook Modifier を削除してください。
+
+その後、AnimeHairTools で生成した Armature を削除すればすべてなかったことになります。
