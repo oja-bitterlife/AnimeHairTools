@@ -1,7 +1,7 @@
 
 import bpy
 
-import Naming
+from . import Naming, ArmatureEditMode
 
 
 # ボーン作成
@@ -59,8 +59,7 @@ def remove(context, selected_curve_objs):
     armature = bpy.data.objects[context.scene.AHT_armature_name]
 
     # to edit-mode
-    bpy.context.view_layer.objects.active = armature
-    bpy.ops.object.mode_set(mode='EDIT')
+    state_backup = ArmatureEditMode.to_edit_mode(context, armature)
 
     # 一旦全部選択解除
     bpy.ops.armature.select_all(action='DESELECT')
@@ -75,4 +74,4 @@ def remove(context, selected_curve_objs):
     bpy.ops.armature.delete()
 
     # OBJECTモードに戻すのを忘れないように
-    bpy.ops.object.mode_set(mode='OBJECT')
+    ArmatureEditMode.return_obuject_mode(state_backup)

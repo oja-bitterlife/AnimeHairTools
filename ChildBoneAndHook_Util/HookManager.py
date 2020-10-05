@@ -1,6 +1,6 @@
 import bpy
 
-import Naming
+from . import Naming
 
 
 # create hook modifiers
