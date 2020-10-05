@@ -56,8 +56,9 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
         armature = bpy.context.active_object
 
         # Collectionの中に入って迷子にならないように、先頭に出しておく
-        armature.users_scene[0].collection.objects.link(armature)  # TOPレベルからリンク
-        armature.users_collection[0].objects.unlink(armature)  # 現在のコレクションからunlink
+        if armature.users_scene[0].collection.objects.get(armature.name) == None:  # TOPレベルにいなければ
+            armature.users_scene[0].collection.objects.link(armature)  # TOPレベルからリンク
+            armature.users_collection[0].objects.unlink(armature)  # 現在のコレクションからunlink
 
         # set name
         armature.name = scene.AHT_armature_name
