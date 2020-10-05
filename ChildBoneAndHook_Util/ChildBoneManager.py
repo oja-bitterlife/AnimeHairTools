@@ -56,6 +56,7 @@ def _create_curve_bones(context, armature, curve_obj):
 # =================================================================================================
 def remove(context, selected_curve_objs):
     armature = bpy.data.objects[context.scene.AHT_armature_name]
+    bpy.context.view_layer.objects.active = armature
 
     # to edit-mode
     state_backup = ArmatureMode.to_edit_mode(context, armature)
@@ -69,8 +70,8 @@ def remove(context, selected_curve_objs):
         for bone in armature.data.edit_bones:
             bone.select = bone.name.startswith(bone_basename)
 
-    # 一括削除
-    bpy.ops.armature.delete()
+        # 一括削除
+        bpy.ops.armature.delete()
 
     # OBJECTモードに戻すのを忘れないように
     ArmatureMode.return_obuject_mode(state_backup)
