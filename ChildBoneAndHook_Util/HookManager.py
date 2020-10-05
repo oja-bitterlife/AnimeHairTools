@@ -50,7 +50,7 @@ def create(context, selected_curve_objs):
                 break
 
             # Hookモディファイアでない間は下に移動
-            for i in range(len(curve_obj.modifiers)-1):
+            for _ in range(len(curve_obj.modifiers)-1):
                 bpy.ops.object.modifier_move_down(modifier=modifier.name)
 
 
