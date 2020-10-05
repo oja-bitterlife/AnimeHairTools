@@ -1,50 +1,52 @@
 # AnimeHairTools
 
-※全体的に作り直すことにしたので、しばらく動作が不安定、、、っていうかまともに動かないと思います。ある程度できてから動作確認するので、ちょっとまっててね
+## 概要
 
 アニメ風の髪の毛をCurve(Path)で作るのに手数を減らしたい、そんなツールです。
 
 Curveのコントロールポイント上にボーンを配置しフックを設定するので、ボーンを使ってCurveを簡単に動かせます。
 
-|<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/maribe.jpg" width="256px" height="256px">|<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/emeruda.jpg" width="256px" height="256px">|<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/sorano.jpg" width="256px" height="256px">|
+### こんな感じ
+<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/maribe.jpg" width="256px" height="256px">
+<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/emeruda.jpg" width="256px" height="256px">
+<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/sorano.jpg" width="256px" height="256px">
 
 まだインストーラとかないので、普通にスクリプトタブからファイルを取り込んで実行しないと動きません。
-プラグインが起動すると、オブジェクトモード時に３Dビュー上にAHTというメニューが追加されます。
+プラグインが起動すると、オブジェクトモード時に３Dビュー上にAnimeHairToolsというメニューが追加されます。
 
 <img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/3d-view.jpg">
 
-使い方は、髪の毛用のCurve(Path)を選択して「Create Bone and Hook」ボタンを押してください。自動でArmatureができるのでPoseモードにすれば動くはずです。Curve(Bezier)は未対応です。
+## 使い方
 
+とりあえず使うだけなら
 
-## Create Bone and Hook
+1. Setup Armature and RootBone ボタンを押す
+1. ボーンをつけたいCurve(Pathのみ。bezie非対応)を選択して、Create ChildBone And Hook ボタンを押す
 
-最初に座標と回転のコントロール用にボーンを１つ作成し、ターゲットのないConstraintを２つ追加します。スクリプトが完了したらここに顔のボーンを設定してください。
+これだけで、ArmatureがRootシーンの直下に作成され、ボーンがCurveのコントロールポイントに沿って生成されます。
 
-その後選択中のCurveごとにコントロールポイント間の連結Boneが作成され、自動でCurveのPointにHookされます。
+Curve以外のオブジェクトが選択されていても無視するので、まとめてオブジェクトを選択しても大丈夫です。
 
-最後に選択中のCurveにRotatationのContraintが追加され、ターゲットにコントロール用ボーンを設定します。
+※bezieは多分10行も追加すれば対応できるんだけど、自分が髪の毛には使わないので非対応にしてます。
 
-## Remove AHT Bone and Hook
+## Armature and Bone Setting
 
-選択中のCurveから次のアイテムを削除します
-「Create Bone and Hook」で自動生成されたものの削除用。
-
-* Curveの名前から始まるBoneを全て削除する
-* Curveの名前から始まるHookを全て削除する
-* AHT_rotationという名前のConstraintを削除する
-
-
-# 基本的な使い方
-まだ使い勝手が非常に悪いので、分かる人だけ使ってください。
-
-まず適当なカーブを掴んで CreateBone and Hook します。その後即 Remove AHT Bone and Hook でカーブについたボーンを削除してください。
-
-AHT_Aarmatureというアーマチュアができているので、ボーンの始点を頭のボーンの位置に合わせます。Shift+Sで３Dカーソルを頭のボーンの位置に持っていき、AHT_AarmatureをShift+Sで３Dカーソルの位置に移動させると簡単です。
-
-AHT_AarmatureのObjectConstraintにTransformとrotationが付いているので、頭のボーンを設定しておきます。この時点で首から後ろに向かってボーンが伸びるように設定されるはずです。
+ツール用のArmatureを作成します。髪の毛のBoneは顔のボーンに追従することが多いはずなので、Constraint Target には通常、顔のBoneを設定しておきます。そうすると、顔の位置にRootBoneが生成されます。
 
 <img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/ATH_Armature_setup.jpg" width="50%" height="50%">
 
-対象にするCurveを選んででオリジンを３Dカーソルの位置に移動させておきます。
 
-ここまで終わっていれば、髪の毛のCurveを選択して CreateBone and Hook ボタンを押せばボーンが正しく入るはずです。
+あとからConstraint先を変えてこのボタンを押すと、今までのBoneの座標がおかしくなりますが、Create ChildBone And Settings ボタンを押し直せばBoneが生成され直すので、慌てず再度Boneを作り直してください。
+
+## Create ChildBone and Hook
+
+選択中のCurveごとにコントロールポイント間の連結Boneが作成され、自動でHook Modifierが生成されCurveのPointにHookされます。
+
+実行前にRemoveが実行されるので、やり直すときは単純にこのボタンを押し直すだけですみます。
+
+## Remove AnimeHairTools Bone and Hook
+
+選択中のCurveから Create ChildBone and Hook で自動生成されたものを削除します。
+
+* ArmaturよりBoneの削除
+* CurveよりHook Modifierの削除
