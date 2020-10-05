@@ -20,3 +20,10 @@ def get_bone_list(self, context):
     # 選択されているarmatureのboneをリストする
     armature = bpy.data.objects[context.scene.AHT_constraint_target_name.armature]
     return [(bone.name, bone.name, "") for bone in armature.data.bones]
+
+
+# コンストレイント設定用データ
+# =================================================================================================
+class ConstraintTargetProperty(bpy.types.PropertyGroup):
+    armature: bpy.props.EnumProperty(items=get_armature_list)
+    bone: bpy.props.EnumProperty(items=get_bone_list)

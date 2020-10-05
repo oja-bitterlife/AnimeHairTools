@@ -1,6 +1,7 @@
 import bpy
 
 from .ArmatureManager_Util import ConstraintManager
+from .ArmatureManager_Util.ConstraintManager import ConstraintTargetProperty
 
 
 # AHT用のArmatureのセットアップを行う
@@ -102,13 +103,6 @@ def ui_draw(context, layout):
 
     # 実行
     box.operator("anime_hair_tools.setup_armature")
-
-
-# コンストレイント設定用データ
-# =================================================================================================
-class ConstraintTargetProperty(bpy.types.PropertyGroup):
-    armature: bpy.props.EnumProperty(items=ConstraintManager.get_armature_list)
-    bone: bpy.props.EnumProperty(items=ConstraintManager.get_bone_list)
 
 
 # =================================================================================================
