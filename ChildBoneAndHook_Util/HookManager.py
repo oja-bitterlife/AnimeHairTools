@@ -15,7 +15,7 @@ def create(context, selected_curve_objs):
         # spline単位で処理
         for spline_no, spline in enumerate(curve_obj.data.splines):
             # 頂点ごとにHookを作成する
-            for target_bone_no in reversed(range(len(spline.points)-1)):
+            for target_bone_no in range(len(spline.points)-1):
                 hook_name = Naming.make_modifier_name(curve_obj.name, spline_no, target_bone_no)
 
                 # create modifier
@@ -28,7 +28,10 @@ def create(context, selected_curve_objs):
                 new_modifier.subtarget = Naming.make_bone_name(curve_obj.name, spline_no, target_bone_no)
 
                 # ついでにHook
-                new_modifier.vertex_indices_set([hook_offset + target_bone_no+1])
+                if target_bone_no == 0:
+                    new_modifier.vertex_indices_set([hook_offset, hook_offset + 1])  # 0と1両方設定
+                else:
+                    new_modifier.vertex_indices_set([hook_offset + target_bone_no+1])
 
             # hook用のpointのindexが取れないので、計算で出してみる用
             hook_offset += len(spline.points)
