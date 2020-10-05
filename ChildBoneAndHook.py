@@ -1,6 +1,6 @@
-import bpy
+import bpy, sys
 
-from . import ChildBoneManager, HookManager
+from .ChildBoneAndHook_Util import ChildBoneManager, HookManager
 
 
 # create constraints and controll bone

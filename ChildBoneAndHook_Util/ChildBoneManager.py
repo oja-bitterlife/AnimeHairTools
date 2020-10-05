@@ -1,20 +1,7 @@
 
 import bpy
 
-from . import HookManager
-
-
-HOOK_BONE_PREFIX = "AHT_HookBone"
-HOOK_BONE_SEPALATER = "@"
-
-
-# name utility
-# =================================================================================================
-def make_bone_basename(base_name):
-    return HOOK_BONE_PREFIX + "." + base_name
-
-def make_bone_name(base_name, spline_no, point_no):
-    return make_bone_basename(base_name) + HOOK_BONE_SEPALATER + "{}.{:0=3}".format(spline_no, point_no)
+import Naming
 
 
 # ボーン作成
@@ -46,7 +33,7 @@ def _create_curve_bones(context, armature, curve_obj):
         parent = armature.data.edit_bones[context.scene.AHT_root_bone_name]  # 最初はRootBoneが親
         for i in range(len(spline.points)-1):
             # Bone生成
-            bone_name = make_bone_name(curve_obj.name, spline_no, i)
+            bone_name = Naming.make_bone_name(curve_obj.name, spline_no, i)
             bpy.ops.armature.bone_primitive_add(name=bone_name)
             new_bone = armature.data.edit_bones[bone_name]
 
@@ -80,7 +67,7 @@ def remove(context, selected_curve_objs):
 
     # 消すべきBoneを選択
     for curve_obj in selected_curve_objs:
-        bone_basename = make_bone_basename(curve_obj.name) + HOOK_BONE_SEPALATER
+        bone_basename = Naming.make_bone_basename(curve_obj.name) + Naming.HOOK_BONE_SEPALATER
         for bone in armature.data.edit_bones:
             bone.select = bone.name.startswith(bone_basename)
 

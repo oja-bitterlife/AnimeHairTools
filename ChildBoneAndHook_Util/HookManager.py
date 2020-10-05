@@ -1,19 +1,6 @@
 import bpy
 
-from . import ChildBoneManager
-
-
-HOOK_MODIFIRE_PREFIX = "AHT_HookModifire"
-HOOK_MODIFIRE_SEPALATER = "@"
-
-
-# name utility
-# =================================================================================================
-def make_modifier_basename(base_name):
-    return HOOK_MODIFIRE_PREFIX + "." + base_name
-
-def make_modifier_name(base_name, spline_no, point_no):
-    return make_modifier_basename(base_name) + HOOK_MODIFIRE_SEPALATER + "{}.{:0=3}".format(spline_no, point_no)
+import Naming
 
 
 # create hook modifiers
@@ -29,7 +16,7 @@ def create(context, selected_curve_objs):
         for spline_no, spline in enumerate(curve_obj.data.splines):
             # 頂点ごとにHookを作成する
             for target_bone_no in range(len(spline.points)-1):
-                hook_name = make_modifier_name(curve_obj.name, spline_no, target_bone_no)
+                hook_name = Naming.make_modifier_name(curve_obj.name, spline_no, target_bone_no)
 
                 # create modifier
                 curve_obj.modifiers.new(hook_name, type="HOOK")
@@ -38,7 +25,7 @@ def create(context, selected_curve_objs):
                 # setup
                 # -------------------------------------------------------------------------
                 new_modifier.object = armature
-                new_modifier.subtarget = ChildBoneManager.make_bone_name(curve_obj.name, spline_no, target_bone_no)
+                new_modifier.subtarget = Naming.make_bone_name(curve_obj.name, spline_no, target_bone_no)
 
                 # ついでにHook
                 new_modifier.vertex_indices_set([hook_offset + target_bone_no+1])
@@ -56,7 +43,7 @@ def remove(context, selected_curve_objs):
         bpy.context.view_layer.objects.active = curve_obj
 
         # CurveオブジェクトについているすべてのATH用モディファイアを消す
-        hook_basename = make_modifier_basename(curve_obj.name) + HOOK_MODIFIRE_SEPALATER
+        hook_basename = Naming.make_modifier_basename(curve_obj.name) + Naming.HOOK_MODIFIRE_SEPALATER
         for modifier in curve_obj.modifiers:
             if modifier.name.startswith(hook_basename):
                 bpy.ops.object.modifier_remove(modifier=modifier.name)

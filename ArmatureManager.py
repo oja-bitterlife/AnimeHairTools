@@ -1,5 +1,7 @@
 import bpy
 
+from .ArmatureManager_Util import ConstraintManager
+
 
 # AHT用のArmatureのセットアップを行う
 # =================================================================================================
@@ -104,28 +106,9 @@ def ui_draw(context, layout):
 
 # コンストレイント設定用データ
 # =================================================================================================
-# コンストレイント先のArmatureの候補
-def get_armature_list(self, context):
-    armature_list = [(obj.name, obj.name, "") for obj in context.scene.objects if obj.type == "ARMATURE" and obj.name != context.scene.AHT_armature_name]
-    armature_list.insert(0, ("_empty_for_delete", "", ""))  # 空も設定できるように
-    return armature_list
-
-# コンストレイント先のBoneの候補
-def get_bone_list(self, context):
-    scene = context.scene
-
-    # armature未設定
-    if scene.AHT_constraint_target_name.armature == "_empty_for_delete":
-        return []
-
-    # 選択されているarmatureのboneをリストする
-    armature = bpy.data.objects[context.scene.AHT_constraint_target_name.armature]
-    return [(bone.name, bone.name, "") for bone in armature.data.bones]
-
-# コンストレイント先データ
 class ConstraintTargetProperty(bpy.types.PropertyGroup):
-    armature: bpy.props.EnumProperty(items=get_armature_list)
-    bone: bpy.props.EnumProperty(items=get_bone_list)
+    armature: bpy.props.EnumProperty(items=ConstraintManager.get_armature_list)
+    bone: bpy.props.EnumProperty(items=ConstraintManager.get_bone_list)
 
 
 # =================================================================================================
@@ -134,5 +117,4 @@ def register():
     bpy.types.Scene.AHT_armature_name = bpy.props.StringProperty(name = "armature name", default="AHT_Armature")
     bpy.types.Scene.AHT_root_bone_name = bpy.props.StringProperty(name = "bone root name", default="AHT_RootBone")
 
-    # Constraint設定用
     bpy.types.Scene.AHT_constraint_target_name = bpy.props.PointerProperty(type=ConstraintTargetProperty)
