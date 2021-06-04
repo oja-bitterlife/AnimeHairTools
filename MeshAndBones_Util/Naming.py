@@ -24,8 +24,8 @@ def make_bone_name(base_name, spline_no, point_no):
 
 # Mesh
 # *****************************************************************************
-def make_mesh_basename(base_name):
+def make_mesh_name(base_name):
     return base_name + MESH_SEPALATER + MESH_SUFFIX
 
 def make_tmp_mesh_name(base_name, spline_no):
-    return make_mesh_basename(base_name) + ".{:0=3}".format(spline_no)
+    return make_mesh_name(base_name) + ".{:0=3}".format(spline_no)
