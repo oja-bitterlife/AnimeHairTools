@@ -54,6 +54,9 @@ class ANIME_HAIR_TOOLS_OT_remove(bpy.types.Operator):
         if bpy.data.objects.get(context.scene.AHT_armature_name) != None:  # ATHのArmatureがあるときだけBoneを消せる
             BoneManager.remove(context, selected_curve_objs)  # ボーンを削除
 
+        # remove mesh
+        MeshManager.remove(context, selected_curve_objs)
+
         return{'FINISHED'}
 
 

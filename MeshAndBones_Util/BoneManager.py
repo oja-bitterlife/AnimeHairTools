@@ -66,7 +66,7 @@ def remove(context, selected_curve_objs):
 
     # 消すべきBoneを選択
     for curve_obj in selected_curve_objs:
-        bone_basename = Naming.make_bone_basename(curve_obj.name) + Naming.HOOK_BONE_SEPALATER
+        bone_basename = Naming.make_bone_basename(curve_obj.name)
         for bone in armature.data.edit_bones:
             bone.select = bone.name.startswith(bone_basename)
 

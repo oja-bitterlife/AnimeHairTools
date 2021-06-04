@@ -38,13 +38,11 @@ def create(context, selected_curve_objs):
 # Meshの削除
 # =================================================================================================
 def remove(context, selected_curve_objs):
-    # 選択中のCurveに適用
-    for curve_obj in selected_curve_objs:
-        # 処理するCurveをActiveにしておく必要があるっぽい
-        bpy.context.view_layer.objects.active = curve_obj
+    bpy.ops.object.select_all(action='DESELECT')
 
-        # CurveオブジェクトについているすべてのATH用モディファイアを消す
-        hook_basename = Naming.make_modifier_basename(curve_obj.name) + Naming.HOOK_MODIFIRE_SEPALATER
-        for modifier in curve_obj.modifiers:
-            if modifier.name.startswith(hook_basename):
-                bpy.ops.object.modifier_remove(modifier=modifier.name)
+    # 選択中のCurveを元にメッシュを特定
+    for curve_obj in selected_curve_objs:
+        bpy.data.objects[Naming.make_mesh_basename(curve_obj.name)].select_set(True)
+
+    # 削除        
+    bpy.ops.object.delete()
