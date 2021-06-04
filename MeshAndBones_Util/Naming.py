@@ -19,7 +19,7 @@ def make_bone_basename(base_name):
     return base_name + BONE_SEPALATER + BONE_SUFFIX
 
 def make_bone_name(base_name, spline_no, point_no):
-    return make_bone_basename(base_name) + "{:0=3}.{:0=3}".format(spline_no, point_no)
+    return make_bone_basename(base_name) + "-{:0=3}.{:0=3}".format(spline_no, point_no)
 
 
 # Mesh

@@ -74,18 +74,22 @@ def _create_temp_mesh(curve_obj):
 def _set_mesh_weights(curve_obj, duplicated_list):
     # まずはVertexGropusの追加から
     for duplicate_no,duplicated_obj in enumerate(duplicated_list):
-        print(dir(curve_obj.data.splines))
-#        for point_no,points in enumerate(curve_obj.data.splines.get(duplicate_no).points):
-#            duplicated_obj.vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, duplicate_no, point_no))
+        splines = curve_obj.data.splines.values()
+        for point_no,points in enumerate(splines[duplicate_no].points):
+            duplicated_obj.vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, duplicate_no, point_no))
 
         # _set_mesh_weights(curve_obj, duplicated_list)
 
 def _join_temp_meshes(duplicated_list):
     bpy.ops.object.select_all(action='DESELECT')
+
+    # 結合用に生成したメッシュを選択
     for duplicated_obj in duplicated_list:
         duplicated_obj.select_set(True)
+
     bpy.ops.object.join()
 
+    # 結合したオブジェクトがアクティブになる
     return bpy.context.view_layer.objects.active
 
 
