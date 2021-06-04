@@ -1,13 +1,13 @@
 import bpy, sys
 
-from .ChildBoneAndHook_Util import ChildBoneManager, HookManager
+from .ChildBoneAndHook_Util import ChildBoneManager
 
 
 # create constraints and controll bone
 # =================================================================================================
-class ANIME_HAIR_TOOLS_OT_create_bone_and_hook(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.create_bone_and_hook"
-    bl_label = "Create ChildBone and Hook"
+class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.create"
+    bl_label = "Create Mesh & Bones"
 
     # execute ok
     def execute(self, context):
@@ -19,16 +19,12 @@ class ANIME_HAIR_TOOLS_OT_create_bone_and_hook(bpy.types.Operator):
 
         # 一旦今までのものを削除
         # ---------------------------------------------------------------------
-        HookManager.remove(context, selected_curve_objs)  # Hookを削除
         ChildBoneManager.remove(context, selected_curve_objs)  # ボーンを削除
 
         # 作り直す
         # ---------------------------------------------------------------------
         # create bones
         ChildBoneManager.create(context, selected_curve_objs)
-
-        # create hook
-        HookManager.create(context, selected_curve_objs)
 
         return{'FINISHED'}
 
@@ -40,9 +36,9 @@ class ANIME_HAIR_TOOLS_OT_create_bone_and_hook(bpy.types.Operator):
 
 # Delete the constraints added for management
 # =================================================================================================
-class ANIME_HAIR_TOOLS_OT_remove_bone_and_hook(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.remove_bone_and_hook"
-    bl_label = "Remove ChildBone and Hook"
+class ANIME_HAIR_TOOLS_OT_remove(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.remove"
+    bl_label = "Remove Mesh & Bones"
 
     # execute ok
     def execute(self, context):
@@ -50,9 +46,6 @@ class ANIME_HAIR_TOOLS_OT_remove_bone_and_hook(bpy.types.Operator):
         # Curveが１つも選択されていなかった
         if len(selected_curve_objs) == 0:
             return{'FINISHED'}
-
-        # remove modifiers
-        HookManager.remove(context, selected_curve_objs)  # Hookを削除
 
         # remove child bones
         if bpy.data.objects.get(context.scene.AHT_armature_name) != None:  # ATHのArmatureがあるときだけBoneを消せる
@@ -64,10 +57,10 @@ class ANIME_HAIR_TOOLS_OT_remove_bone_and_hook(bpy.types.Operator):
 # UI描画設定
 # =================================================================================================
 def ui_draw(context, layout):
-    layout.label(text="Bone and Hook Setting:")
+    layout.label(text="Mesh & Bones Setting:")
 
     box = layout.box()
 
     # 実行
-    box.operator("anime_hair_tools.create_bone_and_hook")
-    box.operator("anime_hair_tools.remove_bone_and_hook")
+    box.operator("anime_hair_tools.create")
+    box.operator("anime_hair_tools.remove")
