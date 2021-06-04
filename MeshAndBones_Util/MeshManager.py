@@ -13,6 +13,9 @@ def create(context, selected_curve_objs):
         # 処理するCurveをActiveにしてEDITモードに
         bpy.context.view_layer.objects.active = curve_obj
 
+        # 鏡面化を解除してコンバートする
+        recovery_data = _disable_mirror_modifires(curve_obj)
+
         # 房ごとにMesh化
         duplicated_list = _create_temp_mesh(curve_obj)
 
@@ -23,6 +26,22 @@ def create(context, selected_curve_objs):
         mesh_obj = _join_temp_meshes(duplicated_list)
         mesh_obj.name = Naming.make_mesh_name(curve_obj.name)
 
+        for modifier in recovery_data:
+            # Curveのモディファイアを元に戻す
+            modifier.show_viewport = True
+            # メッシュにモディファイアをコピー
+            mesh_obj.modifiers.new(modifier.name, modifier.type)
+
+def _disable_mirror_modifires(curve_obj):
+    recovery_data = []
+    for modifier in curve_obj.modifiers:
+        if modifier.show_viewport and modifier.type == 'MIRROR':
+            modifier.show_viewport = False
+
+        # 後で戻せるよう変更したモディファイアを覚えておく
+        recovery_data.append(modifier)
+
+    return recovery_data
 
 # テンポラリMeshを作成
 def _create_temp_mesh(curve_obj):
