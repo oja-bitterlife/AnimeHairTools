@@ -1,6 +1,6 @@
 import bpy, sys
 
-from .MeshAndBones_Util import BoneManager
+from .MeshAndBones_Util import BoneManager, MeshManager
 
 
 # create constraints and controll bone
@@ -19,12 +19,15 @@ class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
 
         # 一旦今までのものを削除
         # ---------------------------------------------------------------------
-        BoneManager.remove(context, selected_curve_objs)  # ボーンを削除
+        # BoneManager.remove(context, selected_curve_objs)  # ボーンを削除
 
         # 作り直す
         # ---------------------------------------------------------------------
         # create bones
-        BoneManager.create(context, selected_curve_objs)
+        # BoneManager.create(context, selected_curve_objs)
+
+        # create mesh
+        MeshManager.create(context, selected_curve_objs)
 
         return{'FINISHED'}
 
