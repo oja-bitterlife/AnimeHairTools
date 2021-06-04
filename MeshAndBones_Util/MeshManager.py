@@ -25,17 +25,17 @@ def create(context, selected_curve_objs):
                 if duplicate_no != spline_no:
                     duplicated_obj.data.splines.remove(spline)
 
+            # 名前も設定しておく
+            duplicated_obj.name = Naming.make_tmp_mesh_name(curve_obj.name, duplicate_no)
+
         # メッシュ化
         bpy.ops.object.select_all(action='DESELECT')
         for duplicated_obj in duplicated_list:
             duplicated_obj.select_set(True)
         bpy.ops.object.convert(target='MESH', keep_original=False)
 
-        # モードを戻しておく
-        bpy.ops.object.mode_set(mode='OBJECT')
 
-
-# Hookの削除
+# Meshの削除
 # =================================================================================================
 def remove(context, selected_curve_objs):
     # 選択中のCurveに適用
