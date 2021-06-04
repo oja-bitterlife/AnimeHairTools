@@ -1,6 +1,6 @@
 import bpy, sys
 
-from .ChildBoneAndHook_Util import ChildBoneManager
+from .MeshAndBones_Util import BoneManager
 
 
 # create constraints and controll bone
@@ -19,12 +19,12 @@ class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
 
         # 一旦今までのものを削除
         # ---------------------------------------------------------------------
-        ChildBoneManager.remove(context, selected_curve_objs)  # ボーンを削除
+        BoneManager.remove(context, selected_curve_objs)  # ボーンを削除
 
         # 作り直す
         # ---------------------------------------------------------------------
         # create bones
-        ChildBoneManager.create(context, selected_curve_objs)
+        BoneManager.create(context, selected_curve_objs)
 
         return{'FINISHED'}
 
@@ -49,7 +49,7 @@ class ANIME_HAIR_TOOLS_OT_remove(bpy.types.Operator):
 
         # remove child bones
         if bpy.data.objects.get(context.scene.AHT_armature_name) != None:  # ATHのArmatureがあるときだけBoneを消せる
-            ChildBoneManager.remove(context, selected_curve_objs)  # ボーンを削除
+            BoneManager.remove(context, selected_curve_objs)  # ボーンを削除
 
         return{'FINISHED'}
 

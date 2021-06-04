@@ -1,6 +1,5 @@
 import bpy
 
-from .ArmatureManager_Util import ConstraintManager
 from .ArmatureManager_Util.ConstraintManager import ConstraintTargetProperty
 
 

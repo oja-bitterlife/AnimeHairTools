@@ -1,6 +1,6 @@
 import bpy
 
-from . import ArmatureManager, ChildBoneAndHook
+from . import ArmatureManager, MeshAndBones
 
 # Main UI
 # ===========================================================================================
@@ -13,7 +13,7 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
 
     def draw(self, context):
         ArmatureManager.ui_draw(context, self.layout)
-        ChildBoneAndHook.ui_draw(context, self.layout)
+        MeshAndBones.ui_draw(context, self.layout)
 
     # オブジェクトモード時のみ利用可能に
     @classmethod
