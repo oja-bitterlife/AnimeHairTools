@@ -13,7 +13,7 @@ def create(context, selected_curve_objs):
         # 処理するCurveをActiveにしてEDITモードに
         bpy.context.view_layer.objects.active = curve_obj
 
-        # 鏡面化を解除してコンバートする
+        # コンバート前にミラーを解除する
         recovery_data = _disable_mirror_modifires(curve_obj)
 
         # 房ごとにMesh化
@@ -26,6 +26,7 @@ def create(context, selected_curve_objs):
         mesh_obj = _join_temp_meshes(duplicated_list)
         mesh_obj.name = Naming.make_mesh_name(curve_obj.name)
 
+        # ミラーの後処理
         for modifier in recovery_data:
             # Curveのモディファイアを元に戻す
             modifier.show_viewport = True
@@ -34,6 +35,8 @@ def create(context, selected_curve_objs):
 
 def _disable_mirror_modifires(curve_obj):
     recovery_data = []
+
+    # ミラーモディファイアを探して、disableにしておく
     for modifier in curve_obj.modifiers:
         if modifier.show_viewport and modifier.type == 'MIRROR':
             modifier.show_viewport = False
@@ -69,7 +72,12 @@ def _create_temp_mesh(curve_obj):
     return duplicated_list
 
 def _set_mesh_weights(curve_obj, duplicated_list):
-    pass
+    # まずはVertexGropusの追加から
+    for duplicate_no,duplicated_obj in enumerate(duplicated_list):
+        print(dir(curve_obj.data.splines))
+#        for point_no,points in enumerate(curve_obj.data.splines.get(duplicate_no).points):
+#            duplicated_obj.vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, duplicate_no, point_no))
+
         # _set_mesh_weights(curve_obj, duplicated_list)
 
 def _join_temp_meshes(duplicated_list):
@@ -88,7 +96,9 @@ def remove(context, selected_curve_objs):
 
     # 選択中のCurveを元にメッシュを特定
     for curve_obj in selected_curve_objs:
-        bpy.data.objects[Naming.make_mesh_name(curve_obj.name)].select_set(True)
+        mesh = bpy.data.objects.get(Naming.make_mesh_name(curve_obj.name))
+        if mesh != None:
+            mesh.select_set(True)
 
     # 削除        
     bpy.ops.object.delete()

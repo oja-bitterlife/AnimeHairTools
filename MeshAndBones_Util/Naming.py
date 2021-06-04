@@ -3,8 +3,8 @@
 # base define
 # =================================================================================================
 # ChildBone
-BONE_PREFIX = "AHT_Bone"
 BONE_SEPALATER = "@"
+BONE_SUFFIX = "bone"
 
 # Mesh
 MESH_SEPALATER = "@"
@@ -16,10 +16,10 @@ MESH_SUFFIX = "mesh"
 # Bone
 # *****************************************************************************
 def make_bone_basename(base_name):
-    return BONE_PREFIX + "." + base_name + BONE_SEPALATER
+    return base_name + BONE_SEPALATER + BONE_SUFFIX
 
 def make_bone_name(base_name, spline_no, point_no):
-    return make_bone_basename(base_name) + "{}.{:0=3}".format(spline_no, point_no)
+    return make_bone_basename(base_name) + "{:0=3}.{:0=3}".format(spline_no, point_no)
 
 
 # Mesh
