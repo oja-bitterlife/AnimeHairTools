@@ -72,28 +72,41 @@ def _create_temp_mesh(curve_obj):
     return duplicated_list
 
 def _set_mesh_weights(curve_obj, duplicated_list):
-    # まずはVertexGropusの追加から
+    # まずはVertexGropusの追加
+    # -------------------------------------------------------------------------
     for duplicate_no,duplicated_obj in enumerate(duplicated_list):
         splines = curve_obj.data.splines.values()
-        for point_no,points in enumerate(splines[duplicate_no].points):
+        for point_no in range(len(splines[duplicate_no].points)-1):
             duplicated_obj.vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, duplicate_no, point_no))
 
     # 頂点ごとにウェイト値を算出
     # -------------------------------------------------------------------------
-    # vg = obj.vertex_groups['Vertex Group Name']
-    # vg.add( [1, 2, 3], 0.8, 'REPLACE' )
     # まずは対象となるCurveのポイントの座標を取得
     bone_ends = []
     for spline_no, spline in enumerate(curve_obj.data.splines):
         for i in range(len(spline.points)-1):
             root_matrix = curve_obj.matrix_world
-            bone_ends.append(root_matrix @ spline.points[i+1].co)
+            world_pos = root_matrix @ spline.points[i+1].co
+            bone_ends.append(world_pos.xyz)
 
-    # 複製はメッシュ化されているはず
+    # 房(メッシュ)ごとに各頂点のボーンとの距離算出
     for duplicated_obj in duplicated_list:
-        print("num of vertices:", len(duplicated_obj.vertices))
-    # for vt in msh.vertices:
-    #     print("vertex index:{0:2} co:{1} normal:{2}".format(vt.index, vt.co, vt.normal))
+        mesh = duplicated_obj.data
+        root_matrix = duplicated_obj.matrix_world
+    
+        distance = []
+        for v_no,v in enumerate(mesh.vertices):
+            # 一つの頂点にすべてのボーンへの距離を突っ込む
+            vertex_weight = []
+            for bone_no,bone_world in enumerate(bone_ends):
+                d = (root_matrix @ v.co) - bone_world
+                vertex_weight.append((bone_no,d.length))
+            # 値が小さい４つに絞る
+            distance.append( sorted(vertex_weight, key=lambda x: x[1])[:4] )
+
+
+        # vg = duplicated_obj.vertex_groups['Vertex Group Name']
+    # vg.add( [1, 2, 3], 0.8, 'REPLACE' )
 
 
 def _join_temp_meshes(duplicated_list):
