@@ -110,7 +110,7 @@ def _set_mesh_weights(curve_obj, duplicated_list):
             for bone_no,bone_world in enumerate(bone_ends):
                 d = (root_matrix @ v.co) - bone_world
                 vertex_weight.append([bone_no, d.length])
-            # 値が小さい４つに絞る
+            # 値が小さい３つに絞る
             vertex_weight = sorted(vertex_weight, key=lambda x: x[1])[:3]
 
             # 割合に変換

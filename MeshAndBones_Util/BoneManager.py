@@ -48,6 +48,10 @@ def _create_curve_bones(context, armature, curve_obj):
                 new_bone.head = bgn.xyz  # disconnected head setup
             new_bone.tail = end.xyz
 
+            # BendyBone化
+            BENDY_BONE_NUM = 4
+            new_bone.bbone_segments = BENDY_BONE_NUM
+
             # 自分を親にして次をつなげていく
             parent = new_bone
 
