@@ -19,6 +19,10 @@ def create(context, selected_curve_objs):
         # 房ごとにMesh化
         duplicated_list = _create_temp_mesh(curve_obj)
 
+        # CurveのMirrorモディファイアを元に戻しておく
+        for modifier in recovery_data:
+            modifier.show_viewport = True
+
         # 頂点ウェイト設定
         _set_mesh_weights(curve_obj, duplicated_list)
 
@@ -26,12 +30,14 @@ def create(context, selected_curve_objs):
         mesh_obj = _join_temp_meshes(duplicated_list)
         mesh_obj.name = Naming.make_mesh_name(curve_obj.name)
 
-        # ミラーの後処理
+        # ミラーのコピー
         for modifier in recovery_data:
-            # Curveのモディファイアを元に戻す
-            modifier.show_viewport = True
-            # メッシュにモディファイアをコピー
             mesh_obj.modifiers.new(modifier.name, modifier.type)
+
+        # メッシュにモディファイアを追加
+        mesh_obj.modifiers.new("Armature", "ARMATURE")
+        armature = mesh_obj.modifiers[-1]
+        armature.object = bpy.data.objects.get(context.scene.AHT_armature_name)
 
 def _disable_mirror_modifires(curve_obj):
     recovery_data = []
