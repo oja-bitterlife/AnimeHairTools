@@ -69,5 +69,12 @@ def ui_draw(context, layout):
     box = layout.box()
 
     # 実行
+    box.prop(context.scene, "AHT_bbone", text="BendyBone")
     box.operator("anime_hair_tools.create")
     box.operator("anime_hair_tools.remove")
+
+
+# =================================================================================================
+def register():
+    # 設定用
+    bpy.types.Scene.AHT_bbone = bpy.props.IntProperty(name = "BendyBone split", default=4)

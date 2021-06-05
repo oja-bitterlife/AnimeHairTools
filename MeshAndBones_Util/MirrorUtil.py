@@ -22,6 +22,7 @@ def disable_mirror_modifires(obj):
 
     return find_list
 
+# Mirrorモディファイアのリストを表示に戻す(disable_mirror_modifiresの戻り値を使う)
 def recovery_mirror_modifires(recovery_list):
     for modifier in recovery_list:
         modifier.show_viewport = True
