@@ -69,12 +69,19 @@ def _create_temp_mesh(curve_obj):
     return duplicated_list
 
 def _set_mesh_weights(curve_obj, duplicated_list):
+        # ミラーチェック
+    MirrorName = None if len(MirrorUtil.find_mirror_modifires(curve_obj)) == 0 else "L"
+
     # まずはVertexGropusの追加
     # -------------------------------------------------------------------------
     for duplicate_no,duplicated_obj in enumerate(duplicated_list):
         splines = curve_obj.data.splines.values()
         for point_no in range(len(splines[duplicate_no].points)-1):
-            duplicated_obj.vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, duplicate_no, point_no))
+            duplicated_obj.vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, duplicate_no, point_no, MirrorName))
+        # .Rも追加
+        if MirrorName != None:
+            for point_no in range(len(splines[duplicate_no].points)-1):
+                duplicated_obj.vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, duplicate_no, point_no, "R"))
 
     # 頂点ごとにウェイト値を算出
     # -------------------------------------------------------------------------
@@ -114,7 +121,7 @@ def _set_mesh_weights(curve_obj, duplicated_list):
 
             # 頂点についたウェイトを頂点グループに登録
             for vw in vertex_weight:
-                vw_name = Naming.make_bone_name(curve_obj.name, duplicate_no, vw[0])
+                vw_name = Naming.make_bone_name(curve_obj.name, duplicate_no, vw[0], MirrorName)
                 vg = duplicated_obj.vertex_groups[vw_name]
                 vg.add([v_no], vw[1], 'ADD')  # 割合にして逆数に
 
