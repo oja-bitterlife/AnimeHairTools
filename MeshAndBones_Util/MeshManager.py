@@ -1,6 +1,6 @@
 import bpy
 
-from . import Naming
+from . import Naming, MirrorUtil
 
 
 # Curveをメッシュにコンバート
@@ -14,14 +14,13 @@ def create(context, selected_curve_objs):
         bpy.context.view_layer.objects.active = curve_obj
 
         # コンバート前にミラーを解除する
-        recovery_data = _disable_mirror_modifires(curve_obj)
+        recovery_data = MirrorUtil.disable_mirror_modifires(curve_obj)
 
         # 房ごとにMesh化
         duplicated_list = _create_temp_mesh(curve_obj)
 
         # CurveのMirrorモディファイアを元に戻しておく
-        for modifier in recovery_data:
-            modifier.show_viewport = True
+        MirrorUtil.recovery_mirror_modifires(recovery_data)
 
         # 頂点ウェイト設定
         _set_mesh_weights(curve_obj, duplicated_list)
@@ -39,18 +38,6 @@ def create(context, selected_curve_objs):
         armature = mesh_obj.modifiers[-1]
         armature.object = bpy.data.objects.get(context.scene.AHT_armature_name)
 
-def _disable_mirror_modifires(curve_obj):
-    recovery_data = []
-
-    # ミラーモディファイアを探して、disableにしておく
-    for modifier in curve_obj.modifiers:
-        if modifier.show_viewport and modifier.type == 'MIRROR':
-            modifier.show_viewport = False
-
-        # 後で戻せるよう変更したモディファイアを覚えておく
-        recovery_data.append(modifier)
-
-    return recovery_data
 
 # テンポラリMeshを作成
 def _create_temp_mesh(curve_obj):
