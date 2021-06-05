@@ -86,12 +86,15 @@ def _set_mesh_weights(curve_obj, duplicated_list):
     # 頂点ごとにウェイト値を算出
     # -------------------------------------------------------------------------
     # まずは対象となるCurveのポイントの座標を取得
-    bone_ends = []
+    bone_ends_list = []
     for spline_no, spline in enumerate(curve_obj.data.splines):
+        bone_ends = []
         for i in range(len(spline.points)-1):
             root_matrix = curve_obj.matrix_world
             world_pos = root_matrix @ spline.points[i+1].co
             bone_ends.append(world_pos.xyz)
+        # スプラインごとにまとめていく
+        bone_ends_list.append(bone_ends)
 
     # 房(メッシュ)ごとに各頂点のボーンとの距離算出
     for duplicate_no,duplicated_obj in enumerate(duplicated_list):
@@ -101,7 +104,7 @@ def _set_mesh_weights(curve_obj, duplicated_list):
         for v_no,v in enumerate(mesh.vertices):
             # 一つの頂点にすべてのボーンへの距離を突っ込む
             vertex_weight = []
-            for bone_no,bone_world in enumerate(bone_ends):
+            for bone_no,bone_world in enumerate(bone_ends_list[duplicate_no]):
                 d = (root_matrix @ v.co) - bone_world
                 vertex_weight.append([bone_no, d.length])
             # 値が小さい３つに絞る
