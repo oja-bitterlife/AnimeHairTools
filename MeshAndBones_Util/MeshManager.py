@@ -101,20 +101,23 @@ def _set_mesh_weights(curve_obj, duplicated_list):
                 d = (root_matrix @ v.co) - bone_world
                 vertex_weight.append([bone_no, d.length])
             # 値が小さい４つに絞る
-            vertex_weight = sorted(vertex_weight, key=lambda x: x[1])[:4]
+            vertex_weight = sorted(vertex_weight, key=lambda x: x[1])[:3]
+
+            # 先端は問答無用で固定(bone_noのラストがMARGIN以下なら先端)
+            MARGIN = 0.0001
+            if vertex_weight[0][1] < MARGIN and vertex_weight[0][0] == len(bone_ends)-1:
+                vertex_weight = vertex_weight[:1]  # 先端なので固定
 
             # 割合に変換
-            max_length = 0
-            for vw_no in range(len(vertex_weight)):
-                max_length = max(max_length, vertex_weight[vw_no][1])
-            for vw_no in range(len(vertex_weight)):
-                vertex_weight[vw_no][1] = max_length - vertex_weight[vw_no][1]
-                vertex_weight[vw_no][1] = vertex_weight[vw_no][1] * vertex_weight[vw_no][1]  # ２乗にして影響度にメリハリを
             sum_length = 0
             for vw_no in range(len(vertex_weight)):
                 sum_length += vertex_weight[vw_no][1]
+            if sum_length > 0:
+                for vw_no in range(len(vertex_weight)):
+                    vertex_weight[vw_no][1] = vertex_weight[vw_no][1] / sum_length
             for vw_no in range(len(vertex_weight)):
-                vertex_weight[vw_no][1] = vertex_weight[vw_no][1]/sum_length
+                vertex_weight[vw_no][1] = 1 - vertex_weight[vw_no][1]  # 一番近いときが1
+                vertex_weight[vw_no][1] = pow(vertex_weight[vw_no][1], 4)
 
             # 頂点についたウェイトを頂点グループに登録
             for vw in vertex_weight:
