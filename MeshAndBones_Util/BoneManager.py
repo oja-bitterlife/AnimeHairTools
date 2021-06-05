@@ -50,7 +50,8 @@ def _create_curve_bones(context, armature, curve_obj):
 
             # BendyBone化
             BENDY_BONE_NUM = 4
-            new_bone.bbone_segments = BENDY_BONE_NUM
+            if BENDY_BONE_NUM > 1:
+                new_bone.bbone_segments = BENDY_BONE_NUM
 
             # 自分を親にして次をつなげていく
             parent = new_bone
