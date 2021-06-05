@@ -78,7 +78,23 @@ def _set_mesh_weights(curve_obj, duplicated_list):
         for point_no,points in enumerate(splines[duplicate_no].points):
             duplicated_obj.vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, duplicate_no, point_no))
 
-        # _set_mesh_weights(curve_obj, duplicated_list)
+    # 頂点ごとにウェイト値を算出
+    # -------------------------------------------------------------------------
+    # vg = obj.vertex_groups['Vertex Group Name']
+    # vg.add( [1, 2, 3], 0.8, 'REPLACE' )
+    # まずは対象となるCurveのポイントの座標を取得
+    bone_ends = []
+    for spline_no, spline in enumerate(curve_obj.data.splines):
+        for i in range(len(spline.points)-1):
+            root_matrix = curve_obj.matrix_world
+            bone_ends.append(root_matrix @ spline.points[i+1].co)
+
+    # 複製はメッシュ化されているはず
+    for duplicated_obj in duplicated_list:
+        print("num of vertices:", len(duplicated_obj.vertices))
+    # for vt in msh.vertices:
+    #     print("vertex index:{0:2} co:{1} normal:{2}".format(vt.index, vt.co, vt.normal))
+
 
 def _join_temp_meshes(duplicated_list):
     bpy.ops.object.select_all(action='DESELECT')
@@ -96,13 +112,15 @@ def _join_temp_meshes(duplicated_list):
 # Meshの削除
 # =================================================================================================
 def remove(context, selected_curve_objs):
+    # 一旦全部選択解除
     bpy.ops.object.select_all(action='DESELECT')
 
-    # 選択中のCurveを元にメッシュを特定
+    # 消すべきMeshを選択
     for curve_obj in selected_curve_objs:
-        mesh = bpy.data.objects.get(Naming.make_mesh_name(curve_obj.name))
-        if mesh != None:
-            mesh.select_set(True)
+        mesh_basename = Naming.make_mesh_name(curve_obj.name)
+        for obj in bpy.data.objects:
+            if obj.type == "MESH" and obj.name.startswith(mesh_basename):
+                obj.select_set(True)
 
     # 削除        
     bpy.ops.object.delete()
