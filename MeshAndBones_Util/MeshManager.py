@@ -48,6 +48,10 @@ def _disable_mirror_modifires(curve_obj):
 
 # テンポラリMeshを作成
 def _create_temp_mesh(curve_obj):
+    # 複製の対象を対象のCurveだけにする
+    bpy.ops.object.select_all(action='DESELECT')
+    curve_obj.select_set(True)
+
     # splineの数だけ複製
     duplicated_list = []
     for spline in curve_obj.data.splines:

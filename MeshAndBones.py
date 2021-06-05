@@ -19,7 +19,8 @@ class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
 
         # 一旦今までのものを削除
         # ---------------------------------------------------------------------
-        BoneManager.remove(context, selected_curve_objs)  # ボーンを削除
+        BoneManager.remove(context, selected_curve_objs)  # Boneを削除
+        MeshManager.remove(context, selected_curve_objs)  # Meshも削除
 
         # 作り直す
         # ---------------------------------------------------------------------
