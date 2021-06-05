@@ -90,24 +90,37 @@ def _set_mesh_weights(curve_obj, duplicated_list):
             bone_ends.append(world_pos.xyz)
 
     # 房(メッシュ)ごとに各頂点のボーンとの距離算出
-    for duplicated_obj in duplicated_list:
+    for duplicate_no,duplicated_obj in enumerate(duplicated_list):
         mesh = duplicated_obj.data
         root_matrix = duplicated_obj.matrix_world
     
-        distance = []
         for v_no,v in enumerate(mesh.vertices):
             # 一つの頂点にすべてのボーンへの距離を突っ込む
             vertex_weight = []
             for bone_no,bone_world in enumerate(bone_ends):
                 d = (root_matrix @ v.co) - bone_world
-                vertex_weight.append((bone_no,d.length))
+                vertex_weight.append([bone_no, d.length])
             # 値が小さい４つに絞る
-            distance.append( sorted(vertex_weight, key=lambda x: x[1])[:4] )
+            vertex_weight = sorted(vertex_weight, key=lambda x: x[1])[:4]
 
+            # 割合に変換
+            max_length = 0
+            for vw_no in range(len(vertex_weight)):
+                max_length = max(max_length, vertex_weight[vw_no][1])
+            for vw_no in range(len(vertex_weight)):
+                vertex_weight[vw_no][1] = max_length - vertex_weight[vw_no][1]
+                vertex_weight[vw_no][1] = vertex_weight[vw_no][1] * vertex_weight[vw_no][1]  # ２乗にして影響度にメリハリを
+            sum_length = 0
+            for vw_no in range(len(vertex_weight)):
+                sum_length += vertex_weight[vw_no][1]
+            for vw_no in range(len(vertex_weight)):
+                vertex_weight[vw_no][1] = vertex_weight[vw_no][1]/sum_length
 
-        # vg = duplicated_obj.vertex_groups['Vertex Group Name']
-    # vg.add( [1, 2, 3], 0.8, 'REPLACE' )
-
+            # 頂点についたウェイトを頂点グループに登録
+            for vw in vertex_weight:
+                vw_name = Naming.make_bone_name(curve_obj.name, duplicate_no, vw[0])
+                vg = duplicated_obj.vertex_groups[vw_name]
+                vg.add([v_no], vw[1], 'ADD')  # 割合にして逆数に
 
 def _join_temp_meshes(duplicated_list):
     bpy.ops.object.select_all(action='DESELECT')
