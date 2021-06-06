@@ -120,7 +120,7 @@ def _set_mesh_weights(curve_obj, duplicated_list):
             for vw_no in range(len(vertex_weight)):
                 vertex_weight[vw_no][1] = 1 - vertex_weight[vw_no][1]  # 一番近いときが1
                 # 影響にメリハリを
-                vertex_weight[vw_no][1] = pow(vertex_weight[vw_no][1], 4)
+                vertex_weight[vw_no][1] = pow(vertex_weight[vw_no][1], 3)
 
             # 頂点についたウェイトを頂点グループに登録
             for vw in vertex_weight:

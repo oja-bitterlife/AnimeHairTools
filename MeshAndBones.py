@@ -77,4 +77,4 @@ def ui_draw(context, layout):
 # =================================================================================================
 def register():
     # 設定用
-    bpy.types.Scene.AHT_bbone = bpy.props.IntProperty(name = "BendyBone split", default=3)
+    bpy.types.Scene.AHT_bbone = bpy.props.IntProperty(name = "BendyBone split", default=4)
