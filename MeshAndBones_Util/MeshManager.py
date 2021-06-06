@@ -38,6 +38,9 @@ def create(context, selected_curve_objs):
         armature = mesh_obj.modifiers[-1]
         armature.object = bpy.data.objects.get(context.scene.AHT_armature_name)
 
+        # Bone用に親を設定
+        mesh_obj.parent = bpy.data.objects.get(context.scene.AHT_armature_name)
+        mesh_obj.matrix_parent_inverse = mesh_obj.parent.matrix_world.inverted()
 
 # テンポラリMeshを作成
 def _create_temp_mesh(curve_obj):
