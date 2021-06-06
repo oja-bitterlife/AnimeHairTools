@@ -13,7 +13,7 @@
 ### 作例
 |<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/maribe.jpg" width="256px" height="256px">|<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/emeruda.jpg" width="256px" height="256px">|<img src="https://github.com/oja-bitterlife/AnimeHairTools/blob/master/sample/sorano.jpg" width="256px" height="256px">|
 
-まだインストーラとかないのでスクリプトタブからファイルを取り込んで実行しないと動きません。
+インストールは ZIP で download して、プラグインのメニューから import してください。
 
 プラグインが起動すると、オブジェクトモード時に３Dビュー上に AnimeHairTools というメニューが追加されます。
 
