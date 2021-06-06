@@ -69,7 +69,7 @@ def ui_draw(context, layout):
     box = layout.box()
 
     # 実行
-    box.prop(context.scene, "AHT_bbone", text="BendyBone")
+    box.prop(context.scene, "AHT_bbone", text="BendyBones")
     box.operator("anime_hair_tools.create")
     box.operator("anime_hair_tools.remove")
 
