@@ -75,6 +75,7 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
         constraint.name = self.CONSTRAINT_TRANSFORM_NAME
         constraint = armature.constraints.new('COPY_ROTATION')
         constraint.name = self.CONSTRAINT_ROTATION_NAME
+        constraint.mix_mode = 'ADD'  # Add Mode
 
         # 見やすいように奥向きに設定しておく
         # -------------------------------------------------------------------------

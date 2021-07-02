@@ -10,7 +10,7 @@ def create(context, selected_curve_objs):
 
     # Curveごとに分離する
     for curve_obj in selected_curve_objs:
-        # 処理するCurveをActiveにしてEDITモードに
+        # 処理するCurveをActiveに
         bpy.context.view_layer.objects.active = curve_obj
 
         # コンバート前にミラーを解除する
