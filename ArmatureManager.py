@@ -1,17 +1,13 @@
 import bpy
 
-from .ArmatureManager_Util.ConstraintManager import ConstraintTargetProperty
-
+from .ArmatureManager_Util.ParentManager import ParentTargetProperty
+import math
 
 # AHT用のArmatureのセットアップを行う
 # =================================================================================================
 class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
     bl_idname = "anime_hair_tools.setup_armature"
     bl_label = "Setup Armature and RootBone"
-
-    # コンストレイントにつける名前
-    CONSTRAINT_TRANSFORM_NAME = "AHT_transform"
-    CONSTRAINT_ROTATION_NAME = "AHT_rotation"
 
     # execute
     def execute(self, context):
@@ -27,21 +23,16 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
         # -------------------------------------------------------------------------
         armature.data.bones[0].name = scene.AHT_root_bone_name
 
-        # constraint target
+        # parent 設定
         # -------------------------------------------------------------------------
-        for constraint in armature.constraints:
-            if constraint.name == self.CONSTRAINT_TRANSFORM_NAME or constraint.name == self.CONSTRAINT_ROTATION_NAME:
-                # Armature未設定
-                if scene.AHT_constraint_target_name.armature == "_empty_for_delete":
-                    # Armatureの削除
-                    constraint.target = None
-                else:
-                    # Armatureの設定
-                    target_armature = bpy.data.objects[scene.AHT_constraint_target_name.armature]
-                    constraint.target = target_armature
-
-                    # boneの設定
-                    constraint.subtarget = scene.AHT_constraint_target_name.bone
+        if scene.AHT_parent_target_name.armature == "_empty_for_delete":
+             # parentの削除
+            armature.parent = None
+        else:
+            # parentの設定
+            armature.parent = bpy.data.objects[scene.AHT_parent_target_name.armature]
+            armature.parent_type = "BONE"
+            armature.parent_bone = scene.AHT_parent_target_name.bone
 
         return{'FINISHED'}
 
@@ -68,23 +59,15 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
         armature.show_in_front = True  # 常に手前
         armature.data.display_type = 'WIRE'  # WIRE表示
 
-        # コンストレイントを追加
-        # -------------------------------------------------------------------------
-        # add constraint root_bone (after setting Target to face bone)
-        constraint = armature.constraints.new('COPY_LOCATION')
-        constraint.name = self.CONSTRAINT_TRANSFORM_NAME
-        constraint = armature.constraints.new('COPY_ROTATION')
-        constraint.name = self.CONSTRAINT_ROTATION_NAME
-        constraint.mix_mode = 'ADD'  # Add Mode
-
         # 見やすいように奥向きに設定しておく
         # -------------------------------------------------------------------------
         bpy.ops.object.select_all(action='DESELECT')
         bpy.context.view_layer.objects.active = armature
         bpy.ops.object.mode_set(mode='EDIT')
         armature.data.edit_bones[0].select = True
-        armature.data.edit_bones[0].tail = (0, 0, -1)
+        armature.data.edit_bones[0].tail = (0, 1, 0)
         bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.context.object.rotation_euler[0] = -math.pi/2
 
 
 # UI描画設定
@@ -98,9 +81,9 @@ def ui_draw(context, layout):
     box.prop(context.scene, "AHT_root_bone_name", text="RootBone")
 
     # コンストレイント先設定
-    box.label(text="Constraint Target:")
-    box.prop(context.scene.AHT_constraint_target_name, "armature", text="Armature")
-    box.prop(context.scene.AHT_constraint_target_name, "bone", text="Bone")
+    box.label(text="Parent Target:")
+    box.prop(context.scene.AHT_parent_target_name, "armature", text="Armature")
+    box.prop(context.scene.AHT_parent_target_name, "bone", text="Bone")
 
     # 実行
     box.operator("anime_hair_tools.setup_armature")
@@ -112,4 +95,4 @@ def register():
     bpy.types.Scene.AHT_armature_name = bpy.props.StringProperty(name = "armature name", default="AHT_Armature")
     bpy.types.Scene.AHT_root_bone_name = bpy.props.StringProperty(name = "bone root name", default="AHT_RootBone")
 
-    bpy.types.Scene.AHT_constraint_target_name = bpy.props.PointerProperty(type=ConstraintTargetProperty)
+    bpy.types.Scene.AHT_parent_target_name = bpy.props.PointerProperty(type=ParentTargetProperty)
