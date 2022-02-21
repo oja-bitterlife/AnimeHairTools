@@ -39,11 +39,11 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_roll(bpy.types.Operator):
                 v.normalize()
 
                 # 角度計算
-                cs = max(1, min(-1, v.dot(bone.z_axis)))
+                cs = max(-1, min(1, v.dot(bone.z_axis)))
                 rad = math.acos(cs)  # 角度差分(CW/CCWはわからない)
                 dir = v.cross(bone.z_axis).dot(bone.y_axis)  # 3重積で方向
                 if dir > 0:
-                    rad = -radr
+                    rad = -rad
                 bone.roll += rad
 
         return{'FINISHED'}
