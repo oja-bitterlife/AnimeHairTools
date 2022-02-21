@@ -1,7 +1,8 @@
 import bpy
-
-from .ArmatureManager_Util.ParentManager import ParentTargetProperty
 import math
+
+from .Util.ListupUtil import ListupProperty
+
 
 # AHT用のArmatureのセットアップを行う
 # =================================================================================================
@@ -95,4 +96,4 @@ def register():
     bpy.types.Scene.AHT_armature_name = bpy.props.StringProperty(name = "armature name", default="AHT_Armature")
     bpy.types.Scene.AHT_root_bone_name = bpy.props.StringProperty(name = "bone root name", default="AHT_RootBone")
 
-    bpy.types.Scene.AHT_parent_target_name = bpy.props.PointerProperty(type=ParentTargetProperty)
+    bpy.types.Scene.AHT_parent_target_name = bpy.props.PointerProperty(type=ListupProperty)

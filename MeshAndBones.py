@@ -1,6 +1,6 @@
 import bpy, sys
 
-from .MeshAndBones_Util import BoneManager, MeshManager
+from .Util import BoneManager, MeshManager
 
 
 # create constraints and controll bone
@@ -76,5 +76,5 @@ def ui_draw(context, layout):
 
 # =================================================================================================
 def register():
-    # 設定用
+    # Bone設定
     bpy.types.Scene.AHT_bbone = bpy.props.IntProperty(name = "BendyBone split", default=4)

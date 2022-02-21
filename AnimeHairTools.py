@@ -1,6 +1,8 @@
 import bpy
 
-from . import ArmatureManager, MeshAndBones
+from . import ArmatureManager
+from . import MeshAndBones
+from . import RollManager
 
 # Main UI
 # ===========================================================================================
@@ -14,6 +16,7 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
     def draw(self, context):
         ArmatureManager.ui_draw(context, self.layout)
         MeshAndBones.ui_draw(context, self.layout)
+        RollManager.ui_draw(context, self.layout)
 
     # オブジェクトモード時のみ利用可能に
     @classmethod
