@@ -2,7 +2,7 @@ import bpy
 
 from . import ArmatureManager
 from . import MeshAndBones
-from . import RollManager
+from . import BoneRoll, BoneConnect
 
 # Main UI
 # ===========================================================================================
@@ -19,5 +19,6 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
             ArmatureManager.ui_draw(context, self.layout)
             MeshAndBones.ui_draw(context, self.layout)
         if context.mode == "EDIT_ARMATURE":
-            RollManager.ui_draw(context, self.layout)
+            BoneRoll.ui_draw(context, self.layout)
+            BoneConnect.ui_draw(context, self.layout)
 
