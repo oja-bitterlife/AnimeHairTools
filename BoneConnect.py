@@ -8,7 +8,7 @@ from .Util.ListupUtil import ListupProperty
 # =================================================================================================
 class ANIME_HAIR_TOOLS_OT_setup_bone_connect(bpy.types.Operator):
     bl_idname = "anime_hair_tools.setup_bone_connect"
-    bl_label = "Connect"
+    bl_label = "Connect All"
 
     # execute
     def execute(self, context):
@@ -27,7 +27,7 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_connect(bpy.types.Operator):
 
 class ANIME_HAIR_TOOLS_OT_setup_bone_disconnect(bpy.types.Operator):
     bl_idname = "anime_hair_tools.setup_bone_disconnect"
-    bl_label = "Disconnect"
+    bl_label = "Disconnect All"
 
     # execute
     def execute(self, context):
