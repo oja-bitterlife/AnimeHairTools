@@ -31,6 +31,6 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_connect(bpy.types.Operator):
 # =================================================================================================
 def ui_draw(context, layout):
     # 選択中ボーンの子ボーンを選択
-    layout.label(text="Lazy Bone:")
+    layout.label(text="Delay Bone:")
     box = layout.box()
     box.operator("anime_hair_tools.select_child_bones")

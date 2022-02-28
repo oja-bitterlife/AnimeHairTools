@@ -1,7 +1,7 @@
 import bpy
 
-from . import ArmatureManager, MeshAndBones
-from . import EditBoneSetup, LazyBone
+from . import ArmatureManager, DelayBone, MeshAndBones
+from . import EditBoneSetup
 
 # Main UI
 # ===========================================================================================
@@ -20,5 +20,5 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
         if context.mode == "EDIT_ARMATURE":
             EditBoneSetup.ui_draw(context, self.layout)
         if context.mode == "POSE":
-            LazyBone.ui_draw(context, self.layout)
+            DelayBone.ui_draw(context, self.layout)
 
