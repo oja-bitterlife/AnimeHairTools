@@ -18,7 +18,7 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_connect(bpy.types.Operator):
         # gather children
         children_list = []
         for pose_bone in selected_bones:
-            children_list.extend(BoneManager.gather_pose_bone_children(pose_bone))
+            children_list.extend(BoneManager.pose_bone_gather_children(pose_bone))
 
         # まとめてselect
         for child_pose_bone in children_list:

@@ -95,9 +95,9 @@ def remove(context, selected_curve_objs):
 
 # pose_boneの子を再帰的に選択する
 # =================================================================================================
-def gather_pose_bone_children(pose_bone):
+def pose_bone_gather_children(pose_bone):
     pose_bone_list = []
     for child_pose_bone in pose_bone.children:
         pose_bone_list.append(child_pose_bone)
-        pose_bone_list.extend(gather_pose_bone_children(child_pose_bone))
+        pose_bone_list.extend(pose_bone_gather_children(child_pose_bone))
     return pose_bone_list
