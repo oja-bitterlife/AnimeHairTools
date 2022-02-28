@@ -14,18 +14,25 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_connect(bpy.types.Operator):
             if pose_bone.bone.select:
                 selected_bones.append(pose_bone)
 
-        # select children
+        # gather children
+        children_list = []
         for pose_bone in selected_bones:
-            self.select_recursive(pose_bone)
+            children_list.extend(self.gather_children_recursive(pose_bone))
+        print(children_list)
+
+        # まとめてselect
+        for child_pose_bone in children_list:
+            child_pose_bone.bone.select = True
 
         return{'FINISHED'}
 
     # 再帰的に選択する
-    def select_recursive(self, pose_bone):
-        pose_bone.bone.select = True
+    def gather_children_recursive(self, pose_bone):
+        pose_bone_list = []
         for child_pose_bone in pose_bone.children:
-            self.select_recursive(child_pose_bone)
-
+            pose_bone_list.append(child_pose_bone)
+            pose_bone_list.extend(self.gather_children_recursive(child_pose_bone))
+        return pose_bone_list
 
 
 # UI描画設定
