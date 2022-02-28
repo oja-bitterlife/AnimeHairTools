@@ -60,21 +60,66 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_roll(bpy.types.Operator):
         return min_index
 
 
+# 選択中BoneのConnect/Disconnect
+# =================================================================================================
+class ANIME_HAIR_TOOLS_OT_setup_bone_connect(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.setup_bone_connect"
+    bl_label = "Connect All"
+
+    # execute
+    def execute(self, context):
+        # 編集対象ボーンの回収
+        armature = bpy.context.active_object
+        selected_bones = []
+        for bone in armature.data.edit_bones:
+            if bone.select:
+                selected_bones.append(bone)
+
+        # connect
+        for bone in selected_bones:
+            bone.use_connect = True
+
+        return{'FINISHED'}
+
+
+class ANIME_HAIR_TOOLS_OT_setup_bone_disconnect(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.setup_bone_disconnect"
+    bl_label = "Disconnect All"
+
+    # execute
+    def execute(self, context):
+        # 編集対象ボーンの回収
+        armature = bpy.context.active_object
+        selected_bones = []
+        for bone in armature.data.edit_bones:
+            if bone.select:
+                selected_bones.append(bone)
+
+        # disconnect
+        for bone in selected_bones:
+            bone.use_connect = False
+
+        return{'FINISHED'}
+
 
 # UI描画設定
 # =================================================================================================
 def ui_draw(context, layout):
+    # 選択中BoneのRollの設定
     layout.label(text="Bone Roll Setting:")
     box = layout.box()
-
-    # Roll参照先設定
     box.prop(context.scene.AHT_roll_reference, "roll_reference", text="Roll Reference Object")
-
-    # 実行
     box.operator("anime_hair_tools.setup_bone_roll")
+
+
+    # 選択中BoneのConnect/Disconnect
+    layout.label(text="Bone Connect Setting:")
+    box = layout.box()
+    box.operator("anime_hair_tools.setup_bone_connect")
+    box.operator("anime_hair_tools.setup_bone_disconnect")
 
 
 # =================================================================================================
 def register():
-    # Bone設定
+    # Rollの参照用メッシュ
     bpy.types.Scene.AHT_roll_reference = bpy.props.PointerProperty(type=ListupProperty)
