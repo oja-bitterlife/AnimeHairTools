@@ -4,7 +4,7 @@ import math
 from .Util.ListupUtil import ListupProperty
 
 
-# AHT用のArmatureのセットアップを行う
+# 選択中のBoneのRollを設定する
 # =================================================================================================
 class ANIME_HAIR_TOOLS_OT_setup_bone_roll(bpy.types.Operator):
     bl_idname = "anime_hair_tools.setup_bone_roll"

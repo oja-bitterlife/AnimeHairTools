@@ -1,7 +1,7 @@
 import bpy
 
-from . import ArmatureManager, SelectedEditBoneSetting
-from . import MeshAndBones
+from . import ArmatureManager, MeshAndBones
+from . import EditBoneSetup, LazyBone
 
 # Main UI
 # ===========================================================================================
@@ -18,5 +18,7 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
             ArmatureManager.ui_draw(context, self.layout)
             MeshAndBones.ui_draw(context, self.layout)
         if context.mode == "EDIT_ARMATURE":
-            SelectedEditBoneSetting.ui_draw(context, self.layout)
+            EditBoneSetup.ui_draw(context, self.layout)
+        if context.mode == "POSE":
+            LazyBone.ui_draw(context, self.layout)
 
