@@ -1,7 +1,4 @@
 import bpy
-import math
-
-from .Util.ListupUtil import ListupProperty
 
 
 # AHT用のArmatureのセットアップを行う
