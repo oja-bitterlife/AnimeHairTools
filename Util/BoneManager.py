@@ -91,3 +91,13 @@ def remove(context, selected_curve_objs):
 
     # OBJECTモードに戻すのを忘れないように
     ArmatureMode.return_obuject_mode(state_backup)
+
+
+# pose_boneの子を再帰的に選択する
+# =================================================================================================
+def gather_pose_bone_children(pose_bone):
+    pose_bone_list = []
+    for child_pose_bone in pose_bone.children:
+        pose_bone_list.append(child_pose_bone)
+        pose_bone_list.extend(gather_pose_bone_children(child_pose_bone))
+    return pose_bone_list
