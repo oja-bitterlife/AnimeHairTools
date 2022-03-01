@@ -53,7 +53,7 @@ class ANIME_HAIR_TOOLS_OT_copy_rotate_keys(bpy.types.Operator):
             self.copy_rotate_keys(target_bone, context.scene.AHT_keyframe_offset)
         return {'FINISHED'}
 
-    def copy_rotate_keys(self, target_bone, offset):
+    def copy_rotate_keys(self, target_bone, child_offset):
         # gather children
         children_list = BoneManager.pose_bone_gather_children(target_bone)
 
@@ -83,6 +83,7 @@ class ANIME_HAIR_TOOLS_OT_copy_rotate_keys(bpy.types.Operator):
             parent_distance = calc_parent_distance(target_bone, child_bone)
             # 通常ありえないはずだけど、親まで到達できなかった
             if parent_distance <= 0:
+                print("error: parent not found!")
                 continue
 
             # keyframeの転送開始
@@ -94,7 +95,7 @@ class ANIME_HAIR_TOOLS_OT_copy_rotate_keys(bpy.types.Operator):
 
                 # keyframe_pointsのコピー
                 for point in keyframes[keyname]:
-                    offset = parent_distance * offset
+                    offset = parent_distance * child_offset
                     new_point = new_fcurve.keyframe_points.insert(point.co[0]+offset, point.co[1])
                     # co以外の残りをコピー
                     copy_keyframe(point, new_point) 
