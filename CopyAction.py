@@ -122,7 +122,7 @@ class ANIME_HAIR_TOOLS_OT_remove_children_keys(bpy.types.Operator):
 
 
 # keyの内容をコピーする
-def copy_keyframe(self, src_point, dest_point):
+def copy_keyframe(src_point, dest_point):
     dest_point.amplitude = src_point.amplitude
     dest_point.back = src_point.back
     # new_point.co
