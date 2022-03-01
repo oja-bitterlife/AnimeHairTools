@@ -49,13 +49,13 @@ class ANIME_HAIR_TOOLS_OT_copy_rotate_keys(bpy.types.Operator):
 
     # execute
     def execute(self, context):
-        for active_bone in bpy.context.selected_pose_bones:
-            self.copy_rotate_keys(active_bone, context.scene.AHT_keyframe_offset)
+        for target_bone in bpy.context.selected_pose_bones:
+            self.copy_rotate_keys(target_bone, context.scene.AHT_keyframe_offset)
         return {'FINISHED'}
 
-    def copy_rotate_keys(self, active_bone, offset):
+    def copy_rotate_keys(self, target_bone, offset):
         # gather children
-        children_list = BoneManager.pose_bone_gather_children(active_bone)
+        children_list = BoneManager.pose_bone_gather_children(target_bone)
 
         # 現在のActionを取得
         action = bpy.context.active_object.animation_data.action
@@ -63,7 +63,7 @@ class ANIME_HAIR_TOOLS_OT_copy_rotate_keys(bpy.types.Operator):
         # 一旦子Boneからキーを削除する
         remove_all_keys_from_children(action, children_list)
 
-        # active_boneのキーフレームを取得
+        # target_boneのキーフレームを取得
         keyframes = {}
         for fcurve in action.fcurves:
             # ボーン名と適用対象の取得
@@ -72,7 +72,7 @@ class ANIME_HAIR_TOOLS_OT_copy_rotate_keys(bpy.types.Operator):
                 bone_name, target = match.groups()
 
             # ActiveBoneだけ処理
-            if bone_name == active_bone.name:
+            if bone_name == target_bone.name:
                 # 回転だけコピー
                 if target != "rotation_quaternion" and target != "rotation_euler" and target != "rotation_axis_angle":
                     continue
@@ -80,7 +80,7 @@ class ANIME_HAIR_TOOLS_OT_copy_rotate_keys(bpy.types.Operator):
 
         # 子Boneにkeyframeを突っ込む
         for child_bone in children_list:
-            parent_distance = calc_parent_distance(active_bone, child_bone)
+            parent_distance = calc_parent_distance(target_bone, child_bone)
             # 通常ありえないはずだけど、親まで到達できなかった
             if parent_distance <= 0:
                 continue
@@ -106,13 +106,13 @@ class ANIME_HAIR_TOOLS_OT_remove_children_keys(bpy.types.Operator):
 
     # execute
     def execute(self, context):
-        for active_bone in bpy.context.selected_pose_bones:
-            self.remove_children_keys(active_bone)
+        for target_bone in bpy.context.selected_pose_bones:
+            self.remove_children_keys(target_bone)
         return {'FINISHED'}
 
-    def remove_children_keys(self, active_bone):
+    def remove_children_keys(self, target_bone):
         # gather children
-        children_list = BoneManager.pose_bone_gather_children(active_bone)
+        children_list = BoneManager.pose_bone_gather_children(target_bone)
 
         # 現在のActionを取得
         action = bpy.context.active_object.animation_data.action
