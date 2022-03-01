@@ -106,8 +106,23 @@ class ANIME_HAIR_TOOLS_OT_delay_setup(bpy.types.Operator):
                 # まずは突っ込み先のFCurveを作成
                 target, index = keyname.split(":")
                 data_path = 'pose.bones["%s"].%s' % (child_bone.name, target)
-                dest_action.fcurves.new(data_path=data_path, index=int(index))
+                new_fcurve = dest_action.fcurves.new(data_path=data_path, index=int(index))
 
+                # keyframe_pointsのコピー
+                for point in keyframes[keyname]:
+                    new_point = new_fcurve.keyframe_points.insert(point.co[0], point.co[1])
+                    # co以外の残りをコピー
+                    new_point.amplitude = point.amplitude
+                    new_point.back = point.back
+                    # new_point.co
+                    # new_point.co_ui
+                    new_point.easing = point.easing
+                    new_point.handle_left = point.handle_left
+                    new_point.handle_left_type = point.handle_left_type
+                    new_point.handle_right = point.handle_right
+                    new_point.handle_right_type = point.handle_right_type
+                    new_point.interpolation = point.interpolation
+                    new_point.period = point.period
 
         return{'FINISHED'}
 
