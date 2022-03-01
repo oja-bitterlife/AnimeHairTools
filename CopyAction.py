@@ -1,6 +1,7 @@
 import bpy, re
 
 from .Util import BoneManager
+from .Util.ListupUtil import ListupProperty
 
 class ANIME_HAIR_TOOLS_OT_select_child_bones(bpy.types.Operator):
     bl_idname = "anime_hair_tools.select_child_bones"
@@ -55,7 +56,8 @@ class ANIME_HAIR_TOOLS_OT_copy_rotate_keys(bpy.types.Operator):
         # gather children
         children_list = BoneManager.pose_bone_gather_children(active_bone)
 
-        action = bpy.data.actions["AHT_ArmatureAction"]
+        # 現在のActionを取得
+        action = bpy.context.active_object.animation_data.action
 
         # 一旦子Boneからキーを削除する
         remove_all_keys_from_children(action, children_list)
@@ -91,7 +93,7 @@ class ANIME_HAIR_TOOLS_OT_copy_rotate_keys(bpy.types.Operator):
 
                 # keyframe_pointsのコピー
                 for point in keyframes[keyname]:
-                    offset = parent_distance * 5
+                    offset = parent_distance * context.scene.AHT_keyframe_offset
                     new_point = new_fcurve.keyframe_points.insert(point.co[0]+offset, point.co[1])
                     # co以外の残りをコピー
                     self.copy_key(point, new_point)
@@ -126,9 +128,10 @@ class ANIME_HAIR_TOOLS_OT_remove_children_keys(bpy.types.Operator):
         # gather children
         children_list = BoneManager.pose_bone_gather_children(active_bone)
 
-        action = bpy.data.actions["AHT_ArmatureAction"]
+        # 現在のActionを取得
+        action = bpy.context.active_object.animation_data.action
 
-        # 一旦子Boneからキーを削除する
+        # 子Boneからキーを削除する
         remove_all_keys_from_children(action, children_list)
 
         return{'FINISHED'}
@@ -171,5 +174,11 @@ def ui_draw(context, layout):
     # Actionを子BoneにCopyする
     layout.label(text="Propagate Action:")
     box = layout.box()
+    box.prop(context.scene, "AHT_keyframe_offset", text="Keyframe Offset")
     box.operator("anime_hair_tools.copy_rotate_keys")
     box.operator("anime_hair_tools.remove_children_keys")
+
+
+# =================================================================================================
+def register():
+    bpy.types.Scene.AHT_keyframe_offset = bpy.props.IntProperty(name = "keyframe offset", default=5)
