@@ -59,7 +59,7 @@ class ANIME_HAIR_TOOLS_OT_delay_setup(bpy.types.Operator):
         src_action = bpy.data.actions["AHT_ArmatureAction"]
         dest_action = bpy.data.actions["AHT_ArmatureAction"]
 
-        # 選択中Boneから一旦キーフレームを削除する
+        # 子Boneから一旦キーフレームを削除する
         for fcurve in dest_action.fcurves:
             # ボーン名と適用対象の取得
             match = re.search(r'pose.bones\["(.+?)"\].+?([^.]+$)', fcurve.data_path)
@@ -72,6 +72,7 @@ class ANIME_HAIR_TOOLS_OT_delay_setup(bpy.types.Operator):
                     dest_action.fcurves.remove(fcurve)
 
         # active_boneのキーフレームを取得
+        keyframes = {}
         for fcurve in dest_action.fcurves:
             # ボーン名と適用対象の取得
             match = re.search(r'pose.bones\["(.+?)"\].+?([^.]+$)', fcurve.data_path)
@@ -80,16 +81,32 @@ class ANIME_HAIR_TOOLS_OT_delay_setup(bpy.types.Operator):
 
             # ActiveBoneだけ処理
             if bone_name == active_bone.name:
-                print(target)
+                # 回転だけコピー
+                if target != "rotation_quaternion" and target != "rotation_euler" and target != "rotation_axis_angle":
+                    continue
 
-                    # # 回転をコピー
-                    # if target == "rotation_quaternion":
-                    #     fcurve
-                    #     pass
-                    # elif target == "rotation_euler":
-                    #     pass
-                    # else:  # axis
-                    #     pass
+                keyframes["%s:%d" % (target, fcurve.array_index)] = fcurve.keyframe_points
+                # print(target, fcurve.array_index)
+                # print(dir(fcurve.keyframe_points[0]))
+                # print(fcurve.keyframe_points[0].amplitude)
+                # print(fcurve.keyframe_points[0].back)
+                # print(fcurve.keyframe_points[0].co)
+                # print(fcurve.keyframe_points[0].co_ui)
+                # print(fcurve.keyframe_points[0].easing)
+                # print(fcurve.keyframe_points[0].handle_left)
+                # print(fcurve.keyframe_points[0].handle_left_type)
+                # print(fcurve.keyframe_points[0].handle_right)
+                # print(fcurve.keyframe_points[0].handle_right_type)
+                # print(fcurve.keyframe_points[0].interpolation)
+                # print(fcurve.keyframe_points[0].period)
+
+        # 子Boneにkeyframeを突っ込む
+        for child_bone in children_list:
+            for keyname in keyframes:
+                # まずは突っ込み先のFCurveを作成
+                target, index = keyname.split(":")
+                data_path = 'pose.bones["%s"].%s' % (child_bone.name, target)
+                dest_action.fcurves.new(data_path=data_path, index=int(index))
 
 
         return{'FINISHED'}
