@@ -49,10 +49,11 @@ class ANIME_HAIR_TOOLS_OT_copy_rotate_keys(bpy.types.Operator):
 
     # execute
     def execute(self, context):
-        active_bone = context.active_pose_bone
-        if not active_bone.bone.select:
-            return{'FINISHED'}
+        for active_bone in bpy.context.selected_pose_bones:
+            self.copy_rotate_keys(active_bone, context.scene.AHT_keyframe_offset)
+        return {'FINISHED'}
 
+    def copy_rotate_keys(self, active_bone, offset):
         # gather children
         children_list = BoneManager.pose_bone_gather_children(active_bone)
 
@@ -93,26 +94,10 @@ class ANIME_HAIR_TOOLS_OT_copy_rotate_keys(bpy.types.Operator):
 
                 # keyframe_pointsのコピー
                 for point in keyframes[keyname]:
-                    offset = parent_distance * context.scene.AHT_keyframe_offset
+                    offset = parent_distance * offset
                     new_point = new_fcurve.keyframe_points.insert(point.co[0]+offset, point.co[1])
                     # co以外の残りをコピー
-                    self.copy_key(point, new_point)
-
-        return{'FINISHED'}    
-
-    # keyの内容をコピーする
-    def copy_key(self, src_point, dest_point):
-        dest_point.amplitude = src_point.amplitude
-        dest_point.back = src_point.back
-        # new_point.co
-        # new_point.co_ui
-        dest_point.easing = src_point.easing
-        dest_point.handle_left = src_point.handle_left
-        dest_point.handle_left_type = src_point.handle_left_type
-        dest_point.handle_right = src_point.handle_right
-        dest_point.handle_right_type = src_point.handle_right_type
-        dest_point.interpolation = src_point.interpolation
-        dest_point.period = src_point.period
+                    copy_keyframe(point, new_point) 
 
 
 class ANIME_HAIR_TOOLS_OT_remove_children_keys(bpy.types.Operator):
@@ -121,10 +106,11 @@ class ANIME_HAIR_TOOLS_OT_remove_children_keys(bpy.types.Operator):
 
     # execute
     def execute(self, context):
-        active_bone = context.active_pose_bone
-        if not active_bone.bone.select:
-            return{'FINISHED'}
+        for active_bone in bpy.context.selected_pose_bones:
+            self.remove_children_keys(active_bone)
+        return {'FINISHED'}
 
+    def remove_children_keys(self, active_bone):
         # gather children
         children_list = BoneManager.pose_bone_gather_children(active_bone)
 
@@ -134,7 +120,21 @@ class ANIME_HAIR_TOOLS_OT_remove_children_keys(bpy.types.Operator):
         # 子Boneからキーを削除する
         remove_all_keys_from_children(action, children_list)
 
-        return{'FINISHED'}
+
+# keyの内容をコピーする
+def copy_keyframe(self, src_point, dest_point):
+    dest_point.amplitude = src_point.amplitude
+    dest_point.back = src_point.back
+    # new_point.co
+    # new_point.co_ui
+    dest_point.easing = src_point.easing
+    dest_point.handle_left = src_point.handle_left
+    dest_point.handle_left_type = src_point.handle_left_type
+    dest_point.handle_right = src_point.handle_right
+    dest_point.handle_right_type = src_point.handle_right_type
+    dest_point.interpolation = src_point.interpolation
+    dest_point.period = src_point.period
+
 
 # 子Boneから指定ボーンまでの距離を計測する。到達できなければ-1
 def calc_parent_distance(parent_bone, bone, count=0):
