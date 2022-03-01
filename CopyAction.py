@@ -77,6 +77,12 @@ class ANIME_HAIR_TOOLS_OT_copy_rotate_keys(bpy.types.Operator):
 
         # 子Boneにkeyframeを突っ込む
         for child_bone in children_list:
+            parent_distance = calc_parent_distance(active_bone, child_bone)
+            # 通常ありえないはずだけど、親まで到達できなかった
+            if parent_distance <= 0:
+                continue
+
+            # keyframeの転送開始
             for keyname in keyframes:
                 # まずは突っ込み先のFCurveを作成
                 target, index = keyname.split(":")
@@ -85,7 +91,7 @@ class ANIME_HAIR_TOOLS_OT_copy_rotate_keys(bpy.types.Operator):
 
                 # keyframe_pointsのコピー
                 for point in keyframes[keyname]:
-                    offset = 5
+                    offset = parent_distance * 5
                     new_point = new_fcurve.keyframe_points.insert(point.co[0]+offset, point.co[1])
                     # co以外の残りをコピー
                     self.copy_key(point, new_point)
@@ -106,6 +112,7 @@ class ANIME_HAIR_TOOLS_OT_copy_rotate_keys(bpy.types.Operator):
         dest_point.interpolation = src_point.interpolation
         dest_point.period = src_point.period
 
+
 class ANIME_HAIR_TOOLS_OT_remove_children_keys(bpy.types.Operator):
     bl_idname = "anime_hair_tools.remove_children_keys"
     bl_label = "Remove Children Keys"
@@ -125,6 +132,14 @@ class ANIME_HAIR_TOOLS_OT_remove_children_keys(bpy.types.Operator):
         remove_all_keys_from_children(action, children_list)
 
         return{'FINISHED'}
+
+# 子Boneから指定ボーンまでの距離を計測する。到達できなければ-1
+def calc_parent_distance(parent_bone, bone, count=0):
+    if bone == None:
+        return -1
+    if parent_bone.name == bone.name:
+        return count
+    return calc_parent_distance(parent_bone, bone.parent, count+1)
 
 
 # 子Boneからキーを削除する
