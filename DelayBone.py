@@ -48,41 +48,48 @@ class ANIME_HAIR_TOOLS_OT_delay_setup(bpy.types.Operator):
 
     # execute
     def execute(self, context):
-        # 編集対象ボーンの回収
-        armature = bpy.context.active_object
-        selected_bones = []
-        for pose_bone in armature.pose.bones:
-            if pose_bone.bone.select:
-                selected_bones.append(pose_bone)
-        selected_bone_names = [bone.name for bone in selected_bones]
+        active_bone = context.active_pose_bone
+        if not active_bone.bone.select:
+            return{'FINISHED'}
 
-        # 親を集める
-        parent_list = []
-        for pose_bone in selected_bones:
-            parent_list.append(self.find_root_parent(pose_bone))
-        parent_list = set(parent_list)  # unique
-        parent_list_names = [parent.name for parent in parent_list]
+        # gather children
+        children_list = BoneManager.pose_bone_gather_children(active_bone)
+        children_dict = {bone.name: bone for bone in children_list}
 
         src_action = bpy.data.actions["AHT_ArmatureAction"]
         dest_action = bpy.data.actions["AHT_ArmatureAction"]
 
         # 選択中Boneから一旦キーフレームを削除する
-        for fcurve in src_action.fcurves:
+        for fcurve in dest_action.fcurves:
             # ボーン名と適用対象の取得
             match = re.search(r'pose.bones\["(.+?)"\].+?([^.]+$)', fcurve.data_path)
             if match:
                 bone_name, target = match.groups()
 
-                # 選択中のBoneだけ処理
-                if bone_name in selected_bone_names:
-                    print(fcurve.array_index)
-                    print(bone_name)
-                    print(target)
+                # 子のBoneだけ処理
+                if bone_name in children_dict:
+                    # 一旦キーを削除
                     dest_action.fcurves.remove(fcurve)
 
-                # for keyframe in fcurve.keyframe_points:
-                #     print(keyframe.co)
-                #     break
+        # active_boneのキーフレームを取得
+        for fcurve in dest_action.fcurves:
+            # ボーン名と適用対象の取得
+            match = re.search(r'pose.bones\["(.+?)"\].+?([^.]+$)', fcurve.data_path)
+            if match:
+                bone_name, target = match.groups()
+
+            # ActiveBoneだけ処理
+            if bone_name == active_bone.name:
+                print(target)
+
+                    # # 回転をコピー
+                    # if target == "rotation_quaternion":
+                    #     fcurve
+                    #     pass
+                    # elif target == "rotation_euler":
+                    #     pass
+                    # else:  # axis
+                    #     pass
 
 
         return{'FINISHED'}
