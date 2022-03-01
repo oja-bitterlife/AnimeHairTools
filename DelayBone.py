@@ -8,21 +8,36 @@ class ANIME_HAIR_TOOLS_OT_select_child_bones(bpy.types.Operator):
 
     # execute
     def execute(self, context):
-        # 編集対象ボーンの回収
-        armature = bpy.context.active_object
-        selected_bones = []
-        for pose_bone in armature.pose.bones:
-            if pose_bone.bone.select:
-                selected_bones.append(pose_bone)
+        active_bone = context.active_pose_bone
+        if not active_bone.bone.select:
+            return{'FINISHED'}
 
         # gather children
-        children_list = []
-        for pose_bone in selected_bones:
-            children_list.extend(BoneManager.pose_bone_gather_children(pose_bone))
+        children_list = BoneManager.pose_bone_gather_children(active_bone)
 
         # まとめてselect
         for child_pose_bone in children_list:
             child_pose_bone.bone.select = True
+
+        return{'FINISHED'}
+
+
+class ANIME_HAIR_TOOLS_OT_deselect_child_bones(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.deselect_child_bones"
+    bl_label = "Deselect Children"
+
+    # execute
+    def execute(self, context):
+        active_bone = context.active_pose_bone
+        if not active_bone.bone.select:
+            return{'FINISHED'}
+
+        # gather children
+        children_list = BoneManager.pose_bone_gather_children(active_bone)
+
+        # まとめてdeselect
+        for child_pose_bone in children_list:
+            child_pose_bone.bone.select = False
 
         return{'FINISHED'}
 
@@ -50,7 +65,8 @@ class ANIME_HAIR_TOOLS_OT_delay_setup(bpy.types.Operator):
 
         src_action = bpy.data.actions["AHT_ArmatureAction"]
         dest_action = bpy.data.actions["AHT_ArmatureAction"]
-        # 選択Boneから一旦キーフレームを削除
+
+        # 選択中Boneから一旦キーフレームを削除する
         for fcurve in src_action.fcurves:
             # ボーン名と適用対象の取得
             match = re.search(r'pose.bones\["(.+?)"\].+?([^.]+$)', fcurve.data_path)
@@ -68,10 +84,6 @@ class ANIME_HAIR_TOOLS_OT_delay_setup(bpy.types.Operator):
                 #     print(keyframe.co)
                 #     break
 
-        # 一旦keyを削除する
-        for pose_bone in selected_bones:
-            pass
-
 
         return{'FINISHED'}
 
@@ -88,7 +100,10 @@ class ANIME_HAIR_TOOLS_OT_delay_setup(bpy.types.Operator):
 # =================================================================================================
 def ui_draw(context, layout):
     # 選択中ボーンの子ボーンを選択
-    layout.label(text="Delay Bone:")
+    layout.label(text="Select Bones:")
     box = layout.box()
     box.operator("anime_hair_tools.select_child_bones")
+    box.operator("anime_hair_tools.deselect_child_bones")
+    layout.label(text="Propagate Action:")
+    box = layout.box()
     box.operator("anime_hair_tools.delay_setup")
