@@ -31,14 +31,14 @@ class ANIME_HAIR_TOOLS_OT_copy_rotation_keys(bpy.types.Operator):
             # ボーン名と適用対象の取得
             match = re.search(r'pose.bones\["(.+?)"\].+?([^.]+$)', fcurve.data_path)
             if match:
-                bone_name, target = match.groups()
+                bone_name, attribute = match.groups()
 
             # ActiveBoneだけ処理
             if bone_name == target_bone.name:
                 # 回転だけコピー
-                if target != "rotation_quaternion" and target != "rotation_euler" and target != "rotation_axis_angle":
+                if attribute != "rotation_quaternion" and attribute != "rotation_euler" and attribute != "rotation_axis_angle":
                     continue
-                keyframes["%s:%d" % (target, fcurve.array_index)] = fcurve.keyframe_points
+                keyframes["%s:%d" % (attribute, fcurve.array_index)] = fcurve.keyframe_points
 
         # 子Boneにkeyframeを突っ込む
         for child_bone in children_list:
@@ -51,9 +51,9 @@ class ANIME_HAIR_TOOLS_OT_copy_rotation_keys(bpy.types.Operator):
             # keyframeの転送開始
             for keyname in keyframes:
                 # まずは突っ込み先のFCurveを作成
-                target, index = keyname.split(":")
+                attribute, index = keyname.split(":")
                 index = int(index)
-                data_path = 'pose.bones["%s"].%s' % (child_bone.name, target)
+                data_path = 'pose.bones["%s"].%s' % (child_bone.name, attribute)
                 new_fcurve = action.fcurves.new(data_path=data_path, index=index)
 
                 # keyframe_pointsのコピー
@@ -63,7 +63,7 @@ class ANIME_HAIR_TOOLS_OT_copy_rotation_keys(bpy.types.Operator):
                     damping = pow(keyframe_damping, parent_distance)
 
                     # quaternionのときはwだけ操作する
-                    if target == "rotation_quaternion":
+                    if attribute == "rotation_quaternion":
                         if index != 0:
                             damping = 1
                         else:
@@ -98,6 +98,47 @@ class ANIME_HAIR_TOOLS_OT_remove_children_keys(bpy.types.Operator):
 
         # 子Boneからキーを削除する
         remove_all_keys_from_children(action, children_list)
+
+
+# キーフレームの単純コピー
+class ANIME_HAIR_TOOLS_OT_copy_action(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.copy_action"
+    bl_label = "Copy Active To Selected"
+
+    # execute
+    def execute(self, context):
+        active_bone = context.active_pose_bone
+
+        # ActiveBoneはコピー元なのでそれ以外をリストする
+        selected_list = [bone for bone in bpy.context.selected_pose_bones if bone != active_bone]
+
+        # コピー先BoneのKeyframeを削除する
+        action = bpy.context.active_object.animation_data.action
+        remove_all_keys_from_children(action, selected_list)
+
+        # active_boneのキーフレームを取得
+        for fcurve in action.fcurves:
+            # ボーン名と適用対象の取得
+            match = re.search(r'pose.bones\["(.+?)"\].+?([^.]+$)', fcurve.data_path)
+            if match:
+                bone_name, attribute = match.groups()
+
+            # ActiveBoneからコピーする
+            if bone_name == active_bone.name:
+                # 選択リストのBoneに転送
+                for select_bone in selected_list:
+                    data_path = 'pose.bones["%s"].%s' % (select_bone.name, attribute)
+                    new_fcurve = action.fcurves.new(data_path=data_path, index=fcurve.array_index)
+
+                    # keyframeの転送
+                    for point in fcurve.keyframe_points:
+                        # 転送先Keyframeの追加
+                        new_point = new_fcurve.keyframe_points.insert(point.co[0], point.co[1])
+
+                        # co以外の残りのパラメータをコピー
+                        copy_keyframe(point, new_point) 
+
+        return {'FINISHED'}
 
 
 # keyの内容をコピーする
@@ -145,12 +186,14 @@ def remove_all_keys_from_children(action, children_list):
 # =================================================================================================
 def ui_draw(context, layout):
     # Actionを子BoneにCopyする
-    layout.label(text="Propagate Action:")
+    layout.label(text="Propagate Action To Children:")
     box = layout.box()
     box.prop(context.scene, "AHT_keyframe_offset", text="Keyframe Offset")
     box.prop(context.scene, "AHT_keyframe_damping", text="Keyframe Damping")
     box.operator("anime_hair_tools.copy_rotation_keys")
     box.operator("anime_hair_tools.remove_children_keys")
+    layout.label(text="Copy Action:")
+    layout.operator("anime_hair_tools.copy_action")
 
 
 # =================================================================================================
