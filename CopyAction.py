@@ -54,7 +54,7 @@ class ANIME_HAIR_TOOLS_OT_copy_rotation_keys(bpy.types.Operator):
                 attribute, index = keyname.split(":")
                 index = int(index)
                 data_path = 'pose.bones["%s"].%s' % (child_bone.name, attribute)
-                new_fcurve = action.fcurves.new(data_path=data_path, index=index)
+                new_fcurve = action.fcurves.new(data_path=data_path, index=index, action_group=child_bone.name)
 
                 # keyframe_pointsのコピー
                 for point in keyframes[keyname]:
@@ -128,7 +128,7 @@ class ANIME_HAIR_TOOLS_OT_copy_action(bpy.types.Operator):
                 # 選択リストのBoneに転送
                 for select_bone in selected_list:
                     data_path = 'pose.bones["%s"].%s' % (select_bone.name, attribute)
-                    new_fcurve = action.fcurves.new(data_path=data_path, index=fcurve.array_index)
+                    new_fcurve = action.fcurves.new(data_path=data_path, index=fcurve.array_index, action_group=select_bone.name)
 
                     # keyframeの転送
                     for point in fcurve.keyframe_points:
