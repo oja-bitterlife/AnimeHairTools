@@ -2,18 +2,20 @@ import bpy, re
 
 from .Util import BoneManager
 
-# 
+# 回転系のKeyframeを子ボーンにコピーする
 class ANIME_HAIR_TOOLS_OT_copy_rotation_keys(bpy.types.Operator):
     bl_idname = "anime_hair_tools.copy_rotation_keys"
     bl_label = "Copy Rotation Keys"
 
     # execute
     def execute(self, context):
+        # 選択中のボーン一つ一つを親にして処理
         for target_bone in bpy.context.selected_pose_bones:
             self.copy_rotation_keys(target_bone, context.scene.AHT_keyframe_offset)
         return {'FINISHED'}
 
-    def copy_rotation_keys(self, target_bone, child_offset):
+    # target_bone以下のボーンにKeyframeをコピーする
+    def copy_rotation_keys(self, target_bone, delay_offset):
         # gather children
         children_list = BoneManager.pose_bone_gather_children(target_bone)
 
@@ -55,22 +57,25 @@ class ANIME_HAIR_TOOLS_OT_copy_rotation_keys(bpy.types.Operator):
 
                 # keyframe_pointsのコピー
                 for point in keyframes[keyname]:
-                    offset = parent_distance * child_offset
+                    offset = parent_distance * delay_offset
                     new_point = new_fcurve.keyframe_points.insert(point.co[0]+offset, point.co[1])
                     # co以外の残りをコピー
                     copy_keyframe(point, new_point) 
 
 
+# 子ボーンのキーフレームを削除する。スッキリさせて再出発用
 class ANIME_HAIR_TOOLS_OT_remove_children_keys(bpy.types.Operator):
     bl_idname = "anime_hair_tools.remove_children_keys"
     bl_label = "Remove Children Keys"
 
     # execute
     def execute(self, context):
+        # 選択中のボーン一つ一つを親にして処理
         for target_bone in bpy.context.selected_pose_bones:
             self.remove_children_keys(target_bone)
         return {'FINISHED'}
 
+    # target_boneの子boneにあるKeyframeを削除する
     def remove_children_keys(self, target_bone):
         # gather children
         children_list = BoneManager.pose_bone_gather_children(target_bone)
