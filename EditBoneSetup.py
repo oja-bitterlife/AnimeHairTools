@@ -25,7 +25,7 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_roll(bpy.types.Operator):
         armature = bpy.context.active_object
         selected_bones = []
         for bone in armature.data.edit_bones:
-            if bone.select:
+            if bone.select and is_layer_enable(armature, bone):
                 selected_bones.append(bone)
 
         # 最近点を探る
@@ -72,7 +72,7 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_connect(bpy.types.Operator):
         armature = bpy.context.active_object
         selected_bones = []
         for bone in armature.data.edit_bones:
-            if bone.select:
+            if bone.select and is_layer_enable(armature, bone):
                 selected_bones.append(bone)
 
         # connect
@@ -92,7 +92,7 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_disconnect(bpy.types.Operator):
         armature = bpy.context.active_object
         selected_bones = []
         for bone in armature.data.edit_bones:
-            if bone.select:
+            if bone.select and is_layer_enable(armature, bone):
                 selected_bones.append(bone)
 
         # disconnect
@@ -100,6 +100,14 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_disconnect(bpy.types.Operator):
             bone.use_connect = False
 
         return{'FINISHED'}
+
+
+# boneが含まれているレイヤーがArmatureの表示レイヤーになっているかどうか
+def is_layer_enable(armature, edit_bone):
+    for i, b in enumerate(edit_bone.layers):
+        if b:
+            return armature.data.layers[i]
+    return False
 
 
 # UI描画設定
