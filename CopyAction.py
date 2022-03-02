@@ -69,8 +69,10 @@ class ANIME_HAIR_TOOLS_OT_copy_rotation_keys(bpy.types.Operator):
                         else:
                             damping = 1.0 / damping  # wには逆数を使う
 
+                    # Keyframeの追加
                     new_point = new_fcurve.keyframe_points.insert(point.co[0]+offset, point.co[1]*damping)
-                    # co以外の残りをコピー
+
+                    # co以外の残りのパラメータをコピー
                     copy_keyframe(point, new_point) 
 
 
