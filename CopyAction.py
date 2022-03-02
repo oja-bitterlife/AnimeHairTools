@@ -1,59 +1,19 @@
 import bpy, re
 
 from .Util import BoneManager
-from .Util.ListupUtil import ListupProperty
 
-class ANIME_HAIR_TOOLS_OT_select_child_bones(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.select_child_bones"
-    bl_label = "Select Children"
-
-    # execute
-    def execute(self, context):
-        active_bone = context.active_pose_bone
-        if not active_bone.bone.select:
-            return{'FINISHED'}
-
-        # gather children
-        children_list = BoneManager.pose_bone_gather_children(active_bone)
-
-        # まとめてselect
-        for child_pose_bone in children_list:
-            child_pose_bone.bone.select = True
-
-        return{'FINISHED'}
-
-
-class ANIME_HAIR_TOOLS_OT_deselect_child_bones(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.deselect_child_bones"
-    bl_label = "Deselect Children"
-
-    # execute
-    def execute(self, context):
-        active_bone = context.active_pose_bone
-        if not active_bone.bone.select:
-            return{'FINISHED'}
-
-        # gather children
-        children_list = BoneManager.pose_bone_gather_children(active_bone)
-
-        # まとめてdeselect
-        for child_pose_bone in children_list:
-            child_pose_bone.bone.select = False
-
-        return{'FINISHED'}
-
-
-class ANIME_HAIR_TOOLS_OT_copy_rotate_keys(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.copy_rotate_keys"
-    bl_label = "Copy Rotate Keys"
+# 
+class ANIME_HAIR_TOOLS_OT_copy_rotation_keys(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.copy_rotation_keys"
+    bl_label = "Copy Rotation Keys"
 
     # execute
     def execute(self, context):
         for target_bone in bpy.context.selected_pose_bones:
-            self.copy_rotate_keys(target_bone, context.scene.AHT_keyframe_offset)
+            self.copy_rotation_keys(target_bone, context.scene.AHT_keyframe_offset)
         return {'FINISHED'}
 
-    def copy_rotate_keys(self, target_bone, child_offset):
+    def copy_rotation_keys(self, target_bone, child_offset):
         # gather children
         children_list = BoneManager.pose_bone_gather_children(target_bone)
 
@@ -166,17 +126,11 @@ def remove_all_keys_from_children(action, children_list):
 # UI描画設定
 # =================================================================================================
 def ui_draw(context, layout):
-    # 選択中ボーンの子ボーンを選択
-    layout.label(text="Select Bones:")
-    box = layout.box()
-    box.operator("anime_hair_tools.select_child_bones")
-    box.operator("anime_hair_tools.deselect_child_bones")
-
     # Actionを子BoneにCopyする
     layout.label(text="Propagate Action:")
     box = layout.box()
     box.prop(context.scene, "AHT_keyframe_offset", text="Keyframe Offset")
-    box.operator("anime_hair_tools.copy_rotate_keys")
+    box.operator("anime_hair_tools.copy_rotation_keys")
     box.operator("anime_hair_tools.remove_children_keys")
 
 
