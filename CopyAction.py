@@ -11,11 +11,11 @@ class ANIME_HAIR_TOOLS_OT_copy_rotation_keys(bpy.types.Operator):
     def execute(self, context):
         # 選択中のボーン一つ一つを親にして処理
         for target_bone in bpy.context.selected_pose_bones:
-            self.copy_rotation_keys(target_bone, context.scene.AHT_keyframe_offset)
+            self.copy_rotation_keys(target_bone, context.scene.AHT_keyframe_offset, context.scene.AHT_keyframe_damping)
         return {'FINISHED'}
 
     # target_bone以下のボーンにKeyframeをコピーする
-    def copy_rotation_keys(self, target_bone, delay_offset):
+    def copy_rotation_keys(self, target_bone, keyframe_offset, keyframe_damping):
         # gather children
         children_list = BoneManager.pose_bone_gather_children(target_bone)
 
@@ -52,13 +52,24 @@ class ANIME_HAIR_TOOLS_OT_copy_rotation_keys(bpy.types.Operator):
             for keyname in keyframes:
                 # まずは突っ込み先のFCurveを作成
                 target, index = keyname.split(":")
+                index = int(index)
                 data_path = 'pose.bones["%s"].%s' % (child_bone.name, target)
-                new_fcurve = action.fcurves.new(data_path=data_path, index=int(index))
+                new_fcurve = action.fcurves.new(data_path=data_path, index=index)
 
                 # keyframe_pointsのコピー
                 for point in keyframes[keyname]:
-                    offset = parent_distance * delay_offset
-                    new_point = new_fcurve.keyframe_points.insert(point.co[0]+offset, point.co[1])
+                    # 変化
+                    offset = parent_distance * keyframe_offset
+                    damping = pow(keyframe_damping, parent_distance)
+
+                    # quaternionのときはwだけ操作する
+                    if target == "rotation_quaternion":
+                        if index != 0:
+                            damping = 1
+                        else:
+                            damping = 1.0 / damping  # wには逆数を使う
+
+                    new_point = new_fcurve.keyframe_points.insert(point.co[0]+offset, point.co[1]*damping)
                     # co以外の残りをコピー
                     copy_keyframe(point, new_point) 
 
@@ -135,6 +146,7 @@ def ui_draw(context, layout):
     layout.label(text="Propagate Action:")
     box = layout.box()
     box.prop(context.scene, "AHT_keyframe_offset", text="Keyframe Offset")
+    box.prop(context.scene, "AHT_keyframe_damping", text="Keyframe Damping")
     box.operator("anime_hair_tools.copy_rotation_keys")
     box.operator("anime_hair_tools.remove_children_keys")
 
@@ -142,3 +154,4 @@ def ui_draw(context, layout):
 # =================================================================================================
 def register():
     bpy.types.Scene.AHT_keyframe_offset = bpy.props.IntProperty(name = "keyframe offset", default=5)
+    bpy.types.Scene.AHT_keyframe_damping = bpy.props.FloatProperty(name = "keyframe damping", default=1)
