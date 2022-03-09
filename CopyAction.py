@@ -10,7 +10,7 @@ class ANIME_HAIR_TOOLS_OT_copy_rotation_keys(bpy.types.Operator):
     # execute
     def execute(self, context):
         # 選択中のボーン一つ一つを親にして処理
-        for target_bone in bpy.context.selected_pose_bones:
+        for target_bone in context.selected_pose_bones:
             self.copy_rotation_keys(target_bone, context.scene.AHT_keyframe_offset, context.scene.AHT_keyframe_damping)
         return {'FINISHED'}
 
@@ -84,7 +84,7 @@ class ANIME_HAIR_TOOLS_OT_remove_children_keys(bpy.types.Operator):
     # execute
     def execute(self, context):
         # 選択中のボーン一つ一つを親にして処理
-        for target_bone in bpy.context.selected_pose_bones:
+        for target_bone in context.selected_pose_bones:
             self.remove_children_keys(target_bone)
         return {'FINISHED'}
 
@@ -110,10 +110,10 @@ class ANIME_HAIR_TOOLS_OT_copy_action(bpy.types.Operator):
         active_bone = context.active_pose_bone
 
         # ActiveBoneはコピー元なのでそれ以外をリストする
-        selected_list = [bone for bone in bpy.context.selected_pose_bones if bone != active_bone]
+        selected_list = [bone for bone in context.selected_pose_bones if bone != active_bone]
 
         # コピー先BoneのKeyframeを削除する
-        action = bpy.context.active_object.animation_data.action
+        action = context.active_object.animation_data.action
         remove_all_keys_from_children(action, selected_list)
 
         # active_boneのキーフレームを取得
