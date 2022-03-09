@@ -31,7 +31,9 @@ def create(context, selected_curve_objs):
 
         # ミラーのコピー
         for modifier in recovery_data:
-            mesh_obj.modifiers.new(modifier.name, modifier.type)
+            new_mirror_modifire = mesh_obj.modifiers.new(modifier.name, modifier.type)
+            new_mirror_modifire.use_mirror_merge = False
+
 
         # メッシュにモディファイアを追加
         mesh_obj.modifiers.new("Armature", "ARMATURE")

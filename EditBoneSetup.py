@@ -4,6 +4,31 @@ import math
 from .Util.ListupUtil import ListupProperty
 
 
+# 選択中BoneのBendyBoneの設定
+# =================================================================================================
+class ANIME_HAIR_TOOLS_OT_setup_bendy_bone(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.setup_bendy_bone"
+    bl_label = "Setup Bendy Bone"
+
+    # execute
+    def execute(self, context):
+        # 編集対象ボーンの回収
+        armature = context.active_object
+        selected_bones = []
+        for bone in armature.data.edit_bones:
+            if bone.select and is_layer_enable(armature, bone):
+                selected_bones.append(bone)
+
+        if context.scene.AHT_bbone < 1:
+            context.scene.AHT_bbone = 1
+
+        # connect
+        for bone in selected_bones:
+            bone.bbone_segments = context.scene.AHT_bbone
+
+        return{'FINISHED'}
+
+
 # 選択中のBoneのRollを設定する
 # =================================================================================================
 class ANIME_HAIR_TOOLS_OT_setup_bone_roll(bpy.types.Operator):
@@ -22,7 +47,7 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_roll(bpy.types.Operator):
             normals.append(v.normal)
 
         # 編集対象ボーンの回収
-        armature = bpy.context.active_object
+        armature = context.active_object
         selected_bones = []
         for bone in armature.data.edit_bones:
             if bone.select and is_layer_enable(armature, bone):
@@ -69,7 +94,7 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_connect(bpy.types.Operator):
     # execute
     def execute(self, context):
         # 編集対象ボーンの回収
-        armature = bpy.context.active_object
+        armature = context.active_object
         selected_bones = []
         for bone in armature.data.edit_bones:
             if bone.select and is_layer_enable(armature, bone):
@@ -89,7 +114,7 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_disconnect(bpy.types.Operator):
     # execute
     def execute(self, context):
         # 編集対象ボーンの回収
-        armature = bpy.context.active_object
+        armature = context.active_object
         selected_bones = []
         for bone in armature.data.edit_bones:
             if bone.select and is_layer_enable(armature, bone):
@@ -113,12 +138,17 @@ def is_layer_enable(armature, edit_bone):
 # UI描画設定
 # =================================================================================================
 def ui_draw(context, layout):
+    # 選択中BoneのBendyBoneの設定
+    layout.label(text="Bone Roll Setting:")
+    box = layout.box()
+    box.prop(context.scene, "AHT_bbone", text="BendyBones")
+    box.operator("anime_hair_tools.setup_bendy_bone")
+
     # 選択中BoneのRollの設定
     layout.label(text="Bone Roll Setting:")
     box = layout.box()
     box.prop(context.scene.AHT_roll_reference, "roll_reference", text="Roll Reference Object")
     box.operator("anime_hair_tools.setup_bone_roll")
-
 
     # 選択中BoneのConnect/Disconnect
     layout.label(text="Bone Connect Setting:")
