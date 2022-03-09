@@ -1,4 +1,4 @@
-import bpy
+import bpy, math
 
 from . import Naming, MirrorUtil
 
@@ -75,7 +75,15 @@ def _create_temp_mesh(curve_obj):
     return duplicated_list
 
 def _set_mesh_weights(curve_obj, duplicated_list):
-        # ミラーチェック
+    # 頂点にウェイト設定する内部関数を用意しておく
+    def __add_weight_group(target_obj, name_base, spline_no, segment_no, mirror_name):
+        vw_name = Naming.make_bone_name(name_base, spline_no, segment_no, mirror_name)
+        vg = target_obj.vertex_groups[vw_name]
+        vg.add([v_no], 1, 'ADD')
+
+    # 関数本体
+    # -------------------------------------------------------------------------
+    # ミラーチェック
     MirrorName = None if len(MirrorUtil.find_mirror_modifires(curve_obj)) == 0 else "L"
 
     # まずはVertexGropusの追加
@@ -91,49 +99,73 @@ def _set_mesh_weights(curve_obj, duplicated_list):
 
     # 頂点ごとにウェイト値を算出
     # -------------------------------------------------------------------------
-    # まずは対象となるCurveのポイントの座標を取得
-    bone_ends_list = []
-    for spline_no, spline in enumerate(curve_obj.data.splines):
-        bone_ends = []
-        for i in range(len(spline.points)-1):
+    # まずは対象となるCurveポイントのWorld座標を取得
+    curve_world_points_list = []
+    for spline in curve_obj.data.splines:
+        curve_world_points = []
+        for spline_point in spline.points:
             root_matrix = curve_obj.matrix_world
-            world_pos = root_matrix @ spline.points[i+1].co
-            bone_ends.append(world_pos.xyz)
+            world_pos = root_matrix @ spline_point.co
+            curve_world_points.append(world_pos.xyz)
         # スプラインごとにまとめていく
-        bone_ends_list.append(bone_ends)
+        curve_world_points_list.append(curve_world_points)
 
-    # 房(メッシュ)ごとに各頂点のボーンとの距離算出
+    # 房(メッシュ)ごとに処理。
+    # Curveのポイント間をつなぐ線分上に射影して、一番近い(ただし0以上)
+    # Curveの始点をウェイト対象にする
     for duplicate_no,duplicated_obj in enumerate(duplicated_list):
         mesh = duplicated_obj.data
         root_matrix = duplicated_obj.matrix_world
-    
+
+        curve_world_points = curve_world_points_list[duplicate_no]
+
+        # Meshの頂点ごとにウェイトを計算
         for v_no,v in enumerate(mesh.vertices):
-            # 一つの頂点にすべてのボーンへの距離を突っ込む
-            vertex_weight = []
-            for bone_no,bone_world in enumerate(bone_ends_list[duplicate_no]):
-                d = (root_matrix @ v.co) - bone_world
-                vertex_weight.append([bone_no, d.length])
-            # 値が小さい３つに絞る
-            vertex_weight = sorted(vertex_weight, key=lambda x: x[1])[:3]
+            world_vpos = (root_matrix @ v.co)
+            # Curveの線分ごとに処理
+            vg_add_flag = False
+            for i in range(len(curve_world_points)-1):
+                # Curveの線分のベクトル
+                curve_vec = curve_world_points[i+1] - curve_world_points[i]
+                curve_vec_length = curve_vec.length  # ベクトルの長さを出しておく
+                curve_vec.normalize()  # 単位化
+    
+                # Curveの始点から頂点へのベクトル
+                to_point_vec = world_vpos - curve_world_points[i]
 
-            # 割合に変換
-            sum_length = 0
-            for vw_no in range(len(vertex_weight)):
-                sum_length += vertex_weight[vw_no][1]
-            if sum_length > 0:  # 一応0割対策
-                for vw_no in range(len(vertex_weight)):
-                    vertex_weight[vw_no][1] = vertex_weight[vw_no][1] / sum_length
-            for vw_no in range(len(vertex_weight)):
-                vertex_weight[vw_no][1] = 1 - vertex_weight[vw_no][1]  # 一番近いときが1
-                # 影響にメリハリを
-                vertex_weight[vw_no][1] = pow(vertex_weight[vw_no][1], 3)
+                # 射影
+                on_curve_length = curve_vec.dot(to_point_vec)
 
-            # 頂点についたウェイトを頂点グループに登録
-            for vw in vertex_weight:
-                vw_name = Naming.make_bone_name(curve_obj.name, duplicate_no, vw[0], MirrorName)
-                vg = duplicated_obj.vertex_groups[vw_name]
-                vg.add([v_no], vw[1], 'ADD')  # 割合にして逆数に
+                # 線分上にいればその線分から作られるBoneをウェイト1.0に
+                if on_curve_length >= 0 and on_curve_length < curve_vec_length:
+                    # この頂点が始点のBoneに追従するようにウェイト設定
+                    __add_weight_group(duplicated_obj, curve_obj.name, duplicate_no, i, MirrorName)
+                    vg_add_flag = True
+                    break
 
+            # 頂点グループを設定しそこなった
+            if vg_add_flag == False:
+                # 一番近いBoneの始点をを算出
+                min_distance = math.inf
+                min_index = None
+                for i in range(len(curve_world_points)-1):
+                    distance = (world_vpos - curve_world_points[i]).length
+                    if min_distance > distance:
+                        min_index = i
+                        min_distance = distance
+
+                # 一番近いBoneの始点を対象にする
+                if min_index != None:
+                    # この頂点が始点のBoneに追従するようにウェイト設定
+                    __add_weight_group(duplicated_obj, curve_obj.name, duplicate_no, min_index, MirrorName)
+                    vg_add_flag = True
+
+            # 基本的にここには来ない
+            if vg_add_flag == False:
+                print("error: weight cannot set:", v_no)
+
+
+# ウェイトを付け終わった中間Meshを結合して１つのオブジェクトにする
 def _join_temp_meshes(duplicated_list):
     bpy.ops.object.select_all(action='DESELECT')
 
