@@ -1,7 +1,7 @@
 
 import bpy
 
-from . import Naming, ArmatureMode, MirrorUtil
+from . import Naming, ArmatureMode, MirrorUtil, ConstraintUtil
 
 
 # ボーン作成
@@ -22,10 +22,12 @@ def create(context, selected_curve_objs):
         if MirrorName != None:
             _create_curve_bones(context, armature, curve_obj, "R")  # Curve１本１本処理する
 
+    # BoneConstraintsの追加
+    ArmatureMode.to_pose_mode(context, armature)
+    _add_constraints(context, armature)
 
     # OBJECTモードに戻すのを忘れないように
     ArmatureMode.return_obuject_mode(state_backup)
-
 
 # create bone chain
 # *****************************************************************************
@@ -66,6 +68,13 @@ def _create_curve_bones(context, armature, curve_obj, MirrorName):
 
             # 自分を親にして次をつなげていく
             parent = new_bone
+
+
+# BoneConstraintの追加
+def _add_constraints(context, armature):
+    for pose_bone in armature.pose.bones:
+        # limit location
+        ConstraintUtil.add_limit_location(pose_bone)
 
 
 # 削除
