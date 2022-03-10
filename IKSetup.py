@@ -29,8 +29,8 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
         # 生成するBone名と、すでに存在するかのチェック
         ik_target_bone_name = Naming.make_ik_target_bone_name(end_bone.name)
         has_bone = armature.pose.bones.get(ik_target_bone_name)
-        if has_bone == None:
-            remove_bone_from_pose(has_bone)
+        if has_bone:
+            remove_bone_from_pose(armature, has_bone)
 
         bpy.ops.object.mode_set(mode='EDIT')
         new_bone = armature.data.edit_bones.new(name=ik_target_bone_name)
@@ -38,7 +38,7 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
         new_bone.tail = end_bone.tail+mathutils.Vector((0,0,-size))
  
         # IK constraintの設定
-        ConstraintUtil.add_ik(end_bone, new_bone, level)
+        ConstraintUtil.add_ik(armature, end_bone, new_bone, level)
 
         bpy.ops.object.mode_set(mode='POSE')
 
@@ -71,7 +71,7 @@ class ANIME_HAIR_TOOLS_OT_ik_remove(bpy.types.Operator):
 
         # constraint_target_boneも削除
         if pose_bone.name.startswith(Naming.IK_TARGET_BONE_PREFIX):
-            remove_bone_from_pose(pose_bone)
+            remove_bone_from_pose(armature, pose_bone)
 
 
 # POSEモードのpose_boneからedit_boneを削除する
