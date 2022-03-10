@@ -1,4 +1,4 @@
-import bpy, sys
+import bpy
 
 from .Util import BoneManager, MeshManager
 
@@ -70,7 +70,7 @@ def ui_draw(context, layout):
 
     # 実行
     box.prop(context.scene, "AHT_subdivision", text="Use Subdivision Modifire")
-    box.prop(context.scene, "AHT_bbone", text="BendyBones")
+    box.prop(context.scene, "AHT_bbone", text="Bendy Bones")
     box.operator("anime_hair_tools.create")
     box.operator("anime_hair_tools.remove")
 
