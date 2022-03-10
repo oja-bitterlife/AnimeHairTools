@@ -26,21 +26,19 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
         level = self.check_level_distance(root_bone, end_bone)
         size = context.scene.AHT_ik_target_size
 
-        # 生成するBone名と、すでに存在するかのチェック
+        # 生成するBone名
         ik_target_bone_name = Naming.make_ik_target_bone_name(end_bone.name)
-        has_bone = armature.pose.bones.get(ik_target_bone_name)
-        if has_bone:
-            remove_bone_from_pose(armature, has_bone)
 
         bpy.ops.object.mode_set(mode='EDIT')
         new_bone = armature.data.edit_bones.new(name=ik_target_bone_name)
         new_bone.head = end_bone.tail
         new_bone.tail = end_bone.tail+mathutils.Vector((0,0,-size))
  
+        bpy.ops.object.mode_set(mode='POSE')
+
         # IK constraintの設定
         ConstraintUtil.add_ik(armature, end_bone, new_bone, level)
 
-        bpy.ops.object.mode_set(mode='POSE')
 
     # end_boneからroot_boneまでの距離を計算
     def check_level_distance(self, root_bone, end_bone, level=1):
