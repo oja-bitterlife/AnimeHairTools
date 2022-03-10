@@ -124,47 +124,34 @@ def _set_mesh_weights(curve_obj, duplicated_list):
         # Meshの頂点ごとにウェイトを計算
         for v_no,v in enumerate(mesh.vertices):
             world_vpos = (root_matrix @ v.co)
+
             # Curveの線分ごとに処理
-            vg_add_flag = False
+            distance_list = []
             for i in range(len(curve_world_points)-1):
-                # Curveの線分のベクトル
-                curve_vec = curve_world_points[i+1] - curve_world_points[i]
-                curve_vec_length = curve_vec.length  # ベクトルの長さを出しておく
-                curve_vec.normalize()  # 単位化
-    
-                # Curveの始点から頂点へのベクトル
-                to_point_vec = world_vpos - curve_world_points[i]
+                # 頂点間の距離
+                distance_list.append([i , (world_vpos - curve_world_points[i]).length])
 
-                # 射影
-                on_curve_length = curve_vec.dot(to_point_vec)
+            # ソートして近い順に
+            distance_list = sorted(distance_list, key=lambda x: x[1])
 
-                # 線分上にいればその線分から作られるBoneをウェイト1.0に
-                if on_curve_length >= 0 and on_curve_length < curve_vec_length:
-                    # この頂点が始点のBoneに追従するようにウェイト設定
-                    __add_weight_group(duplicated_obj, curve_obj.name, duplicate_no, i, MirrorName)
-                    vg_add_flag = True
-                    break
+            # ボーン方向にないものを排除
+            def check_dir(distance, world_vpos, curve_world_points):
+                point_no = distance[0]
+                point_vec = world_vpos - curve_world_points[point_no]
+                curve_vec = curve_world_points[point_no+1] - curve_world_points[point_no]
+                return curve_vec.dot(point_vec) >= 0
 
-            # 頂点グループを設定しそこなった
-            if vg_add_flag == False:
-                # 一番近いBoneの始点をを算出
-                min_distance = math.inf
-                min_index = None
-                for i in range(len(curve_world_points)-1):
-                    distance = (world_vpos - curve_world_points[i]).length
-                    if min_distance > distance:
-                        min_index = i
-                        min_distance = distance
+            check_dir_list = [distance for distance in distance_list if check_dir(distance, world_vpos, curve_world_points)]
 
-                # 一番近いBoneの始点を対象にする
-                if min_index != None:
-                    # この頂点が始点のBoneに追従するようにウェイト設定
-                    __add_weight_group(duplicated_obj, curve_obj.name, duplicate_no, min_index, MirrorName)
-                    vg_add_flag = True
+            # 順方向に近いCurveのpointがなかった
+            use_no = None
+            if len(check_dir_list) == 0:
+                use_no = distance_list[0][0]  # とりあえず一番近いCurveのpointを使う
+            else:
+                # 残ったので一番近いもの
+                use_no = check_dir_list[0][0]
 
-            # 基本的にここには来ない
-            if vg_add_flag == False:
-                print("error: weight cannot set:", v_no)
+            __add_weight_group(duplicated_obj, curve_obj.name, duplicate_no, use_no, MirrorName)
 
 
 # ウェイトを付け終わった中間Meshを結合して１つのオブジェクトにする
