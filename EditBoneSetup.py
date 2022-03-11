@@ -139,7 +139,7 @@ def is_layer_enable(armature, edit_bone):
 # =================================================================================================
 def ui_draw(context, layout):
     # 選択中BoneのBendyBoneの設定
-    layout.label(text="Bone Roll Setting:")
+    layout.label(text="Bendy Bone Setting:")
     box = layout.box()
     box.prop(context.scene, "AHT_bbone", text="BendyBones")
     box.operator("anime_hair_tools.setup_bendy_bone")

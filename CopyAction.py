@@ -185,15 +185,17 @@ def remove_all_keys_from_children(action, children_list):
 # UI描画設定
 # =================================================================================================
 def ui_draw(context, layout):
+    layout.label(text="Action Util:")
+    copy_action_box = layout.box()
     # Actionを子BoneにCopyする
-    layout.label(text="Propagate Action To Children:")
-    box = layout.box()
+    copy_action_box.label(text="Propagate Action To Children:")
+    box = copy_action_box.box()
     box.prop(context.scene, "AHT_keyframe_offset", text="Keyframe Offset")
     box.prop(context.scene, "AHT_keyframe_damping", text="Keyframe Damping")
     box.operator("anime_hair_tools.copy_rotation_keys")
     box.operator("anime_hair_tools.remove_children_keys")
-    layout.label(text="Copy Action:")
-    layout.operator("anime_hair_tools.copy_action")
+    copy_action_box.label(text="Copy Action:")
+    copy_action_box.operator("anime_hair_tools.copy_action")
 
 
 # =================================================================================================
