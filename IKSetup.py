@@ -19,7 +19,9 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
                 # 終端だったらセットアップ
                 if len(child.children) == 0:
                     self.IK_setup(context, armature, root_bone, child)
+
         return {'FINISHED'}
+
 
     def IK_setup(self, context, armature, root_bone, end_bone):
         # すでにあるIK関連を消しておく
@@ -53,7 +55,7 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
         return self.check_level_distance(root_bone, end_bone.parent, level+1)
 
 
-# IK Setup
+# IK Remove
 # =================================================================================================
 class ANIME_HAIR_TOOLS_OT_ik_remove(bpy.types.Operator):
     bl_idname = "anime_hair_tools.ik_remove"
@@ -85,6 +87,40 @@ class ANIME_HAIR_TOOLS_OT_ik_remove(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# IK Enable
+# =================================================================================================
+class ANIME_HAIR_TOOLS_OT_ik_enable(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.ik_enable"
+    bl_label = "IK Enable All"
+
+    # execute ok
+    def execute(self, context):
+        armature = context.active_object
+        for pose_bone in armature.pose.bones:
+            for constraint in pose_bone.constraints:
+                if constraint.name.startswith(Naming.CONSTRAINT_PREFIX + "ik_"):
+                    constraint.mute = False
+
+        return {'FINISHED'}
+
+
+# IK Disable
+# =================================================================================================
+class ANIME_HAIR_TOOLS_OT_ik_disable(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.ik_disable"
+    bl_label = "IK Dsiable All"
+
+    # execute ok
+    def execute(self, context):
+        armature = context.active_object
+        for pose_bone in armature.pose.bones:
+            for constraint in pose_bone.constraints:
+                if constraint.name.startswith(Naming.CONSTRAINT_PREFIX + "ik_"):
+                    constraint.mute = True
+
+        return {'FINISHED'}
+
+
 # UI描画設定
 # =================================================================================================
 def ui_draw(context, layout):
@@ -93,6 +129,9 @@ def ui_draw(context, layout):
     box.prop(context.scene, "AHT_ik_target_size", text="IK Target Size")
     box.operator("anime_hair_tools.ik_setup")
     box.operator("anime_hair_tools.ik_remove")
+    box = layout.box()
+    box.operator("anime_hair_tools.ik_enable")
+    box.operator("anime_hair_tools.ik_disable")
 
 
 # =================================================================================================
