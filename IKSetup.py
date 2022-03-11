@@ -22,6 +22,9 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
         return {'FINISHED'}
 
     def IK_setup(self, context, armature, root_bone, end_bone):
+        # すでにあるIK関連を消しておく
+        ConstraintUtil.remove_ik_and_target(armature, end_bone)
+
         # パラメータ取得
         level = self.check_level_distance(root_bone, end_bone)
         size = context.scene.AHT_ik_target_size
@@ -37,7 +40,7 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
  
         bpy.ops.object.mode_set(mode='POSE')
 
-        # IK constraintの設定
+        # IK constraintの追加
         ConstraintUtil.add_ik(armature, end_bone, ik_target_bone_name, level)
 
 
