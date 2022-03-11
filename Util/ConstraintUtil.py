@@ -23,15 +23,15 @@ def remove_all(pose_bone):
 
 # IK用
 # *****************************************************************************
-def add_ik(armature, setup_pose_bone, target_pose_bone, level):
+def add_ik(armature, setup_pose_bone, ik_target_name, level):
     # ２重登録しないように
     remove_ik(setup_pose_bone)
     # 新規
     constraint = setup_pose_bone.constraints.new("IK")
     constraint.name = Naming.make_constraint_name("ik_" + setup_pose_bone.name)
     constraint.chain_count = level
-    constraint.target = armature
-    constraint.subtarget = target_pose_bone.name
+    constraint.target = armature    
+    constraint.subtarget = ik_target_name
 
 def remove_ik(pose_bone):
     for constraint in pose_bone.constraints:

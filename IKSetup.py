@@ -30,14 +30,14 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
         ik_target_bone_name = Naming.make_ik_target_bone_name(end_bone.name)
 
         bpy.ops.object.mode_set(mode='EDIT')
-        new_bone = armature.data.edit_bones.new(name=ik_target_bone_name)
-        new_bone.head = end_bone.tail
-        new_bone.tail = end_bone.tail+mathutils.Vector((0,0,-size))
+        new_edit_bone = armature.data.edit_bones.new(name=ik_target_bone_name)
+        new_edit_bone.head = end_bone.tail
+        new_edit_bone.tail = end_bone.tail+mathutils.Vector((0,0,-size))
  
         bpy.ops.object.mode_set(mode='POSE')
 
         # IK constraintの設定
-        ConstraintUtil.add_ik(armature, end_bone, new_bone, level)
+        ConstraintUtil.add_ik(armature, end_bone, ik_target_bone_name, level)
 
 
     # end_boneからroot_boneまでの距離を計算
