@@ -71,6 +71,7 @@ def ui_draw(context, layout):
     # 実行
     box.prop(context.scene, "AHT_subdivision", text="Use Subdivision Modifire")
     box.prop(context.scene, "AHT_bbone", text="Bendy Bones")
+    box.prop(context.scene, "AHT_create_layer", text="Bone Create Layer")
     box.operator("anime_hair_tools.create")
     box.operator("anime_hair_tools.remove")
 
@@ -78,6 +79,7 @@ def ui_draw(context, layout):
 # =================================================================================================
 def register():
     # Bone設定
-    bpy.types.Scene.AHT_bbone = bpy.props.IntProperty(name = "BendyBone split", default=4)
+    bpy.types.Scene.AHT_bbone = bpy.props.IntProperty(name = "BendyBone split", default=3, min=1, max=32)
+    bpy.types.Scene.AHT_create_layer = bpy.props.IntProperty(name = "Bone Create Layer", default=1, min=1, max=32)
     # モディファイア設定
     bpy.types.Scene.AHT_subdivision = bpy.props.BoolProperty(name = "With Subdivision", default=True)

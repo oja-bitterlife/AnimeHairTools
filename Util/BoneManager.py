@@ -10,28 +10,43 @@ def create(context, selected_curve_objs):
     armature = bpy.data.objects[context.scene.AHT_armature_name]
     bpy.context.view_layer.objects.active = armature
 
+    # Layerのバックアップとwork用LayerのみON
+    backup_layers = list(armature.data.layers)
+    setup_layers = [i == context.scene.AHT_create_layer-1 for i in range(len(backup_layers))]
+    armature.data.layers = setup_layers
+
     # to edit-mode
     state_backup = ArmatureMode.to_edit_mode(context, armature)
 
     # Curveごとに回す
+    edit_bones = []
     for curve_obj in selected_curve_objs:
         # ミラーチェック
         MirrorName = None if len(MirrorUtil.find_mirror_modifires(curve_obj)) == 0 else "L"
 
-        _create_curve_bones(context, armature, curve_obj, MirrorName)  # Curve１本１本処理する
+        edit_bones += _create_curve_bones(context, armature, curve_obj, MirrorName)  # Curve１本１本処理する
         if MirrorName != None:
-            _create_curve_bones(context, armature, curve_obj, "R")  # Curve１本１本処理する
+            edit_bones += _create_curve_bones(context, armature, curve_obj, "R")  # Curve１本１本処理する
+
 
     # BoneConstraintsの追加
+    bone_names = [edit_bone.name for edit_bone in edit_bones]
     ArmatureMode.to_pose_mode(context, armature)
-    _add_constraints(context, armature)
+    pose_bones = [armature.pose.bones[bone_name] for bone_name in bone_names]
+    _add_constraints(context, pose_bones)
 
     # OBJECTモードに戻すのを忘れないように
     ArmatureMode.return_obuject_mode(state_backup)
+    # Boneを作ったLayerも有効にして戻す
+    backup_layers[context.scene.AHT_create_layer-1] = True
+    armature.data.layers = backup_layers
+
 
 # create bone chain
 # *****************************************************************************
 def _create_curve_bones(context, armature, curve_obj, MirrorName):
+    created = []
+
     root_matrix = armature.matrix_world.inverted() @ curve_obj.matrix_world
 
     # spline単位で処理
@@ -69,10 +84,15 @@ def _create_curve_bones(context, armature, curve_obj, MirrorName):
             # 自分を親にして次をつなげていく
             parent = new_bone
 
+            # 作ったボーンを覚えておく
+            created.append(new_bone)
+
+    return created
+
 
 # BoneConstraintの追加
-def _add_constraints(context, armature):
-    for pose_bone in armature.pose.bones:
+def _add_constraints(context, pose_bones):
+    for pose_bone in pose_bones:
         # limit location
         ConstraintUtil.add_limit_location(pose_bone)
 
