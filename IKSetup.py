@@ -14,7 +14,7 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
 
         for root_bone in context.selected_pose_bones:
             # 終端を探す
-            children_list = BoneManager.pose_bone_gather_children(root_bone)
+            children_list = BoneManager.pose_bone_gather_children(root_bone, lambda pose_bone: not pose_bone.bone.select)
             for child in children_list:
                 # 終端だったらセットアップ
                 if len(child.children) == 0:
@@ -33,6 +33,7 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
         new_edit_bone = armature.data.edit_bones.new(name=ik_target_bone_name)
         new_edit_bone.head = end_bone.tail
         new_edit_bone.tail = end_bone.tail+mathutils.Vector((0,0,-size))
+        new_edit_bone.use_deform = False
  
         bpy.ops.object.mode_set(mode='POSE')
 
@@ -58,26 +59,27 @@ class ANIME_HAIR_TOOLS_OT_ik_remove(bpy.types.Operator):
     # execute ok
     def execute(self, context):
         armature = context.active_object
-        # 選択中のボーンでAHTのIK用に作られたものを消す
+
+        # 警告がでてしまうので、IK Constraintを先に消す
+        subtargets = []
         for pose_bone in context.selected_pose_bones:
-            self.IK_remove(armature, pose_bone)
+            subtargets += ConstraintUtil.remove_ik(armature, pose_bone)
+
+        # TargetBoneの回収
+        for pose_bone in context.selected_pose_bones:
+            if pose_bone.name.startswith(Naming.IK_TARGET_BONE_PREFIX):
+                subtargets.append(pose_bone.name)
+        subtargets = set(subtargets)  # unique
+
+        # TargetBoneを消す
+        bpy.ops.object.mode_set(mode='EDIT')
+        for pose_bone_name in subtargets:
+            edit_bone = armature.data.edit_bones.get(pose_bone_name)
+            if edit_bone:
+                armature.data.edit_bones.remove(edit_bone)
+        bpy.ops.object.mode_set(mode='POSE')
+
         return {'FINISHED'}
-
-    def IK_remove(self, armature, pose_bone):
-        # IK constraintを削除
-        ConstraintUtil.remove_ik(pose_bone)
-
-        # constraint_target_boneも削除
-        if pose_bone.name.startswith(Naming.IK_TARGET_BONE_PREFIX):
-            remove_bone_from_pose(armature, pose_bone)
-
-
-# POSEモードのpose_boneからedit_boneを削除する
-def remove_bone_from_pose(armature, pose_bone):
-    bpy.ops.object.mode_set(mode='EDIT')
-    edit_bone = armature.data.edit_bones[pose_bone.name]
-    armature.data.edit_bones.remove(edit_bone)
-    bpy.ops.object.mode_set(mode='POSE')
 
 
 # UI描画設定

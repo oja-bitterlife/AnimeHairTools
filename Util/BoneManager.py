@@ -124,9 +124,18 @@ def remove(context, selected_curve_objs):
 
 # pose_boneの子を再帰的に選択する
 # =================================================================================================
-def pose_bone_gather_children(pose_bone):
+def pose_bone_gather_children(pose_bone, select_func=None):
     pose_bone_list = []
     for child_pose_bone in pose_bone.children:
+        # 選択関数があれば選択するかチェック
+        if select_func != None:
+            if not select_func(child_pose_bone):
+                continue  # 非選択になったら処理しない
+        # 登録
         pose_bone_list.append(child_pose_bone)
+
+        # 再帰で潜って追加していく
         pose_bone_list.extend(pose_bone_gather_children(child_pose_bone))
+
     return pose_bone_list
+
