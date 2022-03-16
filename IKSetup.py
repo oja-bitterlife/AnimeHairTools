@@ -13,17 +13,25 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
         armature = context.active_object
 
         for root_bone in context.selected_pose_bones:
+            # 一番上の親を探す
+            root_parent = self.find_top_root(root_bone)
+
             # 終端を探す
             children_list = BoneManager.pose_bone_gather_children(root_bone, lambda pose_bone: not pose_bone.bone.select)
             for child in children_list:
                 # 終端だったらセットアップ
                 if len(child.children) == 0:
-                    self.IK_setup(context, armature, root_bone, child)
+                    self.IK_setup(context, armature, root_parent, root_bone, child)
 
         return {'FINISHED'}
 
+    # 一番上の親を返す
+    def find_top_root(self, pose_bone):
+        if pose_bone.parent:
+            return self.find_top_root(pose_bone.parent)
+        return pose_bone
 
-    def IK_setup(self, context, armature, root_bone, end_bone):
+    def IK_setup(self, context, armature, root_parent, root_bone, end_bone):
         # すでにあるIK関連を消しておく
         ConstraintUtil.remove_ik_and_target(armature, end_bone)
 
@@ -34,11 +42,13 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
         # 生成するBone名
         ik_target_bone_name = Naming.make_ik_target_bone_name(end_bone.name)
 
+        # ターゲットボーンセットアップ
         bpy.ops.object.mode_set(mode='EDIT')
         new_edit_bone = armature.data.edit_bones.new(name=ik_target_bone_name)
         new_edit_bone.head = end_bone.tail
         new_edit_bone.tail = end_bone.tail+mathutils.Vector((0,0,-size))
         new_edit_bone.use_deform = False
+        new_edit_bone.parent = armature.data.edit_bones.get(root_parent.name)
  
         bpy.ops.object.mode_set(mode='POSE')
 
