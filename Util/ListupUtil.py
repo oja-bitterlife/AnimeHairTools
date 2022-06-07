@@ -19,7 +19,7 @@ def get_bone_list(self, context):
 
     # 選択されているarmatureのboneをリストする
     armature = bpy.data.objects[context.scene.AHT_parent_target_name.armature]
-    return [(bone.name, bone.name, "") for bone in armature.data.bones]
+    return [(bone.name, bone.name, "") for bone in armature.data.bones if bone.use_deform]
 
 # Rollの参照候補
 def get_roll_reference_list(self, context):
