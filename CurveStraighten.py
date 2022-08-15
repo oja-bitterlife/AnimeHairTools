@@ -24,23 +24,27 @@ class ANIME_HAIR_TOOLS_OT_curve_straighten(bpy.types.Operator):
         return {'FINISHED'}
 
     def execute_nurbs(self, spline):
-        beforPos = None
-        vec = None
+        # Curveを移動させると移動前のポイントとの長さが変わるので、先に長さだけ抜き出しておく
+        length_list = []
         for i, point in enumerate(spline.points):
-            # まだ選択点を見つけていない
-            if beforPos == None:
-                if point.select:
-                    if i == 0: 
-                        beforPos = -spline.points[i+1].co.xyz  # 次のポイントの反対方向
-                    else:
-                        beforPos = spline.points[i-1].co.xyz
-                    # 方向取得
-                    nvec = (point.co.xyz - beforPos).normalized()
+            if i == 0:
+                length_list.append(0)
+            else:
+                length_list.append((spline.points[i].co.xyz - spline.points[i-1].co.xyz).length)
 
+        nvec = None
+        for i, point in enumerate(spline.points):
+            # まだ方向が未定(選択点を見つけていない)
+            if nvec == None:
+                if point.select:
+                    # 方向取得
+                    if i == 0:
+                        nvec = (spline.points[i+1].co.xyz - point.co.xyz).normalized()
+                    else:
+                        nvec = (point.co.xyz - spline.points[i-1].co.xyz).normalized()
             else:
                 # 選択点以降はまっすぐに配置しなおす
-                length = (spline.points[i].co.xyz - spline.points[i-1].co.xyz).length
-                spline.points[i].co.xyz = spline.points[i-1].co.xyz + nvec * length
+                spline.points[i].co.xyz = spline.points[i-1].co.xyz + (nvec * length_list[i])
 
 
 # UI描画設定
