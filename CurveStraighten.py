@@ -16,7 +16,7 @@ class ANIME_HAIR_TOOLS_OT_curve_straighten(bpy.types.Operator):
                 if spline.type == "NURBS":
                     self.execute_nurbs(spline)
                 elif spline.type == "BEZIER":
-                    self.execute_bezier(spline)
+                    self.report({'ERROR'}, "unsupported type: %s" % spline.type)
                 else:
                     self.report({'ERROR'}, "unknown type: %s" % spline.type)
                     return {'CANCELLED'}
@@ -24,20 +24,23 @@ class ANIME_HAIR_TOOLS_OT_curve_straighten(bpy.types.Operator):
         return {'FINISHED'}
 
     def execute_nurbs(self, spline):
-        selected = False
-        for point in spline.points:
-            if point.select:
-                selected = True
-            if selected:
-                print(point)
+        beforPos = None
+        vec = None
+        for i, point in enumerate(spline.points):
+            # まだ選択点を見つけていない
+            if beforPos == None:
+                if point.select:
+                    if i == 0: 
+                        beforPos = -spline.points[i+1].co.xyz  # 次のポイントの反対方向
+                    else:
+                        beforPos = spline.points[i-1].co.xyz
+                    # 方向取得
+                    nvec = (point.co.xyz - beforPos).normalized()
 
-    def execute_bezier(self, spline):
-        selected = False
-        for point in spline.bezier_points:
-            if point.select_control_point:
-                selected = True
-            if selected:
-                print(point)
+            else:
+                # 選択点以降はまっすぐに配置しなおす
+                length = (spline.points[i].co.xyz - spline.points[i-1].co.xyz).length
+                spline.points[i].co.xyz = spline.points[i-1].co.xyz + nvec * length
 
 
 # UI描画設定
