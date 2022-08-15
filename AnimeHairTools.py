@@ -3,6 +3,7 @@ import bpy
 from . import ArmatureManager, MeshAndBones
 from . import EditBoneSetup
 from . import IKSetup, CopyAction
+from . import CurveStraighten
 
 # Main UI
 # ===========================================================================================
@@ -23,4 +24,7 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
         if context.mode == "POSE":
             IKSetup.ui_draw(context, self.layout)
             CopyAction.ui_draw(context, self.layout)
+        if context.mode == "EDIT_CURVE":
+            CurveStraighten.ui_draw(context, self.layout)
+
 
