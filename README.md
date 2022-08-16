@@ -70,5 +70,7 @@ Create Mesh and Bones ボタンでも同じ Remove プログラムが動くの�
 後で書く…
 
 ・IK設定機能
+・ボーンのBendyBone/Rollの設定機能
+・ボーンのConnect/Disconnect切り替え機能
 ・アニメーションのコピー機能
 ・カーブ整形機能

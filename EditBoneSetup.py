@@ -97,7 +97,7 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_connect(bpy.types.Operator):
         armature = context.active_object
         selected_bones = []
         for bone in armature.data.edit_bones:
-            if bone.select and is_layer_enable(armature, bone):
+            if bone.select_head and is_layer_enable(armature, bone):
                 selected_bones.append(bone)
 
         # connect
@@ -117,7 +117,7 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_disconnect(bpy.types.Operator):
         armature = context.active_object
         selected_bones = []
         for bone in armature.data.edit_bones:
-            if bone.select and is_layer_enable(armature, bone):
+            if bone.select_head and is_layer_enable(armature, bone):
                 selected_bones.append(bone)
 
         # disconnect
