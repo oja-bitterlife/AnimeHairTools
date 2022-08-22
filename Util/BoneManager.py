@@ -28,13 +28,6 @@ def create(context, selected_curve_objs):
         if MirrorName != None:
             edit_bones += _create_curve_bones(context, armature, curve_obj, "R")  # Curve１本１本処理する
 
-
-    # BoneConstraintsの追加
-    bone_names = [edit_bone.name for edit_bone in edit_bones]
-    ArmatureMode.to_pose_mode(context, armature)
-    pose_bones = [armature.pose.bones[bone_name] for bone_name in bone_names]
-    _add_constraints(context, pose_bones)
-
     # OBJECTモードに戻すのを忘れないように
     ArmatureMode.return_obuject_mode(state_backup)
     # Boneを作ったLayerも有効にして戻す
@@ -88,13 +81,6 @@ def _create_curve_bones(context, armature, curve_obj, MirrorName):
             created.append(new_bone)
 
     return created
-
-
-# BoneConstraintの追加
-def _add_constraints(context, pose_bones):
-    for pose_bone in pose_bones:
-        # limit location
-        ConstraintUtil.add_limit_location(pose_bone)
 
 
 # 削除
