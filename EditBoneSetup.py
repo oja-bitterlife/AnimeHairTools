@@ -33,7 +33,7 @@ class ANIME_HAIR_TOOLS_OT_setup_bendy_bone(bpy.types.Operator):
 # =================================================================================================
 class ANIME_HAIR_TOOLS_OT_reset_bone_roll(bpy.types.Operator):
     bl_idname = "anime_hair_tools.reset_bone_roll"
-    bl_label = "Rset Bone Roll"
+    bl_label = "Rset"
 
     # execute
     def execute(self, context):
@@ -51,7 +51,7 @@ class ANIME_HAIR_TOOLS_OT_reset_bone_roll(bpy.types.Operator):
 
 class ANIME_HAIR_TOOLS_OT_copy_parent_roll(bpy.types.Operator):
     bl_idname = "anime_hair_tools.copy_parent_roll"
-    bl_label = "Copy Parent Roll"
+    bl_label = "from Parent"
 
     # execute
     def execute(self, context):
@@ -62,17 +62,35 @@ class ANIME_HAIR_TOOLS_OT_copy_parent_roll(bpy.types.Operator):
             if bone.select and is_layer_enable(armature, bone):
                 selected_bones.append(bone)
 
-        CopyParentRoll(selected_bones)
+        for bone in selected_bones:
+            if bone.parent == None:
+                continue  # 親のないボーンはそのまま
+
+            bone.roll = bone.parent.roll
 
         return{'FINISHED'}
 
-def CopyParentRoll(selected_bones):
-    # 最近点を探る
-    for bone in selected_bones:
-        if bone.parent == None:
-            continue  # 起点のボーンはそのまま
+class ANIME_HAIR_TOOLS_OT_copy_active_roll(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.copy_active_roll"
+    bl_label = "from Active"
 
-        bone.roll = bone.parent.roll  # 一直線なので親と同じRollになる
+    # execute
+    def execute(self, context):
+        # 編集対象ボーンの回収
+        armature = context.active_object
+        selected_bones = []
+        for bone in armature.data.edit_bones:
+            if bone.select and is_layer_enable(armature, bone):
+                selected_bones.append(bone)
+
+        for bone in selected_bones:
+            if bone == context.active_bone:
+                continue  # Activeボーンはそのまま
+
+            bone.roll = context.active_bone.roll
+
+        return{'FINISHED'}
+
 
 
 # 選択中BoneのConnect/Disconnect
@@ -137,8 +155,10 @@ def ui_draw(context, layout):
     # 選択中BoneのRollの設定
     layout.label(text="Bone Roll Setting:")
     box = layout.box()
-    box.operator("anime_hair_tools.reset_bone_roll")
-    box.operator("anime_hair_tools.copy_parent_roll")
+    row = box.row()
+    row.operator("anime_hair_tools.reset_bone_roll")
+    row.operator("anime_hair_tools.copy_parent_roll")
+    row.operator("anime_hair_tools.copy_active_roll")
 
     # 選択中BoneのConnect/Disconnect
     layout.label(text="Bone Connect Setting:")
