@@ -31,21 +31,12 @@ class ANIME_HAIR_TOOLS_OT_setup_bendy_bone(bpy.types.Operator):
 
 # 選択中のBoneのRollを設定する
 # =================================================================================================
-class ANIME_HAIR_TOOLS_OT_setup_bone_roll(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.setup_bone_roll"
-    bl_label = "Setup Bone Roll"
+class ANIME_HAIR_TOOLS_OT_reset_bone_roll(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.reset_bone_roll"
+    bl_label = "Rset Bone Roll"
 
     # execute
     def execute(self, context):
-
-        # 頂点の回収(法線とペアで)
-        mesh = bpy.data.objects[context.scene.AHT_roll_reference.roll_reference].data
-        points = []
-        normals = []
-        for v in mesh.vertices:
-            points.append(v.co)
-            normals.append(v.normal)
-
         # 編集対象ボーンの回収
         armature = context.active_object
         selected_bones = []
@@ -53,36 +44,47 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_roll(bpy.types.Operator):
             if bone.select and is_layer_enable(armature, bone):
                 selected_bones.append(bone)
 
-        # 最近点を探る
         for bone in selected_bones:
-            index = self.get_nearest_point(armature.matrix_world @ bone.head, points)
-            if index >= 0:
-                # 最近点の法線をボーンのXZ軸上にプロット
-                xprot = normals[index].dot(bone.x_axis)
-                zprot = normals[index].dot(bone.z_axis)
-                v = bone.x_axis * xprot + bone.z_axis * zprot
-                v.normalize()
-
-                # 角度計算
-                cs = max(-1, min(1, v.dot(bone.z_axis)))
-                rad = math.acos(cs)  # 角度差分(CW/CCWはわからない)
-                dir = v.cross(bone.z_axis).dot(bone.y_axis)  # 3重積で方向
-                if dir > 0:
-                    rad = -rad
-                bone.roll += rad
+            bone.roll = 0
 
         return{'FINISHED'}
 
-    # 最近点のインデックスを返す。最近点を見つけきらなければ-1を返す
-    def get_nearest_point(self, bone_pos, points):
-        min_index = -1
-        min_pos = math.inf
-        for i, p in enumerate(points):
-            if min_pos > (p - bone_pos).length:
-                min_pos = (p - bone_pos).length
-                min_index = i
+class ANIME_HAIR_TOOLS_OT_setup_bone_roll(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.setup_bone_roll"
+    bl_label = "Setup Bone Roll"
 
-        return min_index
+    # execute
+    def execute(self, context):
+        # 編集対象ボーンの回収
+        armature = context.active_object
+        selected_bones = []
+        for bone in armature.data.edit_bones:
+            if bone.select and is_layer_enable(armature, bone):
+                selected_bones.append(bone)
+
+        SetupBoneRoll(selected_bones)
+
+        return{'FINISHED'}
+
+def SetupBoneRoll(selected_bones):
+    # 最近点を探る
+    for bone in selected_bones:
+        if bone.parent == None:
+            continue  # 起点のボーンはそのまま
+
+        vec = bone.y_axis.cross(bone.parent.y_axis).normalized()
+        if vec.length == 0:
+            bone.roll = bone.parent.roll  # 一直線なので親と同じRollになる
+            continue
+
+        # 角度計算
+        cs = max(-1, min(1, vec.dot(bone.x_axis)))
+        rad = math.acos(cs)  # 角度差分(CW/CCWはわからない)
+        dir = vec.cross(bone.x_axis).dot(bone.y_axis)  # 3重積で方向
+        if dir > 0:
+            rad = -rad
+        bone.roll += rad
+
 
 
 # 選択中BoneのConnect/Disconnect
@@ -147,7 +149,7 @@ def ui_draw(context, layout):
     # 選択中BoneのRollの設定
     layout.label(text="Bone Roll Setting:")
     box = layout.box()
-    box.prop(context.scene.AHT_roll_reference, "roll_reference", text="Roll Reference Object")
+    box.operator("anime_hair_tools.reset_bone_roll")
     box.operator("anime_hair_tools.setup_bone_roll")
 
     # 選択中BoneのConnect/Disconnect
@@ -156,8 +158,3 @@ def ui_draw(context, layout):
     box.operator("anime_hair_tools.setup_bone_connect")
     box.operator("anime_hair_tools.setup_bone_disconnect")
 
-
-# =================================================================================================
-def register():
-    # Rollの参照用メッシュ
-    bpy.types.Scene.AHT_roll_reference = bpy.props.PointerProperty(type=ListupProperty)
