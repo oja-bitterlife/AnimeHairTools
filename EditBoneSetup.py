@@ -156,9 +156,9 @@ def ui_draw(context, layout):
     layout.label(text="Bone Roll Setting:")
     box = layout.box()
     row = box.row()
-    row.operator("anime_hair_tools.reset_bone_roll")
-    row.operator("anime_hair_tools.copy_parent_roll")
     row.operator("anime_hair_tools.copy_active_roll")
+    row.operator("anime_hair_tools.copy_parent_roll")
+    row.operator("anime_hair_tools.reset_bone_roll")
 
     # 選択中BoneのConnect/Disconnect
     layout.label(text="Bone Connect Setting:")
