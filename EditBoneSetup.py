@@ -49,9 +49,9 @@ class ANIME_HAIR_TOOLS_OT_reset_bone_roll(bpy.types.Operator):
 
         return{'FINISHED'}
 
-class ANIME_HAIR_TOOLS_OT_setup_bone_roll(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.setup_bone_roll"
-    bl_label = "Setup Bone Roll"
+class ANIME_HAIR_TOOLS_OT_copy_parent_roll(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.copy_parent_roll"
+    bl_label = "Copy Parent Roll"
 
     # execute
     def execute(self, context):
@@ -62,29 +62,17 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_roll(bpy.types.Operator):
             if bone.select and is_layer_enable(armature, bone):
                 selected_bones.append(bone)
 
-        SetupBoneRoll(selected_bones)
+        CopyParentRoll(selected_bones)
 
         return{'FINISHED'}
 
-def SetupBoneRoll(selected_bones):
+def CopyParentRoll(selected_bones):
     # 最近点を探る
     for bone in selected_bones:
         if bone.parent == None:
             continue  # 起点のボーンはそのまま
 
-        vec = bone.y_axis.cross(bone.parent.y_axis).normalized()
-        if vec.length == 0:
-            bone.roll = bone.parent.roll  # 一直線なので親と同じRollになる
-            continue
-
-        # 角度計算
-        cs = max(-1, min(1, vec.dot(bone.x_axis)))
-        rad = math.acos(cs)  # 角度差分(CW/CCWはわからない)
-        dir = vec.cross(bone.x_axis).dot(bone.y_axis)  # 3重積で方向
-        if dir > 0:
-            rad = -rad
-        bone.roll += rad
-
+        bone.roll = bone.parent.roll  # 一直線なので親と同じRollになる
 
 
 # 選択中BoneのConnect/Disconnect
@@ -150,7 +138,7 @@ def ui_draw(context, layout):
     layout.label(text="Bone Roll Setting:")
     box = layout.box()
     box.operator("anime_hair_tools.reset_bone_roll")
-    box.operator("anime_hair_tools.setup_bone_roll")
+    box.operator("anime_hair_tools.copy_parent_roll")
 
     # 選択中BoneのConnect/Disconnect
     layout.label(text="Bone Connect Setting:")
