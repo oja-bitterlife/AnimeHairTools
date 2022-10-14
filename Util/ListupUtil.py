@@ -23,7 +23,8 @@ def get_bone_list(self, context):
 
 # Rollの参照候補
 def get_roll_reference_list(self, context):
-    roll_reference_list = [(obj.name, obj.name, "") for obj in context.scene.objects if obj.type == "MESH"]
+    roll_reference_list = [(obj.name, obj.name, "") for obj in context.scene.objects
+        if obj.type == "MESH" and not obj.hide_viewport]
     return roll_reference_list
 
 

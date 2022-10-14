@@ -141,6 +141,7 @@ def ui_draw(context, layout):
     # 選択中BoneのRollの設定
     layout.label(text="Bone Roll Setting:")
     box = layout.box()
+    box.prop(context.scene.AHT_roll_reference, "roll_reference", text="Roll Reference Object")
     row = box.row()
     row.operator("anime_hair_tools.copy_active_roll")
     row.operator("anime_hair_tools.reset_bone_roll")
@@ -152,3 +153,9 @@ def ui_draw(context, layout):
     box.operator("anime_hair_tools.setup_bone_connect")
     box.operator("anime_hair_tools.setup_bone_disconnect")
 
+
+# =================================================================================================
+def register():
+    # Rollの参照用メッシュ
+    bpy.types.Scene.AHT_roll_reference = bpy.props.PointerProperty(type=ListupProperty)
+    # bpy.types.Scene.ik_target_mesh = bpy.props.PointerProperty(type=bpy.types.Object)
