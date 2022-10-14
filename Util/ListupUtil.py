@@ -21,16 +21,9 @@ def get_bone_list(self, context):
     armature = bpy.data.objects[context.scene.AHT_parent_target_name.armature]
     return [(bone.name, bone.name, "") for bone in armature.data.bones if bone.use_deform]
 
-# Rollの参照候補
-def get_roll_reference_list(self, context):
-    roll_reference_list = [(obj.name, obj.name, "") for obj in context.scene.objects
-        if obj.type == "MESH" and not obj.hide_viewport]
-    return roll_reference_list
-
 
 # ペアレント設定用データ
 # =================================================================================================
 class ListupProperty(bpy.types.PropertyGroup):
     armature: bpy.props.EnumProperty(items=get_armature_list)
     bone: bpy.props.EnumProperty(items=get_bone_list)
-    roll_reference: bpy.props.EnumProperty(items=get_roll_reference_list)

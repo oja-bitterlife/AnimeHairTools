@@ -70,13 +70,6 @@ class ANIME_HAIR_TOOLS_OT_copy_active_roll(bpy.types.Operator):
 
         return{'FINISHED'}
 
-class ANIME_HAIR_TOOLS_OT_copy_mesh_roll(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.copy_mesh_roll"
-    bl_label = "from Mesh"
-
-    # execute
-    def execute(self, context):
-        return{'FINISHED'}
 
 
 # 選択中BoneのConnect/Disconnect
@@ -141,11 +134,9 @@ def ui_draw(context, layout):
     # 選択中BoneのRollの設定
     layout.label(text="Bone Roll Setting:")
     box = layout.box()
-    box.prop(context.scene.AHT_roll_reference, "roll_reference", text="Roll Reference Object")
     row = box.row()
     row.operator("anime_hair_tools.copy_active_roll")
     row.operator("anime_hair_tools.reset_bone_roll")
-    row.operator("anime_hair_tools.copy_mesh_roll")
 
     # 選択中BoneのConnect/Disconnect
     layout.label(text="Bone Connect Setting:")
@@ -153,9 +144,3 @@ def ui_draw(context, layout):
     box.operator("anime_hair_tools.setup_bone_connect")
     box.operator("anime_hair_tools.setup_bone_disconnect")
 
-
-# =================================================================================================
-def register():
-    # Rollの参照用メッシュ
-    bpy.types.Scene.AHT_roll_reference = bpy.props.PointerProperty(type=ListupProperty)
-    # bpy.types.Scene.ik_target_mesh = bpy.props.PointerProperty(type=bpy.types.Object)
