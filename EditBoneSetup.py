@@ -49,27 +49,6 @@ class ANIME_HAIR_TOOLS_OT_reset_bone_roll(bpy.types.Operator):
 
         return{'FINISHED'}
 
-class ANIME_HAIR_TOOLS_OT_copy_parent_roll(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.copy_parent_roll"
-    bl_label = "from Parent"
-
-    # execute
-    def execute(self, context):
-        # 編集対象ボーンの回収
-        armature = context.active_object
-        selected_bones = []
-        for bone in armature.data.edit_bones:
-            if bone.select and is_layer_enable(armature, bone):
-                selected_bones.append(bone)
-
-        for bone in selected_bones:
-            if bone.parent == None:
-                continue  # 親のないボーンはそのまま
-
-            bone.roll = bone.parent.roll
-
-        return{'FINISHED'}
-
 class ANIME_HAIR_TOOLS_OT_copy_active_roll(bpy.types.Operator):
     bl_idname = "anime_hair_tools.copy_active_roll"
     bl_label = "from Active"
@@ -91,6 +70,13 @@ class ANIME_HAIR_TOOLS_OT_copy_active_roll(bpy.types.Operator):
 
         return{'FINISHED'}
 
+class ANIME_HAIR_TOOLS_OT_copy_mesh_roll(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.copy_mesh_roll"
+    bl_label = "from Mesh"
+
+    # execute
+    def execute(self, context):
+        return{'FINISHED'}
 
 
 # 選択中BoneのConnect/Disconnect
@@ -157,8 +143,8 @@ def ui_draw(context, layout):
     box = layout.box()
     row = box.row()
     row.operator("anime_hair_tools.copy_active_roll")
-    row.operator("anime_hair_tools.copy_parent_roll")
     row.operator("anime_hair_tools.reset_bone_roll")
+    row.operator("anime_hair_tools.copy_mesh_roll")
 
     # 選択中BoneのConnect/Disconnect
     layout.label(text="Bone Connect Setting:")
