@@ -127,3 +127,9 @@ def pose_bone_gather_children(pose_bone, select_func=None):
 
     return pose_bone_list
 
+
+# pose_boneをCurveに沿って回転させる
+# =================================================================================================
+def pose_bone_fit_curve(armature, selected_curve_objs):
+    pass
+

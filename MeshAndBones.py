@@ -43,6 +43,7 @@ class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
                     CurveStraighten.execute_nurbs_straighten(spline, True, True)
         ArmatureMode.return_obuject_mode()
 
+
         # 作り直す
         # ---------------------------------------------------------------------
         # create bones
@@ -58,6 +59,14 @@ class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
         for obj in tmp_curve_objs:
             obj.select_set(True)
         bpy.ops.object.delete()
+        context.view_layer.objects.active = armature
+        armature.select_set(True)
+
+        # ボーンの形状を元のカーブに合わせておく
+
+        # ---------------------------------------------------------------------
+        BoneManager.pose_bone_fit_curve(armature, selected_curve_objs)
+
 
         return{'FINISHED'}
 
