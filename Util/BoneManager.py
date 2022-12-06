@@ -132,8 +132,6 @@ def pose_bone_gather_children(pose_bone, select_func=None):
 # =================================================================================================
 def pose_bone_fit_curve(armature, selected_curve_objs):
     for curve_obj in selected_curve_objs:
-        root_matrix = armature.matrix_world.inverted() @ curve_obj.matrix_world
-
         for spline_no, spline in enumerate(curve_obj.data.splines):
             for i in range(len(spline.points)-1):
                 bone_names = []
@@ -147,15 +145,19 @@ def pose_bone_fit_curve(armature, selected_curve_objs):
                 for bone_name in bone_names:
                     bone = armature.pose.bones[bone_name]
 
-                    curve_vec = (root_matrix @ spline.points[i].co.xyz - root_matrix @ spline.points[i-1].co.xyz).normalized()
-                    bone_vec = bone.z_axis.xyz.normalized()
+                    curve_vec = (curve_obj.matrix_world @ spline.points[i+1].co.xyz - curve_obj.matrix_world @ spline.points[i].co.xyz).normalized()
+                    bone_vec = bone.y_axis.xyz.normalized()
                     axis = curve_vec.cross(bone_vec).normalized()
-                    rad = math.acos(curve_vec.dot(bone_vec))
+                    rad = -math.acos(curve_vec.dot(bone_vec))
+
+                    print(axis)
 
                     # 回転行列作成
                     rot_mat = mathutils.Matrix.Rotation(rad, 4, axis)
                     bone.matrix = bone.matrix @ rot_mat
+                    
 
+#            if spline_no == 1:
 #                break
 
 
