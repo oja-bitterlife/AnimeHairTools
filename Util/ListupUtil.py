@@ -11,10 +11,8 @@ def get_armature_list(self, context):
 
 # ペアレント先のBoneの候補
 def get_bone_list(self, context):
-    scene = context.scene
-
     # armature未設定
-    if scene.AHT_parent_target_name.armature == "_empty_for_delete":
+    if context.scene.AHT_parent_target_name.armature == "_empty_for_delete" or context.scene.AHT_parent_target_name.armature == "":
         return []
 
     # 選択されているarmatureのboneをリストする
