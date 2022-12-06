@@ -133,31 +133,31 @@ def pose_bone_gather_children(pose_bone, select_func=None):
 def pose_bone_fit_curve(armature, selected_curve_objs):
     for curve_obj in selected_curve_objs:
         for spline_no, spline in enumerate(curve_obj.data.splines):
+
+            parent_rot = mathutils.Matrix.Identity(4)
+
             for i in range(len(spline.points)-1):
-                bone_names = []
                 # ミラーチェック
                 if len(MirrorUtil.find_mirror_modifires(curve_obj)) == 0:
-                    bone_names.append(Naming.make_bone_name(curve_obj.name, spline_no, i))
+                    bone_name = Naming.make_bone_name(curve_obj.name, spline_no, i)
                 else:
-                    bone_names.append(Naming.make_bone_name(curve_obj.name, spline_no, i, "L"))
-                    bone_names.append(Naming.make_bone_name(curve_obj.name, spline_no, i, "R"))
+                    bone_name = Naming.make_bone_name(curve_obj.name, spline_no, i, "L")
 
-                for bone_name in bone_names:
-                    bone = armature.pose.bones[bone_name]
+                bone = armature.pose.bones[bone_name]
 
-                    curve_vec = (curve_obj.matrix_world @ spline.points[i+1].co.xyz - curve_obj.matrix_world @ spline.points[i].co.xyz).normalized()
-                    bone_vec = bone.y_axis.xyz.normalized()
-                    axis = curve_vec.cross(bone_vec).normalized()
-                    rad = -math.acos(curve_vec.dot(bone_vec))
+                curve_vec = (curve_obj.matrix_world @ spline.points[i+1].co.xyz - curve_obj.matrix_world @ spline.points[i].co.xyz).normalized()
+                bone_vec = bone.y_axis.xyz
+                axis = bone_vec.cross(curve_vec).normalized()
+                rad = math.acos(curve_vec.dot(bone_vec))
+                if i == 5:
+                    print(curve_vec, bone_vec)
 
-                    print(axis)
+                # 回転行列作成
+                rot_mat = mathutils.Matrix.Rotation(rad, 4, axis)
+                bone.matrix = parent_rot.inverted() @ rot_mat @ bone.matrix
+                parent_rot = rot_mat
 
-                    # 回転行列作成
-                    rot_mat = mathutils.Matrix.Rotation(rad, 4, axis)
-                    bone.matrix = bone.matrix @ rot_mat
-                    
-
-#            if spline_no == 1:
-#                break
+                # if i == 2:
+                #     break
 
 
