@@ -13,7 +13,7 @@ class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
 
     # execute ok
     def execute(self, context):
-        armature = context.active_object
+        armature = bpy.data.objects[context.scene.AHT_armature_name]
         selected_curve_objs = [obj for obj in context.selected_objects if obj.type == "CURVE"]
 
         # Curveが１つも選択されていなかった
@@ -60,15 +60,18 @@ class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
             obj.select_set(True)
         bpy.ops.object.delete()
         context.view_layer.objects.active = armature
-        armature.select_set(True)
+
+        for curve in selected_curve_objs:
+            curve.select_set(True)
+
 
         # ボーンの形状を元のカーブに合わせておく
-
         # ---------------------------------------------------------------------
         BoneManager.pose_bone_fit_curve(armature, selected_curve_objs)
 
 
         return{'FINISHED'}
+
 
     # ATH_Armatureを先に作る必要がある
     @classmethod
