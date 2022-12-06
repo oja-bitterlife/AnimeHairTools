@@ -131,5 +131,18 @@ def pose_bone_gather_children(pose_bone, select_func=None):
 # pose_boneをCurveに沿って回転させる
 # =================================================================================================
 def pose_bone_fit_curve(armature, selected_curve_objs):
-    pass
+    for curve_obj in selected_curve_objs:
+        for spline_no, spline in enumerate(curve_obj.data.splines):
+            for i in range(len(spline.points)-1):
+                bone_names = []
+                # ミラーチェック
+                if len(MirrorUtil.find_mirror_modifires(curve_obj)) == 0:
+                    bone_names.append(Naming.make_bone_name(curve_obj.name, spline_no, i))
+                else:
+                    bone_names.append(Naming.make_bone_name(curve_obj.name, spline_no, i, "L"))
+                    bone_names.append(Naming.make_bone_name(curve_obj.name, spline_no, i, "R"))
+
+                for bone_name in bone_names:
+                     print(armature.pose.bones[bone_name])
+
 

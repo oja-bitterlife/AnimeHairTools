@@ -61,7 +61,7 @@ class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
         bpy.ops.object.delete()
         context.view_layer.objects.active = armature
 
-        for curve in selected_curve_objs:
+        for curve in selected_curve_objs:  # 対象となったCurveを選択状態に戻しておく
             curve.select_set(True)
 
 
