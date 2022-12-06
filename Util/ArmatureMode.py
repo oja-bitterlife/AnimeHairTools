@@ -37,7 +37,7 @@ def to_pose_mode(context, armature):
 
 
 # オブジェクトモードに戻す
-def return_obuject_mode(state_backup):
+def return_obuject_mode(state_backup = None):
     # 戻すのをやめておく
 #    state_backup["armature"].hide_set(state_backup["hide"])
 

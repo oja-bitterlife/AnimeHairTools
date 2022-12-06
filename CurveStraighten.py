@@ -22,14 +22,14 @@ class ANIME_HAIR_TOOLS_OT_curve_straighten(bpy.types.Operator):
         for curve in selected_curve_objs:
             for spline in curve.data.splines:
                 if spline.type == "NURBS":
-                    self.execute_nurbs_straighten(spline, context.scene.AHT_straighten_keep_length)
+                    execute_nurbs_straighten(spline, context.scene.AHT_straighten_keep_length)
                 elif spline.type == "BEZIER":
                     return "unsupported type: %s" % spline.type
                 else:
                     return "unknown type: %s" % spline.type
         return ""
 
-def execute_nurbs_straighten(spline, keep_length):
+def execute_nurbs_straighten(spline, keep_length, is_force=False):
     # Curveを移動させると移動前のポイントとの長さが変わるので、先に長さだけ抜き出しておく
     length_list = []
     for i, point in enumerate(spline.points):
@@ -42,7 +42,7 @@ def execute_nurbs_straighten(spline, keep_length):
     for i, point in enumerate(spline.points):
         # まだ方向が未定(選択点を見つけていない)
         if vec == None:
-            if point.select:
+            if point.select or is_force:
                 # 方向取得
                 if i == 0:
                     # 最初が選択されてるときは次のポイントとの直線
