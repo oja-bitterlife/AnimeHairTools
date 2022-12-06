@@ -1,5 +1,5 @@
 
-import bpy
+import bpy, math, mathutils
 
 from . import Naming, ArmatureMode, MirrorUtil, ConstraintUtil
 
@@ -132,6 +132,8 @@ def pose_bone_gather_children(pose_bone, select_func=None):
 # =================================================================================================
 def pose_bone_fit_curve(armature, selected_curve_objs):
     for curve_obj in selected_curve_objs:
+        root_matrix = armature.matrix_world.inverted() @ curve_obj.matrix_world
+
         for spline_no, spline in enumerate(curve_obj.data.splines):
             for i in range(len(spline.points)-1):
                 bone_names = []
@@ -143,6 +145,17 @@ def pose_bone_fit_curve(armature, selected_curve_objs):
                     bone_names.append(Naming.make_bone_name(curve_obj.name, spline_no, i, "R"))
 
                 for bone_name in bone_names:
-                     print(armature.pose.bones[bone_name])
+                    bone = armature.pose.bones[bone_name]
+
+                    curve_vec = (root_matrix @ spline.points[i].co.xyz - root_matrix @ spline.points[i-1].co.xyz).normalized()
+                    bone_vec = bone.z_axis.xyz.normalized()
+                    axis = curve_vec.cross(bone_vec).normalized()
+                    rad = math.acos(curve_vec.dot(bone_vec))
+
+                    # 回転行列作成
+                    rot_mat = mathutils.Matrix.Rotation(rad, 4, axis)
+                    bone.matrix = bone.matrix @ rot_mat
+
+#                break
 
 
