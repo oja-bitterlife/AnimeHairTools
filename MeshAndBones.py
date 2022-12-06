@@ -35,7 +35,7 @@ class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
         bpy.ops.object.duplicate(linked=False)  # Curveだけ複製
         tmp_curve_objs = [obj for obj in context.selected_objects if obj.type == "CURVE"]
 
-        # ストレート化
+        # Curveをストレート化
         ArmatureMode.to_edit_mode(context, armature)
         for curve in tmp_curve_objs:
             for spline in curve.data.splines:
@@ -43,13 +43,12 @@ class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
                     CurveStraighten.execute_nurbs_straighten(spline, True, True)
         ArmatureMode.return_obuject_mode()
 
-
         # 作り直す
         # ---------------------------------------------------------------------
         # create bones
-        BoneManager.create(context, tmp_curve_objs)
+        BoneManager.create(context, tmp_curve_objs, selected_curve_objs)
         # create mesh
-        MeshManager.create(context, tmp_curve_objs)
+        MeshManager.create(context, tmp_curve_objs, selected_curve_objs)
 
 
         # 後始末

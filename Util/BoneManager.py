@@ -6,7 +6,7 @@ from . import Naming, ArmatureMode, MirrorUtil, ConstraintUtil
 
 # ボーン作成
 # =================================================================================================
-def create(context, selected_curve_objs):
+def create(context, tmp_curve_objs, original_curve_objs):
     armature = bpy.data.objects[context.scene.AHT_armature_name]
     bpy.context.view_layer.objects.active = armature
 
@@ -20,13 +20,15 @@ def create(context, selected_curve_objs):
 
     # Curveごとに回す
     edit_bones = []
-    for curve_obj in selected_curve_objs:
+    for i, curve_obj in enumerate(tmp_curve_objs):
+        original_name = original_curve_objs[i].name
+
         # ミラーチェック
         MirrorName = None if len(MirrorUtil.find_mirror_modifires(curve_obj)) == 0 else "L"
 
-        edit_bones += _create_curve_bones(context, armature, curve_obj, MirrorName)  # Curve１本１本処理する
+        edit_bones += _create_curve_bones(context, armature, original_name, curve_obj, MirrorName)  # Curve１本１本処理する
         if MirrorName != None:
-            edit_bones += _create_curve_bones(context, armature, curve_obj, "R")  # Curve１本１本処理する
+            edit_bones += _create_curve_bones(context, armature, original_name, curve_obj, "R")  # Curve１本１本処理する
 
     # OBJECTモードに戻すのを忘れないように
     ArmatureMode.return_obuject_mode(state_backup)
@@ -37,7 +39,7 @@ def create(context, selected_curve_objs):
 
 # create bone chain
 # *****************************************************************************
-def _create_curve_bones(context, armature, curve_obj, MirrorName):
+def _create_curve_bones(context, armature, original_name, curve_obj, MirrorName):
     created = []
 
     root_matrix = armature.matrix_world.inverted() @ curve_obj.matrix_world
@@ -48,7 +50,7 @@ def _create_curve_bones(context, armature, curve_obj, MirrorName):
         parent = armature.data.edit_bones[context.scene.AHT_root_bone_name]  # 最初はRootBoneが親
         for i in range(len(spline.points)-1):
             # Bone生成
-            bone_name = Naming.make_bone_name(curve_obj.name, spline_no, i, MirrorName)
+            bone_name = Naming.make_bone_name(original_name, spline_no, i, MirrorName)
             bpy.ops.armature.bone_primitive_add(name=bone_name)
             new_bone = armature.data.edit_bones[bone_name]
 

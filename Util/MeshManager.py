@@ -5,11 +5,13 @@ from . import Naming, MirrorUtil
 
 # Curveをメッシュにコンバート
 # =================================================================================================
-def create(context, selected_curve_objs):
+def create(context, tmp_curve_objs, original_curve_objs):
     armature = bpy.data.objects[context.scene.AHT_armature_name]
 
     # Curveごとに分離する
-    for curve_obj in selected_curve_objs:
+    for i, curve_obj in enumerate(tmp_curve_objs):
+        original_name = original_curve_objs[i].name
+
         # 処理するCurveをActiveに
         bpy.context.view_layer.objects.active = curve_obj
 
@@ -17,17 +19,17 @@ def create(context, selected_curve_objs):
         recovery_data = MirrorUtil.disable_mirror_modifires(curve_obj)
 
         # 房ごとにMesh化
-        duplicated_list = _create_temp_mesh(curve_obj)
+        duplicated_list = _create_temp_mesh(original_name, curve_obj)
 
         # CurveのMirrorモディファイアを元に戻しておく
         MirrorUtil.recovery_mirror_modifires(recovery_data)
 
         # 頂点ウェイト設定
-        _set_mesh_weights(curve_obj, duplicated_list)
+        _set_mesh_weights(original_name, curve_obj, duplicated_list)
 
         # JOIN & 名前設定
         mesh_obj = _join_temp_meshes(duplicated_list)
-        mesh_obj.name = Naming.make_mesh_name(curve_obj.name)
+        mesh_obj.name = Naming.make_mesh_name(original_name)
 
         # ミラーのコピー
         for modifier in recovery_data:
@@ -48,7 +50,7 @@ def create(context, selected_curve_objs):
         mesh_obj.matrix_parent_inverse = mesh_obj.parent.matrix_world.inverted()
 
 # テンポラリMeshを作成
-def _create_temp_mesh(curve_obj):
+def _create_temp_mesh(original_name, curve_obj):
     # 複製の対象を対象のCurveだけにする
     bpy.ops.object.select_all(action='DESELECT')
     curve_obj.select_set(True)
@@ -66,7 +68,7 @@ def _create_temp_mesh(curve_obj):
                 duplicated_obj.data.splines.remove(spline)
 
         # 名前も設定しておく
-        duplicated_obj.name = Naming.make_tmp_mesh_name(curve_obj.name, duplicate_no)
+        duplicated_obj.name = Naming.make_tmp_mesh_name(original_name, duplicate_no)
 
     # メッシュ化
     bpy.ops.object.select_all(action='DESELECT')
@@ -76,7 +78,7 @@ def _create_temp_mesh(curve_obj):
 
     return duplicated_list
 
-def _set_mesh_weights(curve_obj, duplicated_list):
+def _set_mesh_weights(original_name, curve_obj, duplicated_list):
     # 頂点にウェイト設定する内部関数を用意しておく
     def __add_weight_group(target_obj, name_base, spline_no, segment_no, mirror_name):
         vw_name = Naming.make_bone_name(name_base, spline_no, segment_no, mirror_name)
@@ -93,11 +95,11 @@ def _set_mesh_weights(curve_obj, duplicated_list):
     for duplicate_no,duplicated_obj in enumerate(duplicated_list):
         splines = curve_obj.data.splines.values()
         for point_no in range(len(splines[duplicate_no].points)-1):
-            duplicated_obj.vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, duplicate_no, point_no, MirrorName))
+            duplicated_obj.vertex_groups.new(name=Naming.make_bone_name(original_name, duplicate_no, point_no, MirrorName))
         # .Rも追加
         if MirrorName != None:
             for point_no in range(len(splines[duplicate_no].points)-1):
-                duplicated_obj.vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, duplicate_no, point_no, "R"))
+                duplicated_obj.vertex_groups.new(name=Naming.make_bone_name(original_name, duplicate_no, point_no, "R"))
 
     # 頂点ごとにウェイト値を算出
     # -------------------------------------------------------------------------
@@ -151,7 +153,7 @@ def _set_mesh_weights(curve_obj, duplicated_list):
                 # 残ったので一番近いもの
                 use_no = check_dir_list[0][0]
 
-            __add_weight_group(duplicated_obj, curve_obj.name, duplicate_no, use_no, MirrorName)
+            __add_weight_group(duplicated_obj, original_name, duplicate_no, use_no, MirrorName)
 
 
 # ウェイトを付け終わった中間Meshを結合して１つのオブジェクトにする
