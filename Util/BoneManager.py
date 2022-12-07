@@ -134,7 +134,7 @@ def pose_bone_fit_curve(armature, selected_curve_objs):
     for curve_obj in selected_curve_objs:
         for spline_no, spline in enumerate(curve_obj.data.splines):
 
-            parent_rot = mathutils.Matrix.Identity(4)
+            parent_world_rot = mathutils.Matrix.Identity(4)
 
             for i in range(len(spline.points)-1):
                 # ミラーチェック
@@ -145,19 +145,32 @@ def pose_bone_fit_curve(armature, selected_curve_objs):
 
                 bone = armature.pose.bones[bone_name]
 
+                # ワールド空間上同士で角度を算出
                 curve_vec = (curve_obj.matrix_world @ spline.points[i+1].co.xyz - curve_obj.matrix_world @ spline.points[i].co.xyz).normalized()
-                bone_vec = bone.y_axis.xyz
-                axis = bone_vec.cross(curve_vec).normalized()
-                rad = math.acos(curve_vec.dot(bone_vec))
-                if i == 5:
-                    print(curve_vec, bone_vec)
+                bone_world_vec = bone.y_axis.xyz @ armature.matrix_world.inverted_safe().to_3x3()
+                bone_vec = bone_world_vec @ parent_world_rot
+                print(parent_world_rot)
+
+                # 回転軸を出してBone座標系に変換
+                world_axis = curve_vec.cross(bone_vec).normalized()
+                if world_axis.length == 0:
+                    continue
+                bone_axis = world_axis @ armature.matrix_world.to_3x3()
+
+                # 誤差対策付き角度だし
+                cs = curve_vec.dot(bone_vec)
+                cs = min(1, max(-1, cs))
+                rad = math.acos(cs)
+
+#                print(curve_vec, bone_vec, bone_axis, rad*180/3.14)
 
                 # 回転行列作成
-                rot_mat = mathutils.Matrix.Rotation(rad, 4, axis)
-                bone.matrix = parent_rot.inverted() @ rot_mat @ bone.matrix
-                parent_rot = rot_mat
+                rot_mat = mathutils.Matrix.Rotation(-rad, 4, bone_axis)
+                bone.matrix = bone.matrix @ rot_mat
 
-                # if i == 2:
-                #     break
+                # ワールド空間のボーンの向きを更新
+                parent_world_rot = mathutils.Matrix.Rotation(rad, 4, world_axis) @ parent_world_rot
 
 
+                if i == 3:
+                    break
