@@ -135,6 +135,7 @@ def pose_bone_fit_curve(armature, selected_curve_objs):
         for spline_no, spline in enumerate(curve_obj.data.splines):
 
             parent_rot = mathutils.Matrix.Identity(4)
+            parent_qt = mathutils.Quaternion()
 
             for i in range(len(spline.points)-1):
                 # ミラーチェック
@@ -150,25 +151,21 @@ def pose_bone_fit_curve(armature, selected_curve_objs):
                 curve_vec = (curve_obj.matrix_world @ spline.points[i+1].co.xyz - curve_obj.matrix_world @ spline.points[i].co.xyz).normalized()
                 bone_vec = pose_bone.y_axis.xyz @ armature.matrix_world.inverted_safe().to_3x3() @ parent_rot
 
-                # print(curve_vec, bone_vec, pose_bone.y_axis.xyz @ armature.matrix_world.inverted_safe().to_3x3())
-                # if i == 3:
-                #     break
-
                 # 回転軸を出してBone座標系に変換
                 world_axis = curve_vec.cross(bone_vec).normalized()
                 if world_axis.length == 0:
                     continue
-                bone_axis = world_axis @ armature.matrix_world.to_3x3() @ pose_bone.matrix.to_3x3()
+                bone_axis = world_axis @ armature.matrix_world.to_3x3() @ pose_bone.matrix.to_3x3() @ parent_qt.to_matrix().to_3x3()
 
                 # 誤差対策付き角度だし
                 cs = curve_vec.dot(bone_vec)
                 cs = min(1, max(-1, cs))
                 rad = -math.acos(cs)
 
-                # 回転行列作成
-                rot_mat = mathutils.Matrix.Rotation(rad, 4, bone_axis)
-                pose_bone.matrix = pose_bone.matrix @ rot_mat
+                # 回転
+                pose_bone.rotation_quaternion = mathutils.Quaternion(bone_axis, rad)
 
                 # ワールド空間のボーンの向きを更新
                 parent_rot = parent_rot @ mathutils.Matrix.Rotation(-rad, 4, world_axis)
+                parent_qt = parent_qt @ mathutils.Quaternion(bone_axis, rad)
 
