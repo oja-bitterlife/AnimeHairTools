@@ -134,8 +134,8 @@ def pose_bone_fit_curve(armature, selected_curve_objs):
     for curve_obj in selected_curve_objs:
         for spline_no, spline in enumerate(curve_obj.data.splines):
 
-            parent_rot = mathutils.Matrix.Identity(4)
-            parent_qt = mathutils.Quaternion()
+            parent_world_qt = mathutils.Quaternion()
+            parent_pose_qt = mathutils.Quaternion()
 
             for i in range(len(spline.points)-1):
                 # ミラーチェック
@@ -145,27 +145,24 @@ def pose_bone_fit_curve(armature, selected_curve_objs):
                     bone_name = Naming.make_bone_name(curve_obj.name, spline_no, i, "L")
 
                 pose_bone = armature.pose.bones[bone_name]
-#                data_bone = armature.data.bones[bone_name]
 
-                # ワールド空間上同士で角度を算出
+                # ワールド空間上に展開
                 curve_vec = (curve_obj.matrix_world @ spline.points[i+1].co.xyz - curve_obj.matrix_world @ spline.points[i].co.xyz).normalized()
-                bone_vec = pose_bone.y_axis.xyz @ armature.matrix_world.inverted_safe().to_3x3() @ parent_rot
+                bone_vec = pose_bone.y_axis.xyz @ armature.matrix_world.inverted_safe().to_3x3() @ parent_world_qt.to_matrix().to_3x3()
 
-                # 回転軸を出してBone座標系に変換
+                # Worldで回転軸を出してPose座標系に変換
                 world_axis = curve_vec.cross(bone_vec).normalized()
                 if world_axis.length == 0:
                     continue
-                bone_axis = world_axis @ armature.matrix_world.to_3x3() @ pose_bone.matrix.to_3x3() @ parent_qt.to_matrix().to_3x3()
+                pose_axis = world_axis @ armature.matrix_world.to_3x3() @ pose_bone.matrix.to_3x3() @ parent_pose_qt.to_matrix().to_3x3()
 
                 # 誤差対策付き角度だし
-                cs = curve_vec.dot(bone_vec)
-                cs = min(1, max(-1, cs))
-                rad = -math.acos(cs)
+                rad = math.acos(min(1, max(-1, curve_vec.dot(bone_vec))))
 
-                # 回転
-                pose_bone.rotation_quaternion = mathutils.Quaternion(bone_axis, rad)
+                # ボーンの回転
+                pose_bone.rotation_quaternion = mathutils.Quaternion(pose_axis, -rad)
 
-                # ワールド空間のボーンの向きを更新
-                parent_rot = parent_rot @ mathutils.Matrix.Rotation(-rad, 4, world_axis)
-                parent_qt = parent_qt @ mathutils.Quaternion(bone_axis, rad)
+                # 回転を子に伝搬
+                parent_world_qt = parent_world_qt @ mathutils.Quaternion(world_axis, rad)
+                parent_pose_qt = parent_pose_qt @ pose_bone.rotation_quaternion
 
