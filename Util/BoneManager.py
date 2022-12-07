@@ -132,37 +132,52 @@ def pose_bone_gather_children(pose_bone, select_func=None):
 # =================================================================================================
 def pose_bone_fit_curve(armature, selected_curve_objs):
     for curve_obj in selected_curve_objs:
-        for spline_no, spline in enumerate(curve_obj.data.splines):
+        for spline_no in range(len(curve_obj.data.splines)):
 
-            parent_world_qt = mathutils.Quaternion()
-            parent_pose_qt = mathutils.Quaternion()
+            # ミラーチェック
+            if len(MirrorUtil.find_mirror_modifires(curve_obj)) == 0:
+                _rec_pose_bone_fit_process(armature, curve_obj, spline_no, 0, mathutils.Quaternion(), mathutils.Quaternion(), None)
+            else:
+                _rec_pose_bone_fit_process(armature, curve_obj, spline_no, 0, mathutils.Quaternion(), mathutils.Quaternion(), "L")
+                _rec_pose_bone_fit_process(armature, curve_obj, spline_no, 0, mathutils.Quaternion(), mathutils.Quaternion(), "R")
 
-            for i in range(len(spline.points)-1):
-                # ミラーチェック
-                if len(MirrorUtil.find_mirror_modifires(curve_obj)) == 0:
-                    bone_name = Naming.make_bone_name(curve_obj.name, spline_no, i)
-                else:
-                    bone_name = Naming.make_bone_name(curve_obj.name, spline_no, i, "L")
 
-                pose_bone = armature.pose.bones[bone_name]
+# spline１本について、セグメント間の方向にBoneを合わせていく
+def _rec_pose_bone_fit_process(armature, curve_obj, spline_no, point_no, parent_world_qt, parent_pose_qt, LR):
+    # 対象となるspline決定
+    spline = curve_obj.data.splines[spline_no]
+    if len(spline.points) <= point_no+1:
+        return  # 再帰終了
 
-                # ワールド空間上に展開
-                curve_vec = (curve_obj.matrix_world @ spline.points[i+1].co.xyz - curve_obj.matrix_world @ spline.points[i].co.xyz).normalized()
-                bone_vec = pose_bone.y_axis.xyz @ armature.matrix_world.inverted_safe().to_3x3() @ parent_world_qt.to_matrix().to_3x3()
+    # 対象となるBone決定
+    bone_name = Naming.make_bone_name(curve_obj.name, spline_no, point_no, LR)
+    pose_bone = armature.pose.bones[bone_name]
 
-                # Worldで回転軸を出してPose座標系に変換
-                world_axis = curve_vec.cross(bone_vec).normalized()
-                if world_axis.length == 0:
-                    continue
-                pose_axis = world_axis @ armature.matrix_world.to_3x3() @ pose_bone.matrix.to_3x3() @ parent_pose_qt.to_matrix().to_3x3()
+    # ワールド空間上にCurveとBoneのベクトルを展開
+    curve_vec = (curve_obj.matrix_world @ spline.points[point_no+1].co.xyz - curve_obj.matrix_world @ spline.points[point_no].co.xyz).normalized()
+    if LR == "R":
+        curve_vec.x = -curve_vec.x  # Mirror側
+    bone_vec = pose_bone.y_axis.xyz @ armature.matrix_world.inverted_safe().to_3x3() @ parent_world_qt.to_matrix().to_3x3()
 
-                # 誤差対策付き角度だし
-                rad = math.acos(min(1, max(-1, curve_vec.dot(bone_vec))))
+    # Worldで回転軸を出してPose座標系に変換
+    world_axis = curve_vec.cross(bone_vec).normalized()
+    if world_axis.length == 0:
+        return
+    pose_axis = world_axis @ armature.matrix_world.to_3x3() @ pose_bone.matrix.to_3x3() @ parent_pose_qt.to_matrix().to_3x3()
 
-                # ボーンの回転
-                pose_bone.rotation_quaternion = mathutils.Quaternion(pose_axis, -rad)
+    # 誤差対策付き角度だし
+    rad = math.acos(min(1, max(-1, curve_vec.dot(bone_vec))))
 
-                # 回転を子に伝搬
-                parent_world_qt = parent_world_qt @ mathutils.Quaternion(world_axis, rad)
-                parent_pose_qt = parent_pose_qt @ pose_bone.rotation_quaternion
+    # Pose座標系でボーンの回転
+    pose_bone.rotation_quaternion = mathutils.Quaternion(pose_axis, -rad)
+
+    # 回転を子に伝搬
+    _rec_pose_bone_fit_process(
+        armature,
+        curve_obj,
+        spline_no,
+        point_no+1,
+        parent_world_qt @ mathutils.Quaternion(world_axis, rad),
+        parent_pose_qt @ pose_bone.rotation_quaternion,
+        LR)
 
