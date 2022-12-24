@@ -4,6 +4,7 @@ from . import ArmatureManager, MeshAndBones
 from . import EditBoneSetup
 from . import IKSetup, CopyAction
 from . import CurveStraighten
+from . import MirrorEdit
 
 # Main UI
 # ===========================================================================================
@@ -26,5 +27,6 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
             CopyAction.ui_draw(context, self.layout)
         if context.mode == "EDIT_CURVE":
             CurveStraighten.ui_draw(context, self.layout)
-
-
+            MirrorEdit.ui_draw(context, self.layout)
+        if context.mode == "EDIT_MESH":
+            MirrorEdit.ui_draw(context, self.layout)
