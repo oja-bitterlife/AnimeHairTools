@@ -181,7 +181,10 @@ def remove(context, selected_curve_objs):
         mesh_basename = Naming.make_mesh_name(curve_obj.name)
         for obj in bpy.data.objects:
             if obj.type == "MESH" and obj.name.startswith(mesh_basename):
-                obj.select_set(True)
+                try:
+                    obj.select_set(True)
+                except:
+                    pass  # 消したてだとSelectに失敗することがある(完全削除待ち？)
 
     # 削除        
     bpy.ops.object.delete()
