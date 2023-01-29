@@ -181,13 +181,11 @@ class ANIME_HAIR_TOOLS_PT_setup_hair_armature(bpy.types.Panel):
     bl_options = {'HEADER_LAYOUT_EXPAND'}
 
     def draw(self, context):
-        if context.mode != "OBJECT":
-            self.layout.enabled = False
-
         # Armature生成
         # ---------------------------------------------------------------------
         self.layout.label(text="Armature and RootBone Setting:")
         box = self.layout.box()
+        box.enabled = context.mode == "OBJECT"
 
         # ATHのArmatureの設定
         box.prop(context.scene, "AHT_armature_name", text="Armature")
@@ -205,6 +203,8 @@ class ANIME_HAIR_TOOLS_PT_setup_hair_armature(bpy.types.Panel):
         # ---------------------------------------------------------------------
         self.layout.label(text="Mesh & Bones Setting:")
         box = self.layout.box()
+        box.enabled = context.mode == "OBJECT" and bpy.context.view_layer.objects.active.type == "CURVE"
+
         box.prop(context.scene, "AHT_subdivision", text="Use Subdivision Modifire")
         box.prop(context.scene, "AHT_bbone", text="Bendy Bones")
         box.prop(context.scene, "AHT_create_layer", text="Bone Create Layer")

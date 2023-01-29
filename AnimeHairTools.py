@@ -1,7 +1,7 @@
 import bpy
 
 from . import ArmatureManager
-from . import EditBoneSetup
+from . import EditBoneSetting
 from . import IKSetup, CopyAction
 from . import CurveStraighten
 from . import MirrorEdit

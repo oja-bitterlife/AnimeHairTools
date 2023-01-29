@@ -27,14 +27,12 @@ def init():
     from . import AnimeHairTools
     from . import ArmatureManager
     from . import CopyAction
-    from . import CurveStraighten
-    from . import EditBoneSetup
+    from . import EditBoneSetting
     from . import IKSetup
-    from . import MirrorEdit
     orders = [
         AnimeHairTools.ANIME_HAIR_TOOLS_PT_ui,
         ArmatureManager.ANIME_HAIR_TOOLS_PT_setup_hair_armature,
-        EditBoneSetup.ANIME_HAIR_TOOLS_PT_bone_setup,
+        EditBoneSetting.ANIME_HAIR_TOOLS_PT_bone_setting,
         IKSetup.ANIME_HAIR_TOOLS_PT_ik_setup,
         CopyAction.ANIME_HAIR_TOOLS_PT_copy_action,
     ]

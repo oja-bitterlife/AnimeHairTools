@@ -124,8 +124,8 @@ def is_layer_enable(armature, edit_bone):
 
 # UI描画設定
 # =================================================================================================
-class ANIME_HAIR_TOOLS_PT_bone_setup(bpy.types.Panel):
-    bl_label = "Bone Setup"
+class ANIME_HAIR_TOOLS_PT_bone_setting(bpy.types.Panel):
+    bl_label = "Edit Bone Setting"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_parent_id = "APT_HAIR_PT_UI"
