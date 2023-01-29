@@ -19,7 +19,7 @@ bl_info = {
     "version" : (0, 2, 0),
     "location" : "",
     "warning" : "",
-    "category" : "Pose"
+    "category" : "Animation"
 }
 
 from . import auto_load
