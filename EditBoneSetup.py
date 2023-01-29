@@ -124,23 +124,32 @@ def is_layer_enable(armature, edit_bone):
 
 # UI描画設定
 # =================================================================================================
-def ui_draw(context, layout):
-    # 選択中BoneのBendyBoneの設定
-    layout.label(text="Bendy Bone Setting:")
-    box = layout.box()
-    box.prop(context.scene, "AHT_bbone", text="BendyBones")
-    box.operator("anime_hair_tools.setup_bendy_bone")
+class ANIME_HAIR_TOOLS_PT_bone_setup(bpy.types.Panel):
+    bl_label = "Bone Setup"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_parent_id = "APT_HAIR_PT_UI"
+    bl_options = {'HEADER_LAYOUT_EXPAND'}
 
-    # 選択中BoneのRollの設定
-    layout.label(text="Bone Roll Setting:")
-    box = layout.box()
-    row = box.row()
-    row.operator("anime_hair_tools.copy_active_roll")
-    row.operator("anime_hair_tools.reset_bone_roll")
+    def draw(self, context):
+        if context.mode != "EDIT_ARMATURE":
+            self.layout.enabled = False
 
-    # 選択中BoneのConnect/Disconnect
-    layout.label(text="Bone Connect Setting:")
-    box = layout.box()
-    box.operator("anime_hair_tools.setup_bone_connect")
-    box.operator("anime_hair_tools.setup_bone_disconnect")
+        # 選択中BoneのBendyBoneの設定
+        self.layout.label(text="Bendy Bone Setting:")
+        box = self.layout.box()
+        box.prop(context.scene, "AHT_bbone", text="BendyBones")
+        box.operator("anime_hair_tools.setup_bendy_bone")
 
+        # 選択中BoneのRollの設定
+        self.layout.label(text="Bone Roll Setting:")
+        box = self.layout.box()
+        row = box.row()
+        row.operator("anime_hair_tools.copy_active_roll")
+        row.operator("anime_hair_tools.reset_bone_roll")
+
+        # 選択中BoneのConnect/Disconnect
+        self.layout.label(text="Bone Connect Setting:")
+        box = self.layout.box()
+        box.operator("anime_hair_tools.setup_bone_connect")
+        box.operator("anime_hair_tools.setup_bone_disconnect")

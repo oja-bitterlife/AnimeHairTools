@@ -133,15 +133,24 @@ class ANIME_HAIR_TOOLS_OT_ik_disable(bpy.types.Operator):
 
 # UI描画設定
 # =================================================================================================
-def ui_draw(context, layout):
-    layout.label(text="IK Setup:")
-    box = layout.box()
-    box.prop(context.scene, "AHT_ik_target_size", text="IK Target Size")
-    box.operator("anime_hair_tools.ik_setup")
-    box.operator("anime_hair_tools.ik_remove")
-    box = layout.box()
-    box.operator("anime_hair_tools.ik_enable")
-    box.operator("anime_hair_tools.ik_disable")
+class ANIME_HAIR_TOOLS_PT_ik_setup(bpy.types.Panel):
+    bl_label = "IK Setup"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_parent_id = "APT_HAIR_PT_UI"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        if context.mode != "POSE":
+            self.layout.enabled = False
+
+        box = self.layout.box()
+        box.prop(context.scene, "AHT_ik_target_size", text="IK Target Size")
+        box.operator("anime_hair_tools.ik_setup")
+        box.operator("anime_hair_tools.ik_remove")
+        box = self.layout.box()
+        box.operator("anime_hair_tools.ik_enable")
+        box.operator("anime_hair_tools.ik_disable")
 
 
 # =================================================================================================

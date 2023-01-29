@@ -184,18 +184,27 @@ def remove_all_keys_from_children(action, children_list):
 
 # UI描画設定
 # =================================================================================================
-def ui_draw(context, layout):
-    layout.label(text="Action Util:")
-    copy_action_box = layout.box()
-    # Actionを子BoneにCopyする
-    copy_action_box.label(text="Propagate Action To Children:")
-    box = copy_action_box.box()
-    box.prop(context.scene, "AHT_keyframe_offset", text="Keyframe Offset")
-    box.prop(context.scene, "AHT_keyframe_damping", text="Keyframe Damping")
-    box.operator("anime_hair_tools.copy_rotation_keys")
-    box.operator("anime_hair_tools.remove_children_keys")
-    copy_action_box.label(text="Copy Action:")
-    copy_action_box.operator("anime_hair_tools.copy_action")
+class ANIME_HAIR_TOOLS_PT_copy_action(bpy.types.Panel):
+    bl_label = "Copy Action"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_parent_id = "APT_HAIR_PT_UI"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        if context.mode != "POSE":
+            self.layout.enabled = False
+
+        copy_action_box = self.layout.box()
+        # Actionを子BoneにCopyする
+        copy_action_box.label(text="Propagate Action To Children:")
+        box = copy_action_box.box()
+        box.prop(context.scene, "AHT_keyframe_offset", text="Keyframe Offset")
+        box.prop(context.scene, "AHT_keyframe_damping", text="Keyframe Damping")
+        box.operator("anime_hair_tools.copy_rotation_keys")
+        box.operator("anime_hair_tools.remove_children_keys")
+        copy_action_box.label(text="Copy Action:")
+        copy_action_box.operator("anime_hair_tools.copy_action")
 
 
 # =================================================================================================

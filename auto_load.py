@@ -23,6 +23,24 @@ def init():
     modules = get_all_submodules(Path(__file__).parent)
     ordered_classes = get_ordered_classes_to_register(modules)
 
+    # 並び替え
+    from . import AnimeHairTools
+    from . import ArmatureManager
+    from . import CopyAction
+    from . import CurveStraighten
+    from . import EditBoneSetup
+    from . import IKSetup
+    from . import MirrorEdit
+    orders = [
+        AnimeHairTools.ANIME_HAIR_TOOLS_PT_ui,
+        ArmatureManager.ANIME_HAIR_TOOLS_PT_setup_hair_armature,
+        EditBoneSetup.ANIME_HAIR_TOOLS_PT_bone_setup,
+        IKSetup.ANIME_HAIR_TOOLS_PT_ik_setup,
+        CopyAction.ANIME_HAIR_TOOLS_PT_copy_action,
+    ]
+    no_ordered = filter(lambda c: c not in orders, ordered_classes)
+    ordered_classes = list(orders) + list(no_ordered)
+
 def register():
     for cls in ordered_classes:
         bpy.utils.register_class(cls)
