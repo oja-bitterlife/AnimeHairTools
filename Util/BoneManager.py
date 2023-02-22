@@ -46,6 +46,15 @@ def _create_curve_bones(context, armature, original_name, curve_obj, MirrorName)
 
     # spline単位で処理
     for spline_no, spline in enumerate(curve_obj.data.splines):
+        normal_x = None
+        if len(spline.points) >= 2:
+            v = (curve_obj.matrix_world @ spline.points[1].co) - (curve_obj.matrix_world @ spline.points[0].co)
+            n = mathutils.Vector((0, 0, 1))
+            normal_x = n.cross(v.xyz.normalized()).normalized()
+            print("-------------")
+            print(v.xyz.normalized())
+            print(normal_x)
+
         # 頂点ごとにボーンを作成する
         parent = armature.data.edit_bones[context.scene.AHT_root_bone_name]  # 最初はRootBoneが親
         for i in range(len(spline.points)-1):
@@ -71,6 +80,20 @@ def _create_curve_bones(context, armature, original_name, curve_obj, MirrorName)
             if i == 0:
                 new_bone.head = bgn.xyz  # disconnected head setup
             new_bone.tail = end.xyz
+
+            # roll
+            if normal_x != None:
+                if i == 0:
+                    x_axis = armature.matrix_world @ new_bone.x_axis
+                    y_axis = armature.matrix_world @ new_bone.y_axis
+                    roll = math.acos(normal_x.dot(x_axis))
+                    if normal_x.cross(x_axis).dot(y_axis) > 0:
+                        roll = -roll
+                new_bone.roll += roll
+
+                # Mirror側はrollが逆転
+                if MirrorName == "R":
+                    new_bone.roll += math.pi
 
             # BendyBone化
             if context.scene.AHT_bbone > 1:
