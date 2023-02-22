@@ -72,16 +72,12 @@ def _create_curve_bones(context, armature, original_name, curve_obj, MirrorName)
             bgn = root_matrix @ spline.points[i].co
             end = root_matrix @ spline.points[i+1].co
 
-            # .R側だった場合はBoneをX軸反転
-            if MirrorName == "R":
-                bgn.x = -bgn.x
-                end.x = -end.x
-
+            # head/tailに反映
             if i == 0:
                 new_bone.head = bgn.xyz  # disconnected head setup
             new_bone.tail = end.xyz
 
-            # roll
+            # rollも設定
             if normal_x != None:
                 if i == 0:
                     x_axis = armature.matrix_world @ new_bone.x_axis
@@ -91,10 +87,19 @@ def _create_curve_bones(context, armature, original_name, curve_obj, MirrorName)
                         roll = -roll
                 new_bone.roll += roll
 
-                # Mirror側はrollが逆転
-                if MirrorName == "R":
-                    new_bone.roll += math.pi
+            # .R側だった場合はBoneをX軸反転
+            if MirrorName == "R":
+                bgn.x = -bgn.x
+                end.x = -end.x
 
+                # head/tailを設定しなおし(Roll設定に影響しないよう代入しなおしで実施)
+                if i == 0:
+                    new_bone.head = bgn.xyz  # disconnected head setup
+                new_bone.tail = end.xyz
+
+                # Mirror側はrollが逆転
+                new_bone.roll = -new_bone.roll
+ 
             # BendyBone化
             if context.scene.AHT_bbone > 1:
                 new_bone.bbone_segments = context.scene.AHT_bbone
