@@ -2,9 +2,7 @@ import bpy
 import math
 
 from .Util.ListupUtil import ListupProperty
-from .Util import ArmatureMode
 from .Util import BoneManager, MeshManager
-from . import CurveStraighten
 
 
 # AHT用のArmatureのセットアップを行う
@@ -101,24 +99,22 @@ class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
         bpy.ops.object.select_all(action='DESELECT')
         for obj in selected_curve_objs:
             obj.select_set(True)
-        bpy.ops.object.duplicate(linked=False)  # Curveだけ複製
-        tmp_curve_objs = [obj for obj in context.selected_objects if obj.type == "CURVE"]
 
         # Curveをストレート化
-        ArmatureMode.to_edit_mode(context, armature)
-        for curve in tmp_curve_objs:
-            for spline in curve.data.splines:
-                if spline.type == "NURBS":
-                    CurveStraighten.execute_nurbs_straighten(spline, True, True)
-        ArmatureMode.return_obuject_mode()
+        # ArmatureMode.to_edit_mode(context, armature)
+        # for curve in tmp_curve_objs:
+        #     for spline in curve.data.splines:
+        #         if spline.type == "NURBS":
+        #             CurveStraighten.execute_nurbs_straighten(spline, True, True)
+        # ArmatureMode.return_obuject_mode()
 
 
         # 作り直す
         # ---------------------------------------------------------------------
         # create bones
-        BoneManager.create(context, tmp_curve_objs, selected_curve_objs)
+        # BoneManager.create(context, tmp_curve_objs, selected_curve_objs)
         # create mesh
-        MeshManager.create(context, tmp_curve_objs, selected_curve_objs)
+        MeshManager.create(context, selected_curve_objs)
 
 
         # 後始末
@@ -203,7 +199,7 @@ class ANIME_HAIR_TOOLS_PT_setup_hair_armature(bpy.types.Panel):
         # ---------------------------------------------------------------------
         self.layout.label(text="Mesh & Bones Setting:")
         box = self.layout.box()
-        box.enabled = context.mode == "OBJECT" and bpy.context.view_layer.objects.active.type == "CURVE"
+        box.enabled = context.mode == "OBJECT" and (bpy.context.view_layer.objects.active != None and bpy.context.view_layer.objects.active.type == "CURVE")
 
         box.prop(context.scene, "AHT_subdivision", text="Use Subdivision Modifire")
         box.prop(context.scene, "AHT_bbone", text="Bendy Bones")
