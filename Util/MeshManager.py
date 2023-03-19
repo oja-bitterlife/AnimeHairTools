@@ -115,16 +115,16 @@ def _set_mesh_weights(curve_obj, created_list):
 
     # まずはVertexGropusの追加
     # -------------------------------------------------------------------------
-    for duplicate_no in range(len(duplicated_list)):
-        splines = curve_obj.data.splines.values()
-        for point_no in range(len(splines[duplicate_no].points)-1):
-            duplicated_list[duplicate_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, duplicate_no, point_no, MirrorName))
-            straighted_list[duplicate_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, duplicate_no, point_no, MirrorName))
+    for spline_no in range(len(curve_obj.data.splines)):
+        splines = curve_obj.data.splines
+        for point_no in range(len(splines[spline_no].points)-1):
+            duplicated_list[spline_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, spline_no, point_no, MirrorName))
+            straighted_list[spline_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, spline_no, point_no, MirrorName))
         # .Rも追加
         if MirrorName != None:
-            for point_no in range(len(splines[duplicate_no].points)-1):
-                duplicated_list[duplicate_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, duplicate_no, point_no, "R"))
-                straighted_list[duplicate_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, duplicate_no, point_no, "R"))
+            for point_no in range(len(splines[spline_no].points)-1):
+                duplicated_list[spline_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, spline_no, point_no, "R"))
+                straighted_list[spline_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, spline_no, point_no, "R"))
 
     # 頂点ごとにウェイト値を算出
     # -------------------------------------------------------------------------
@@ -134,13 +134,34 @@ def _set_mesh_weights(curve_obj, created_list):
     world_vec = (root_matrix @ spline.points[1].co - root_matrix @ spline.points[0].co).xyz.normalized()
 
     # カーブの各セグメントまでの距離を入れる
-    curve_length = []
+    curve_length = [0]
     segments = curve_obj.data.splines[0].points  # 1Curve=1Splineになっているはず
     total_length = 0
     for point_no in range(len(segments)-1):
         total_length += (segments[point_no+1].co - segments[point_no].co).length
         curve_length.append(total_length)
-    print(curve_length)
+
+    # 房(メッシュ)ごとに処理。
+    # Curveのポイント間をつなぐ線分上に射影して、線分の端点２点からの距離でウェイトを設定する
+    for straighted_no,straighted_obj in enumerate(straighted_list):
+        mesh = straighted_obj.data
+        root_matrix = straighted_obj.matrix_world
+
+        # Meshの頂点ごとにウェイトを計算
+        for v_no,v in enumerate(mesh.vertices):
+            world_vpos = (root_matrix @ v.co)
+
+            # 射影して距離算出
+
+            # 端点２点を調べる
+            bgn_no = 0
+            end_no = 1
+
+            # 割合取得
+            bgn_ratio = 0.5
+            end_ratio = 0.5
+
+            # 割合からウェイト設定
 
     return
 
@@ -150,25 +171,25 @@ def _set_mesh_weights(curve_obj, created_list):
 
 
 
-    # まずは対象となるCurveポイントのWorld座標を取得
-    curve_world_points_list = []
-    for spline in curve_obj.data.splines:
-        curve_world_points = []
-        for spline_point in spline.points:
-            root_matrix = curve_obj.matrix_world
-            world_pos = root_matrix @ spline_point.co
-            curve_world_points.append(world_pos.xyz)
-        # スプラインごとにまとめていく
-        curve_world_points_list.append(curve_world_points)
+    # # まずは対象となるCurveポイントのWorld座標を取得
+    # curve_world_points_list = []
+    # for spline in curve_obj.data.splines:
+    #     curve_world_points = []
+    #     for spline_point in spline.points:
+    #         root_matrix = curve_obj.matrix_world
+    #         world_pos = root_matrix @ spline_point.co
+    #         curve_world_points.append(world_pos.xyz)
+    #     # スプラインごとにまとめていく
+    #     curve_world_points_list.append(curve_world_points)
 
     # 房(メッシュ)ごとに処理。
     # Curveのポイント間をつなぐ線分上に射影して、一番近い(ただし0以上)
     # Curveの始点をウェイト対象にする
-    for duplicate_no,duplicated_obj in enumerate(straighted_list):
+    for spline_no,duplicated_obj in enumerate(straighted_list):
         mesh = duplicated_obj.data
         root_matrix = duplicated_obj.matrix_world
 
-        curve_world_points = curve_world_points_list[duplicate_no]
+        curve_world_points = curve_world_points_list[spline_no]
 
         # Meshの頂点ごとにウェイトを計算
         for v_no,v in enumerate(mesh.vertices):
@@ -200,7 +221,7 @@ def _set_mesh_weights(curve_obj, created_list):
                 # 残ったので一番近いもの
                 use_no = check_dir_list[0][0]
 
-            __add_weight_group(duplicated_obj, v_no, curve_obj.name, duplicate_no, use_no, MirrorName)
+            __add_weight_group(duplicated_obj, v_no, curve_obj.name, spline_no, use_no, MirrorName)
 
 
 # ウェイトを付け終わった中間Meshを結合して１つのオブジェクトにする
