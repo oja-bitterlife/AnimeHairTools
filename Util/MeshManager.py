@@ -133,6 +133,14 @@ def _set_mesh_weights(curve_obj, created_list):
     spline = curve_obj.data.splines[0]  # 1Curve=1Splineになっているはず
     world_vec = (root_matrix @ spline.points[1].co - root_matrix @ spline.points[0].co).xyz.normalized()
 
+    # カーブの各セグメントまでの距離を入れる
+    curve_length = []
+    segments = curve_obj.data.splines[0].points  # 1Curve=1Splineになっているはず
+    total_length = 0
+    for point_no in range(len(segments)-1):
+        total_length += (segments[point_no+1].co - segments[point_no].co).length
+        curve_length.append(total_length)
+    print(curve_length)
 
     return
 
