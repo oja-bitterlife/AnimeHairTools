@@ -19,35 +19,40 @@ def create(context, selected_curve_objs):
         recovery_data = MirrorUtil.disable_mirror_modifires(curve_obj)
 
         # 房ごとにMesh化
-        created_list = _create_temp_mesh(context, curve_obj)
+        (duplicated_list, straighted_list) = _create_temp_mesh(context, curve_obj)
 
         # CurveのMirrorモディファイアを元に戻しておく
         MirrorUtil.recovery_mirror_modifires(recovery_data)
 
         # 頂点ウェイト設定
-        _set_mesh_weights(curve_obj, created_list)
+        _set_mesh_weights(curve_obj, duplicated_list, straighted_list)
+        # 頂点ウェイト設定が終わったらstraight側はもういらない
+        bpy.ops.object.select_all(action='DESELECT')
+        for straight_mesh in straighted_list:
+            straight_mesh.select_set(True)
+        bpy.ops.object.delete()
 
-        # # JOIN & 名前設定
-        # mesh_obj = _join_temp_meshes(duplicated_list)
-        # mesh_obj.name = Naming.make_mesh_name(original_name)
+        # JOIN & 名前設定
+        mesh_obj = _join_temp_meshes(duplicated_list)
+        mesh_obj.name = Naming.make_mesh_name(curve_obj.name)
 
-        # # ミラーのコピー
-        # for modifier in recovery_data:
-        #     new_mirror_modifire = mesh_obj.modifiers.new(modifier.name, modifier.type)
-        #     new_mirror_modifire.use_mirror_merge = False
+        # ミラーのコピー
+        for modifier in recovery_data:
+            new_mirror_modifire = mesh_obj.modifiers.new(modifier.name, modifier.type)
+            new_mirror_modifire.use_mirror_merge = False
 
+        # メッシュにモディファイアを追加
+        mesh_obj.modifiers.new("Armature", "ARMATURE")
+        armature = mesh_obj.modifiers[-1]
+        armature.object = bpy.data.objects.get(context.scene.AHT_armature_name)
 
-        # # メッシュにモディファイアを追加
-        # mesh_obj.modifiers.new("Armature", "ARMATURE")
-        # armature = mesh_obj.modifiers[-1]
-        # armature.object = bpy.data.objects.get(context.scene.AHT_armature_name)
+        if context.scene.AHT_subdivision:
+            mesh_obj.modifiers.new("Subdivision", 'SUBSURF')
 
-        # if context.scene.AHT_subdivision:
-        #     mesh_obj.modifiers.new("Subdivision", 'SUBSURF')
+        # Meshの親をArmatureに設定
+        mesh_obj.parent = bpy.data.objects.get(context.scene.AHT_armature_name)
+        mesh_obj.matrix_parent_inverse = mesh_obj.parent.matrix_world.inverted()
 
-        # # Meshの親をArmatureに設定
-        # mesh_obj.parent = bpy.data.objects.get(context.scene.AHT_armature_name)
-        # mesh_obj.matrix_parent_inverse = mesh_obj.parent.matrix_world.inverted()
 
 # テンポラリMeshを作成
 def _create_temp_mesh(context, curve_obj):
@@ -97,10 +102,9 @@ def _create_temp_mesh(context, curve_obj):
 
     return (duplicated_list, straighted_list)
 
-def _set_mesh_weights(curve_obj, created_list):
-    # 分離して扱いやすく
-    duplicated_list, straighted_list = created_list
 
+# テンポラリメッシュにウェイトを設定する
+def _set_mesh_weights(curve_obj, duplicated_list, straighted_list):
     # 頂点にウェイト設定する内部関数を用意しておく
     # *************************************************************************
     def __add_weight_group(ratio, target_obj, v_no, name_base, spline_no, segment_no, mirror_name):
@@ -108,7 +112,6 @@ def _set_mesh_weights(curve_obj, created_list):
         vg = target_obj.vertex_groups[vw_name]
         vg.add([v_no], ratio, 'ADD')
     # *************************************************************************
-
 
     # 関数本体
     # -------------------------------------------------------------------------
@@ -181,6 +184,7 @@ def _join_temp_meshes(duplicated_list):
     for duplicated_obj in duplicated_list:
         duplicated_obj.select_set(True)
 
+    bpy.context.view_layer.objects.active = duplicated_list[0]
     bpy.ops.object.join()
 
     # 結合したオブジェクトがアクティブになる
