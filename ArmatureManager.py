@@ -96,9 +96,9 @@ class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
         # 作り直す
         # ---------------------------------------------------------------------
         # create mesh
-        meshed_curve_obj = MeshManager.create(context, selected_curve_objs)
+        meshed_curve_list = MeshManager.create(context, selected_curve_objs)
         # create bones
-        BoneManager.create(context, selected_curve_objs, meshed_curve_obj)
+        BoneManager.create(context, selected_curve_objs, meshed_curve_list)
 
         # 後始末
         # ---------------------------------------------------------------------

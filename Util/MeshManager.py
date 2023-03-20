@@ -35,28 +35,29 @@ def create(context, selected_curve_objs):
             straight_mesh.select_set(True)
         bpy.ops.object.delete()
 
-        # JOIN & 名前設定   
-        mesh_obj = _join_temp_meshes(duplicated_list)
-        mesh_obj.name = Naming.make_mesh_name(curve_obj.name)
+        # JOIN & 名前設定
+        # mesh_obj = _join_temp_meshes(duplicated_list)
+        # mesh_obj.name = Naming.make_mesh_name(curve_obj.name)
 
         # ミラーのコピー
-        for modifier in recovery_data:
-            new_mirror_modifire = mesh_obj.modifiers.new(modifier.name, modifier.type)
-            new_mirror_modifire.use_mirror_merge = False
+        for meshed_curve_obj in duplicated_list:
+            for modifier in recovery_data:
+                new_mirror_modifire = meshed_curve_obj.modifiers.new(modifier.name, modifier.type)
+                new_mirror_modifire.use_mirror_merge = False
 
         # メッシュにモディファイアを追加
-        mesh_obj.modifiers.new("Armature", "ARMATURE")
-        armature = mesh_obj.modifiers[-1]
+        meshed_curve_obj.modifiers.new("Armature", "ARMATURE")
+        armature = meshed_curve_obj.modifiers[-1]
         armature.object = bpy.data.objects.get(context.scene.AHT_armature_name)
 
         if context.scene.AHT_subdivision:
-            mesh_obj.modifiers.new("Subdivision", 'SUBSURF')
+            meshed_curve_obj.modifiers.new("Subdivision", 'SUBSURF')
 
         # Meshの親をArmatureに設定
-        mesh_obj.parent = bpy.data.objects.get(context.scene.AHT_armature_name)
-        mesh_obj.matrix_parent_inverse = mesh_obj.parent.matrix_world.inverted()
+        meshed_curve_obj.parent = bpy.data.objects.get(context.scene.AHT_armature_name)
+        meshed_curve_obj.matrix_parent_inverse = meshed_curve_obj.parent.matrix_world.inverted()
 
-    return mesh_obj
+    return duplicated_list
 
 
 # テンポラリMeshを作成

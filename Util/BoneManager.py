@@ -8,7 +8,7 @@ from . import MeshManager
 
 # ボーン作成
 # =================================================================================================
-def create(context, selected_curve_objs, meshed_curve_obj):
+def create(context, selected_curve_objs, meshed_curve_list):
     # プラグインUiに設定されているArmatureを使う
     armature = bpy.data.objects[context.scene.AHT_armature_name]
     bpy.context.view_layer.objects.active = armature
@@ -27,9 +27,10 @@ def create(context, selected_curve_objs, meshed_curve_obj):
         # ミラーチェック
         MirrorName = None if len(MirrorUtil.find_mirror_modifires(curve_obj)) == 0 else "L"
 
-        edit_bones += _create_curve_bones(context, armature, curve_obj.name, meshed_curve_obj, MirrorName)  # Curve１本１本処理する
-        if MirrorName != None:
-            edit_bones += _create_curve_bones(context, armature, curve_obj.name, meshed_curve_obj, "R")  # Curve１本１本処理する
+        for spline_no in range(len(curve_obj.data.splines)):
+            edit_bones += _create_curve_bones(context, armature, curve_obj, spline_no, meshed_curve_list[spline_no], MirrorName)  # Curve１本１本処理する
+            if MirrorName != None:
+                edit_bones += _create_curve_bones(context, armature, curve_obj, spline_no, meshed_curve_list[spline_no], "R")  # Curve１本１本処理する
 
     # OBJECTモードに戻すのを忘れないように
     ArmatureMode.return_obuject_mode(state_backup)
@@ -41,29 +42,25 @@ def create(context, selected_curve_objs, meshed_curve_obj):
 
 # create bone chain
 # *****************************************************************************
-def _create_curve_bones(context, armature, curve_obj_name, meshed_curve_obj, MirrorName):
-    print(meshed_curve_obj)
+def _create_curve_bones(context, armature, curve_obj, spline_no, meshed_curve_obj, MirrorName):
+    spline = curve_obj.data.splines[spline_no]
 
     # 頂点グループごとに、影響度の高い頂点を検出
     # -------------------------------------------------------------------------
-    near_vertex_list = [[] for vg in meshed_curve_obj.vertex_groups if vg.name != MeshManager.NEAR_BONE_MARKING_WEIGHT_NAME and not vg.name.endswith(".R")]
-    for vg in meshed_curve_obj.vertex_groups:
-        if vg.name != MeshManager.NEAR_BONE_MARKING_WEIGHT_NAME and not vg.name.endswith(".R"):
-            print(vg.name)
+    near_vertex_list = [[] for _ in spline.points]
 
     # マーキンググループのインデックスを調べる
     marking_vg_index = None
     for vg in meshed_curve_obj.vertex_groups:
         if vg.name == MeshManager.NEAR_BONE_MARKING_WEIGHT_NAME:
             marking_vg_index = vg.index
+
     # マーキンググループよりボーン付近頂点を取得
     for v in meshed_curve_obj.data.vertices:
         for vge in v.groups:
             if vge.group == marking_vg_index and vge.weight != 0:
-                bone_no = int(vge.weight*10)-1
+                bone_no = int(vge.weight*10)-1  # 1開始を0開始に
                 near_vertex_list[bone_no].append(meshed_curve_obj.matrix_world @ v.co)
-
-    print(near_vertex_list)
 
     # 影響度の高い頂点の重心を求める
     center_of_gravity = []
