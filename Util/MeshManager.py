@@ -45,17 +45,17 @@ def create(context, selected_curve_objs):
                 new_mirror_modifire = meshed_curve_obj.modifiers.new(modifier.name, modifier.type)
                 new_mirror_modifire.use_mirror_merge = False
 
-        # メッシュにモディファイアを追加
-        meshed_curve_obj.modifiers.new("Armature", "ARMATURE")
-        armature = meshed_curve_obj.modifiers[-1]
-        armature.object = bpy.data.objects.get(context.scene.AHT_armature_name)
+            # メッシュにモディファイアを追加
+            meshed_curve_obj.modifiers.new("Armature", "ARMATURE")
+            armature = meshed_curve_obj.modifiers[-1]
+            armature.object = bpy.data.objects.get(context.scene.AHT_armature_name)
 
-        if context.scene.AHT_subdivision:
-            meshed_curve_obj.modifiers.new("Subdivision", 'SUBSURF')
+            if context.scene.AHT_subdivision:
+                meshed_curve_obj.modifiers.new("Subdivision", 'SUBSURF')
 
-        # Meshの親をArmatureに設定
-        meshed_curve_obj.parent = bpy.data.objects.get(context.scene.AHT_armature_name)
-        meshed_curve_obj.matrix_parent_inverse = meshed_curve_obj.parent.matrix_world.inverted()
+            # Meshの親をArmatureに設定
+            meshed_curve_obj.parent = bpy.data.objects.get(context.scene.AHT_armature_name)
+            meshed_curve_obj.matrix_parent_inverse = meshed_curve_obj.parent.matrix_world.inverted()
 
     return duplicated_list
 

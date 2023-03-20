@@ -24,10 +24,10 @@ def create(context, selected_curve_objs, meshed_curve_list):
     # Curveごとに回す
     edit_bones = []
     for curve_obj in selected_curve_objs:
-        # ミラーチェック
-        MirrorName = None if len(MirrorUtil.find_mirror_modifires(curve_obj)) == 0 else "L"
-
         for spline_no in range(len(curve_obj.data.splines)):
+            # ミラーチェック
+            MirrorName = None if len(MirrorUtil.find_mirror_modifires(meshed_curve_list[spline_no],)) == 0 else "L"
+
             edit_bones += _create_curve_bones(context, armature, curve_obj, spline_no, meshed_curve_list[spline_no], MirrorName)  # Curve１本１本処理する
             if MirrorName != None:
                 edit_bones += _create_curve_bones(context, armature, curve_obj, spline_no, meshed_curve_list[spline_no], "R")  # Curve１本１本処理する
@@ -44,6 +44,12 @@ def create(context, selected_curve_objs, meshed_curve_list):
 # *****************************************************************************
 def _create_curve_bones(context, armature, curve_obj, spline_no, meshed_curve_obj, MirrorName):
     spline = curve_obj.data.splines[spline_no]
+
+    # roll計算用
+    spline_x_axis = None  # Z軸と進行方向からX軸を算出
+    if len(spline.points) >= 2:
+        v = meshed_curve_obj.matrix_world @ (spline.points[1].co - spline.points[0].co)
+        spline_x_axis = mathutils.Vector((0, 0, 1)).cross(v.xyz.normalized()).normalized()
 
     # 頂点グループごとに、影響度の高い頂点を検出
     # -------------------------------------------------------------------------
@@ -67,13 +73,13 @@ def _create_curve_bones(context, armature, curve_obj, spline_no, meshed_curve_ob
     for list in near_vertex_list:
         center_of_gravity.append(sum(list, mathutils.Vector((0, 0, 0))) / len(list))
 
-    # root_matrix = armature.matrix_world.inverted() @ meshed_curve_obj.matrix_world
-
     # セグメントごとにボーンを作成する
+    # -------------------------------------------------------------------------
     created_bones = []
-    # parent = armature.data.edit_bones[context.scene.AHT_root_bone_name]  # 最初はRootBoneが親
     for i in range(len(center_of_gravity)-1):
         bone_name = meshed_curve_obj.vertex_groups[i].name
+        if MirrorName == "R" and meshed_curve_obj.vertex_groups[i].name.endswith(".L"):
+            bone_name = bone_name[:-2] + ".R"  # R側
 
         # ボーン作成
         bpy.ops.armature.bone_primitive_add(name=bone_name)
@@ -99,29 +105,29 @@ def _create_curve_bones(context, armature, curve_obj, spline_no, meshed_curve_ob
             new_bone.head = bgn.xyz
         new_bone.tail= end.xyz
 
-        # # rollも設定(head/tailのaxisを使うので代入後に)
-        # if spline_x_axis != None:
-        #     if i == 0:  # 始点のrollですべてを設定
-        #         x_axis = armature.matrix_world @ new_bone.x_axis
-        #         y_axis = armature.matrix_world @ new_bone.y_axis
-        #         roll = math.acos(spline_x_axis.dot(x_axis))
-        #         # 三重積で回転方向をチェック
-        #         if spline_x_axis.cross(x_axis).dot(y_axis) > 0:
-        #             roll = -roll  # 逆回転
-        #     new_bone.roll += roll
+        # rollも設定(head/tailのaxisを使うので代入後に)
+        if spline_x_axis != None:
+            if i == 0:  # 始点のrollですべてを設定
+                x_axis = armature.matrix_world @ new_bone.x_axis
+                y_axis = armature.matrix_world @ new_bone.y_axis
+                roll = math.acos(spline_x_axis.dot(x_axis))
+                # 三重積で回転方向をチェック
+                if spline_x_axis.cross(x_axis).dot(y_axis) > 0:
+                    roll = -roll  # 逆回転
+            new_bone.roll += roll
 
-        # # .R側だった場合はBoneをX軸反転
-        # if MirrorName == "R":
-        #     bgn.x = -bgn.x
-        #     end.x = -end.x
+        # .R側だった場合はBoneをX軸反転
+        if MirrorName == "R":
+            bgn.x = -bgn.x
+            end.x = -end.x
 
-        #     # head/tailを設定しなおし(Roll設定に影響しないよう代入しなおしで実施)
-        #     if i == 0:
-        #         new_bone.head = bgn.xyz  # disconnected head setup
-        #     new_bone.tail = end.xyz
+            # head/tailを設定しなおし(Roll設定に影響しないよう代入しなおしで実施)
+            if i == 0:
+                new_bone.head = bgn.xyz  # disconnected head setup
+            new_bone.tail = end.xyz
 
-        #     # Mirror側はrollが逆転
-        #     new_bone.roll = -new_bone.roll
+            # Mirror側はrollが逆転
+            new_bone.roll = -new_bone.roll
 
         # BendyBone化
         if context.scene.AHT_bbone > 1:
