@@ -5,6 +5,8 @@ from . import ArmatureMode
 from .. import CurveStraighten
 
 
+NEAR_BONE_MARKING_WEIGHT_NAME = "AHT_NEAR_BONE"
+
 # Curveをメッシュにコンバート
 # =================================================================================================
 def create(context, selected_curve_objs):
@@ -33,7 +35,7 @@ def create(context, selected_curve_objs):
             straight_mesh.select_set(True)
         bpy.ops.object.delete()
 
-        # JOIN & 名前設定
+        # JOIN & 名前設定   
         mesh_obj = _join_temp_meshes(duplicated_list)
         mesh_obj.name = Naming.make_mesh_name(curve_obj.name)
 
@@ -88,6 +90,7 @@ def _create_temp_mesh(context, curve_obj):
     bpy.ops.object.duplicate()
     straighted_list = [obj for obj in context.selected_objects if obj.type == "CURVE"]
 
+    # ストレート化
     ArmatureMode.to_edit_mode(context, armature)
     for curve in straighted_list:
         for spline in curve.data.splines:
@@ -125,59 +128,68 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list):
     # まずはVertexGropusの追加
     # -------------------------------------------------------------------------
     for spline_no,spline in enumerate(curve_obj.data.splines):
-        for point_no in range(len(spline.points)):
+        for point_no in range(len(spline.points)-1):
             duplicated_list[spline_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, spline_no, point_no, MirrorName))
             straighted_list[spline_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, spline_no, point_no, MirrorName))
         # .Rも追加
         if MirrorName != None:
-            for point_no in range(len(spline.points)):
+            for point_no in range(len(spline.points)-1):
                 duplicated_list[spline_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, spline_no, point_no, "R"))
                 straighted_list[spline_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, spline_no, point_no, "R"))
+
+    # ボーン地点付近マーキング用
+    for spline_no,spline in enumerate(curve_obj.data.splines):
+        duplicated_list[spline_no].vertex_groups.new(name=NEAR_BONE_MARKING_WEIGHT_NAME)
+
 
     # 頂点ごとにウェイト値を算出
     # -------------------------------------------------------------------------
     # ベクトル取得
     root_matrix = curve_obj.matrix_world
-    spline = curve_obj.data.splines[0]  # 1Curve=1Splineになっているはず
-    world_vec = (root_matrix @ spline.points[1].co - root_matrix @ spline.points[0].co).xyz.normalized()
-
-    # カーブの各セグメントまでの距離を入れる
-    curve_length = [0]
-    segments = curve_obj.data.splines[0].points  # 1Curve=1Splineになっているはず
-    total_length = 0
-    for point_no in range(len(segments)-1):
-        total_length += (segments[point_no+1].co - segments[point_no].co).length
-        curve_length.append(total_length)
 
     # 房(メッシュ)ごとに処理。
     # Curveのポイント間をつなぐ線分上に射影して、線分の端点２点からの距離でウェイトを設定する
     for list_no,straighted_obj in enumerate(straighted_list):
+        spline = curve_obj.data.splines[list_no]
+        world_vec = (root_matrix @ spline.points[1].co - root_matrix @ spline.points[0].co).xyz.normalized()
+        root_point = (root_matrix @ spline.points[0].co).xyz
+
+        # カーブの各セグメントまでの距離を入れる
+        curve_length = [0]
+        segments = curve_obj.data.splines[0].points  # 1Curve=1Splineになっているはず
+        total_length = 0
+        for point_no in range(len(segments)-1):
+            total_length += (segments[point_no+1].co - segments[point_no].co).length
+            curve_length.append(total_length)
+
         # ストレート側と元形状側のメッシュの頂点番号は同じと信じている
         mesh = straighted_obj.data
-
+        
         # Meshの頂点ごとにウェイトを計算
         for v_no,v in enumerate(mesh.vertices):
             world_vpos = (root_matrix @ v.co).xyz
 
             # 射影して距離算出
-            vertex_len = abs((world_vpos - (root_matrix @ spline.points[0].co).xyz).dot(world_vec))
+            vertex_len = abs((world_vpos - root_point).dot(world_vec))
 
-            # 端点２点を調べる
-            for bgn_no in range(len(curve_length)-1):
-                end_no = bgn_no+1
-                if vertex_len < curve_length[end_no]:
+            # 端点を調べる
+            for term_no in range(len(curve_length)):
+                if vertex_len < curve_length[term_no]:
                     break
+            ratio = (vertex_len-curve_length[term_no-1]) / (curve_length[term_no]-curve_length[term_no-1])
+    
+            # ボーン番号マーキング
+            if ratio <= 0.2:
+                vg = duplicated_list[list_no].vertex_groups[NEAR_BONE_MARKING_WEIGHT_NAME]
+                vg.add([v_no], (term_no)*0.1, 'ADD')
+            if ratio >= 0.8:
+                vg = duplicated_list[list_no].vertex_groups[NEAR_BONE_MARKING_WEIGHT_NAME]
+                vg.add([v_no], (term_no+1)*0.1, 'ADD')
 
-            # 割合取得
-            segment_length = curve_length[end_no] - curve_length[bgn_no]
-            bgn_ratio = 1 - ((vertex_len - curve_length[bgn_no]) / segment_length)
-            end_ratio = 1 - ((curve_length[end_no] - vertex_len) / segment_length)
+            # ウェイト設定
+            __add_weight_group(1, duplicated_list[list_no], v_no, curve_obj.name, list_no, term_no-1, MirrorName)
+            __add_weight_group(1, straighted_list[list_no], v_no, curve_obj.name, list_no, term_no-1, MirrorName)
 
-            # 割合からウェイト設定
-            __add_weight_group(bgn_ratio, duplicated_list[list_no], v_no, curve_obj.name, list_no, bgn_no, MirrorName)
-            __add_weight_group(end_ratio, duplicated_list[list_no], v_no, curve_obj.name, list_no, end_no, MirrorName)
-            __add_weight_group(bgn_ratio, straighted_list[list_no], v_no, curve_obj.name, list_no, bgn_no, MirrorName)
-            __add_weight_group(end_ratio, straighted_list[list_no], v_no, curve_obj.name, list_no, end_no, MirrorName)
 
 
 # ウェイトを付け終わった中間Meshを結合して１つのオブジェクトにする

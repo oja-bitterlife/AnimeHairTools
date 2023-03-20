@@ -2,7 +2,8 @@
 import bpy, math, mathutils
 import re
 
-from . import Naming, ArmatureMode, MirrorUtil, ConstraintUtil
+from . import Naming, ArmatureMode, MirrorUtil
+from . import MeshManager
 
 
 # ボーン作成
@@ -41,12 +42,28 @@ def create(context, selected_curve_objs, meshed_curve_obj):
 # create bone chain
 # *****************************************************************************
 def _create_curve_bones(context, armature, curve_obj_name, meshed_curve_obj, MirrorName):
+    print(meshed_curve_obj)
+
     # 頂点グループごとに、影響度の高い頂点を検出
-    near_vertex_list = [[] for _ in meshed_curve_obj.vertex_groups]
+    # -------------------------------------------------------------------------
+    near_vertex_list = [[] for vg in meshed_curve_obj.vertex_groups if vg.name != MeshManager.NEAR_BONE_MARKING_WEIGHT_NAME and not vg.name.endswith(".R")]
+    for vg in meshed_curve_obj.vertex_groups:
+        if vg.name != MeshManager.NEAR_BONE_MARKING_WEIGHT_NAME and not vg.name.endswith(".R"):
+            print(vg.name)
+
+    # マーキンググループのインデックスを調べる
+    marking_vg_index = None
+    for vg in meshed_curve_obj.vertex_groups:
+        if vg.name == MeshManager.NEAR_BONE_MARKING_WEIGHT_NAME:
+            marking_vg_index = vg.index
+    # マーキンググループよりボーン付近頂点を取得
     for v in meshed_curve_obj.data.vertices:
         for vge in v.groups:
-            if (1-vge.weight) ** 2 < 0.05:
-                near_vertex_list[vge.group].append(meshed_curve_obj.matrix_world @ v.co)
+            if vge.group == marking_vg_index and vge.weight != 0:
+                bone_no = int(vge.weight*10)-1
+                near_vertex_list[bone_no].append(meshed_curve_obj.matrix_world @ v.co)
+
+    print(near_vertex_list)
 
     # 影響度の高い頂点の重心を求める
     center_of_gravity = []
@@ -61,22 +78,29 @@ def _create_curve_bones(context, armature, curve_obj_name, meshed_curve_obj, Mir
     for i in range(len(center_of_gravity)-1):
         bone_name = meshed_curve_obj.vertex_groups[i].name
 
+        # ボーン作成
         bpy.ops.armature.bone_primitive_add(name=bone_name)
         new_bone = armature.data.edit_bones[bone_name]
 
         # Bone設定
-        # m = re.match(r".*?@bone-(\d+)\.(\d+)", bone_name)
-        parent = armature.data.edit_bones[context.scene.AHT_root_bone_name]
+        m = re.match(r".*?@bone-(\d+)\.(\d+)", bone_name)
+        if m == None or m.group(2) == "000":  # セグメントの先頭ボーンは親がルートボーン
+            new_bone.parent = armature.data.edit_bones[context.scene.AHT_root_bone_name]
+            new_bone.use_connect = False
+        else:
+            new_bone.parent = created_bones[-1]
+            new_bone.use_connect = True
 
         # # ボーンをCenterに合わせて配置
         bgn = armature.matrix_world.inverted() @ center_of_gravity[i]
         end = armature.matrix_world.inverted() @ center_of_gravity[i+1]
 
         # # head/tailに反映
-        # if i == 0:
-        new_bone.head = bgn.xyz
+        if new_bone.use_connect:
+            new_bone.head = new_bone.parent.tail
+        else:
+            new_bone.head = bgn.xyz
         new_bone.tail= end.xyz
-        # new_bone.tail = end.xyz
 
         # # rollも設定(head/tailのaxisを使うので代入後に)
         # if spline_x_axis != None:
@@ -105,9 +129,6 @@ def _create_curve_bones(context, armature, curve_obj_name, meshed_curve_obj, Mir
         # BendyBone化
         if context.scene.AHT_bbone > 1:
             new_bone.bbone_segments = context.scene.AHT_bbone
-
-        # # 自分を親にして次をつなげていく
-        # parent = new_bone
 
         # 作ったボーンを覚えておく
         created_bones.append(new_bone)
