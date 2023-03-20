@@ -8,7 +8,7 @@ from . import MeshManager
 
 # ボーン作成
 # =================================================================================================
-def create(context, selected_curve_objs, meshed_curve_list):
+def create(context, selected_curve_objs, meshed_curve_list_group):
     # プラグインUiに設定されているArmatureを使う
     armature = bpy.data.objects[context.scene.AHT_armature_name]
     bpy.context.view_layer.objects.active = armature
@@ -23,7 +23,9 @@ def create(context, selected_curve_objs, meshed_curve_list):
 
     # Curveごとに回す
     edit_bones = []
-    for curve_obj in selected_curve_objs:
+    for i, curve_obj in enumerate(selected_curve_objs):
+        meshed_curve_list = meshed_curve_list_group[i]
+
         for spline_no in range(len(curve_obj.data.splines)):
             # ミラーチェック
             MirrorName = None if len(MirrorUtil.find_mirror_modifires(meshed_curve_list[spline_no],)) == 0 else "L"
@@ -135,74 +137,6 @@ def _create_curve_bones(context, armature, curve_obj, spline_no, meshed_curve_ob
 
         # 作ったボーンを覚えておく
         created_bones.append(new_bone)
-
-    return created_bones
-
-    root_matrix = armature.matrix_world.inverted() @ meshed_curve_obj.matrix_world
-
-    # spline単位で処理
-    for spline_no, spline in enumerate(meshed_curve_obj.data.splines):
-        # roll計算用
-        spline_x_axis = None  # Z軸と進行方向からX軸を算出
-        if len(spline.points) >= 2:
-            v = meshed_curve_obj.matrix_world @ (spline.points[1].co - spline.points[0].co)
-            spline_x_axis = mathutils.Vector((0, 0, 1)).cross(v.xyz.normalized()).normalized()
-
-        # 頂点ごとにボーンを作成する
-        parent = armature.data.edit_bones[context.scene.AHT_root_bone_name]  # 最初はRootBoneが親
-        for i in range(len(spline.points)-1):
-            # Bone生成
-            bone_name = Naming.make_bone_name(curve_obj_name, spline_no, i, MirrorName)
-            bpy.ops.armature.bone_primitive_add(name=bone_name)
-            new_bone = armature.data.edit_bones[bone_name]
-
-            # Bone設定
-            new_bone.parent = parent  # 親子設定
-
-            new_bone.use_connect = i != 0  # チェインの開始位置をrootとは接続しない
-
-            # ボーンをCurveに合わせて配置
-            bgn = root_matrix @ spline.points[i].co
-            end = root_matrix @ spline.points[i+1].co
-
-            # head/tailに反映
-            if i == 0:
-                new_bone.head = bgn.xyz  # disconnected head setup
-            new_bone.tail = end.xyz
-
-            # rollも設定(head/tailのaxisを使うので代入後に)
-            if spline_x_axis != None:
-                if i == 0:  # 始点のrollですべてを設定
-                    x_axis = armature.matrix_world @ new_bone.x_axis
-                    y_axis = armature.matrix_world @ new_bone.y_axis
-                    roll = math.acos(spline_x_axis.dot(x_axis))
-                    # 三重積で回転方向をチェック
-                    if spline_x_axis.cross(x_axis).dot(y_axis) > 0:
-                        roll = -roll  # 逆回転
-                new_bone.roll += roll
-
-            # .R側だった場合はBoneをX軸反転
-            if MirrorName == "R":
-                bgn.x = -bgn.x
-                end.x = -end.x
-
-                # head/tailを設定しなおし(Roll設定に影響しないよう代入しなおしで実施)
-                if i == 0:
-                    new_bone.head = bgn.xyz  # disconnected head setup
-                new_bone.tail = end.xyz
-
-                # Mirror側はrollが逆転
-                new_bone.roll = -new_bone.roll
- 
-            # BendyBone化
-            if context.scene.AHT_bbone > 1:
-                new_bone.bbone_segments = context.scene.AHT_bbone
-
-            # 自分を親にして次をつなげていく
-            parent = new_bone
-
-            # 作ったボーンを覚えておく
-            created_bones.append(new_bone)
 
     return created_bones
 

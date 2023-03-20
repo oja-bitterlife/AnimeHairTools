@@ -10,7 +10,7 @@ NEAR_BONE_MARKING_WEIGHT_NAME = "AHT_NEAR_BONE"
 # Curveをメッシュにコンバート
 # =================================================================================================
 def create(context, selected_curve_objs):
-    # armature = bpy.data.objects[context.scene.AHT_armature_name]
+    meshed_curve_list_group = []
 
     # Curveごとに分離する
     for curve_obj in selected_curve_objs:
@@ -35,10 +35,6 @@ def create(context, selected_curve_objs):
             straight_mesh.select_set(True)
         bpy.ops.object.delete()
 
-        # JOIN & 名前設定
-        # mesh_obj = _join_temp_meshes(duplicated_list)
-        # mesh_obj.name = Naming.make_mesh_name(curve_obj.name)
-
         # ミラーのコピー
         for meshed_curve_obj in duplicated_list:
             for modifier in recovery_data:
@@ -57,7 +53,9 @@ def create(context, selected_curve_objs):
             meshed_curve_obj.parent = bpy.data.objects.get(context.scene.AHT_armature_name)
             meshed_curve_obj.matrix_parent_inverse = meshed_curve_obj.parent.matrix_world.inverted()
 
-    return duplicated_list
+        meshed_curve_list_group.append(duplicated_list)
+
+    return meshed_curve_list_group
 
 
 # テンポラリMeshを作成
@@ -194,18 +192,21 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list):
 
 
 # ウェイトを付け終わった中間Meshを結合して１つのオブジェクトにする
-def _join_temp_meshes(duplicated_list):
-    bpy.ops.object.select_all(action='DESELECT')
+def join_and_settings(selected_curve_objs, meshed_curve_list_group):
+    for i, curve_obj in enumerate(selected_curve_objs):
+        duplicated_list = meshed_curve_list_group[i]
 
-    # 結合用に生成したメッシュを選択
-    for duplicated_obj in duplicated_list:
-        duplicated_obj.select_set(True)
+        bpy.ops.object.select_all(action='DESELECT')
 
-    bpy.context.view_layer.objects.active = duplicated_list[0]
-    bpy.ops.object.join()
+        # 結合用に生成したメッシュを選択
+        for duplicated_obj in duplicated_list:
+            duplicated_obj.select_set(True)
 
-    # 結合したオブジェクトがアクティブになる
-    return bpy.context.view_layer.objects.active
+        bpy.context.view_layer.objects.active = duplicated_list[0]
+        bpy.ops.object.join()
+
+        obj = bpy.context.view_layer.objects.active
+        obj.name = Naming.make_mesh_name(curve_obj.name)
 
 
 # Meshの削除
