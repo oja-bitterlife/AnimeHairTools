@@ -1,12 +1,14 @@
 
 import bpy, math, mathutils
+import re
 
 from . import Naming, ArmatureMode, MirrorUtil, ConstraintUtil
 
 
 # ボーン作成
 # =================================================================================================
-def create(context, tmp_curve_objs, original_curve_objs):
+def create(context, selected_curve_objs, meshed_curve_obj):
+    # プラグインUiに設定されているArmatureを使う
     armature = bpy.data.objects[context.scene.AHT_armature_name]
     bpy.context.view_layer.objects.active = armature
 
@@ -20,18 +22,17 @@ def create(context, tmp_curve_objs, original_curve_objs):
 
     # Curveごとに回す
     edit_bones = []
-    for i, curve_obj in enumerate(tmp_curve_objs):
-        original_name = original_curve_objs[i].name
-
+    for curve_obj in selected_curve_objs:
         # ミラーチェック
         MirrorName = None if len(MirrorUtil.find_mirror_modifires(curve_obj)) == 0 else "L"
 
-        edit_bones += _create_curve_bones(context, armature, original_name, curve_obj, MirrorName)  # Curve１本１本処理する
+        edit_bones += _create_curve_bones(context, armature, curve_obj.name, meshed_curve_obj, MirrorName)  # Curve１本１本処理する
         if MirrorName != None:
-            edit_bones += _create_curve_bones(context, armature, original_name, curve_obj, "R")  # Curve１本１本処理する
+            edit_bones += _create_curve_bones(context, armature, curve_obj.name, meshed_curve_obj, "R")  # Curve１本１本処理する
 
     # OBJECTモードに戻すのを忘れないように
     ArmatureMode.return_obuject_mode(state_backup)
+
     # Boneを作ったLayerも有効にして戻す
     backup_layers[context.scene.AHT_create_layer-1] = True
     armature.data.layers = backup_layers
@@ -39,24 +40,95 @@ def create(context, tmp_curve_objs, original_curve_objs):
 
 # create bone chain
 # *****************************************************************************
-def _create_curve_bones(context, armature, original_name, curve_obj, MirrorName):
-    created = []
+def _create_curve_bones(context, armature, curve_obj_name, meshed_curve_obj, MirrorName):
+    # 頂点グループごとに、影響度の高い頂点を検出
+    near_vertex_list = [[] for _ in meshed_curve_obj.vertex_groups]
+    for v in meshed_curve_obj.data.vertices:
+        for vge in v.groups:
+            if (1-vge.weight) ** 2 < 0.05:
+                near_vertex_list[vge.group].append(meshed_curve_obj.matrix_world @ v.co)
 
-    root_matrix = armature.matrix_world.inverted() @ curve_obj.matrix_world
+    # 影響度の高い頂点の重心を求める
+    center_of_gravity = []
+    for list in near_vertex_list:
+        center_of_gravity.append(sum(list, mathutils.Vector((0, 0, 0))) / len(list))
+
+    # root_matrix = armature.matrix_world.inverted() @ meshed_curve_obj.matrix_world
+
+    # セグメントごとにボーンを作成する
+    created_bones = []
+    # parent = armature.data.edit_bones[context.scene.AHT_root_bone_name]  # 最初はRootBoneが親
+    for i in range(len(center_of_gravity)-1):
+        bone_name = meshed_curve_obj.vertex_groups[i].name
+
+        bpy.ops.armature.bone_primitive_add(name=bone_name)
+        new_bone = armature.data.edit_bones[bone_name]
+
+        # Bone設定
+        # m = re.match(r".*?@bone-(\d+)\.(\d+)", bone_name)
+        parent = armature.data.edit_bones[context.scene.AHT_root_bone_name]
+
+        # # ボーンをCenterに合わせて配置
+        bgn = armature.matrix_world.inverted() @ center_of_gravity[i]
+        end = armature.matrix_world.inverted() @ center_of_gravity[i+1]
+
+        # # head/tailに反映
+        # if i == 0:
+        new_bone.head = bgn.xyz
+        new_bone.tail= end.xyz
+        # new_bone.tail = end.xyz
+
+        # # rollも設定(head/tailのaxisを使うので代入後に)
+        # if spline_x_axis != None:
+        #     if i == 0:  # 始点のrollですべてを設定
+        #         x_axis = armature.matrix_world @ new_bone.x_axis
+        #         y_axis = armature.matrix_world @ new_bone.y_axis
+        #         roll = math.acos(spline_x_axis.dot(x_axis))
+        #         # 三重積で回転方向をチェック
+        #         if spline_x_axis.cross(x_axis).dot(y_axis) > 0:
+        #             roll = -roll  # 逆回転
+        #     new_bone.roll += roll
+
+        # # .R側だった場合はBoneをX軸反転
+        # if MirrorName == "R":
+        #     bgn.x = -bgn.x
+        #     end.x = -end.x
+
+        #     # head/tailを設定しなおし(Roll設定に影響しないよう代入しなおしで実施)
+        #     if i == 0:
+        #         new_bone.head = bgn.xyz  # disconnected head setup
+        #     new_bone.tail = end.xyz
+
+        #     # Mirror側はrollが逆転
+        #     new_bone.roll = -new_bone.roll
+
+        # BendyBone化
+        if context.scene.AHT_bbone > 1:
+            new_bone.bbone_segments = context.scene.AHT_bbone
+
+        # # 自分を親にして次をつなげていく
+        # parent = new_bone
+
+        # 作ったボーンを覚えておく
+        created_bones.append(new_bone)
+
+    return created_bones
+
+    root_matrix = armature.matrix_world.inverted() @ meshed_curve_obj.matrix_world
 
     # spline単位で処理
-    for spline_no, spline in enumerate(curve_obj.data.splines):
+    for spline_no, spline in enumerate(meshed_curve_obj.data.splines):
         # roll計算用
         spline_x_axis = None  # Z軸と進行方向からX軸を算出
         if len(spline.points) >= 2:
-            v = curve_obj.matrix_world @ (spline.points[1].co - spline.points[0].co)
+            v = meshed_curve_obj.matrix_world @ (spline.points[1].co - spline.points[0].co)
             spline_x_axis = mathutils.Vector((0, 0, 1)).cross(v.xyz.normalized()).normalized()
 
         # 頂点ごとにボーンを作成する
         parent = armature.data.edit_bones[context.scene.AHT_root_bone_name]  # 最初はRootBoneが親
         for i in range(len(spline.points)-1):
             # Bone生成
-            bone_name = Naming.make_bone_name(original_name, spline_no, i, MirrorName)
+            bone_name = Naming.make_bone_name(curve_obj_name, spline_no, i, MirrorName)
             bpy.ops.armature.bone_primitive_add(name=bone_name)
             new_bone = armature.data.edit_bones[bone_name]
 
@@ -106,9 +178,9 @@ def _create_curve_bones(context, armature, original_name, curve_obj, MirrorName)
             parent = new_bone
 
             # 作ったボーンを覚えておく
-            created.append(new_bone)
+            created_bones.append(new_bone)
 
-    return created
+    return created_bones
 
 
 # 削除

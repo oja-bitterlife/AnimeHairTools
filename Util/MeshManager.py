@@ -11,7 +11,7 @@ def create(context, selected_curve_objs):
     # armature = bpy.data.objects[context.scene.AHT_armature_name]
 
     # Curveごとに分離する
-    for i, curve_obj in enumerate(selected_curve_objs):
+    for curve_obj in selected_curve_objs:
         # 処理するCurveをActiveに
         bpy.context.view_layer.objects.active = curve_obj
 
@@ -26,6 +26,7 @@ def create(context, selected_curve_objs):
 
         # 頂点ウェイト設定
         _set_mesh_weights(curve_obj, duplicated_list, straighted_list)
+
         # 頂点ウェイト設定が終わったらstraight側はもういらない
         bpy.ops.object.select_all(action='DESELECT')
         for straight_mesh in straighted_list:
@@ -53,6 +54,8 @@ def create(context, selected_curve_objs):
         mesh_obj.parent = bpy.data.objects.get(context.scene.AHT_armature_name)
         mesh_obj.matrix_parent_inverse = mesh_obj.parent.matrix_world.inverted()
 
+    return mesh_obj
+
 
 # テンポラリMeshを作成
 def _create_temp_mesh(context, curve_obj):
@@ -61,6 +64,7 @@ def _create_temp_mesh(context, curve_obj):
     # 複製の対象を対象のCurveだけにする
     bpy.ops.object.select_all(action='DESELECT')
     curve_obj.select_set(True)
+    bpy.context.view_layer.objects.active = curve_obj
 
     # splineの数だけ複製
     duplicated_list = []

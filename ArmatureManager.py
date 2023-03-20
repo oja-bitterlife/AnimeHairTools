@@ -82,6 +82,7 @@ class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
     def execute(self, context):
         armature = bpy.data.objects[context.scene.AHT_armature_name]
         selected_curve_objs = [obj for obj in context.selected_objects if obj.type == "CURVE"]
+        backup_active = bpy.context.view_layer.objects.active
 
         # Curveが１つも選択されていなかった
         if len(selected_curve_objs) == 0:
@@ -92,48 +93,23 @@ class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
         BoneManager.remove(context, selected_curve_objs)  # Boneを削除
         MeshManager.remove(context, selected_curve_objs)  # Meshも削除
 
-
-        # 破壊してもいいようコピーしたものを使う
-        # ---------------------------------------------------------------------
-        # Curveだけ選択状態にする
-        bpy.ops.object.select_all(action='DESELECT')
-        for obj in selected_curve_objs:
-            obj.select_set(True)
-
-        # Curveをストレート化
-        # ArmatureMode.to_edit_mode(context, armature)
-        # for curve in tmp_curve_objs:
-        #     for spline in curve.data.splines:
-        #         if spline.type == "NURBS":
-        #             CurveStraighten.execute_nurbs_straighten(spline, True, True)
-        # ArmatureMode.return_obuject_mode()
-
-
         # 作り直す
         # ---------------------------------------------------------------------
-        # create bones
-        # BoneManager.create(context, tmp_curve_objs, selected_curve_objs)
         # create mesh
-        MeshManager.create(context, selected_curve_objs)
-
+        meshed_curve_obj = MeshManager.create(context, selected_curve_objs)
+        # create bones
+        BoneManager.create(context, selected_curve_objs, meshed_curve_obj)
 
         # 後始末
         # ---------------------------------------------------------------------
-        # ストレート化用に作ったCurveを削除する
         bpy.ops.object.select_all(action='DESELECT')
-        for obj in tmp_curve_objs:
-            obj.select_set(True)
-        bpy.ops.object.delete()
-        context.view_layer.objects.active = armature
-
         for curve in selected_curve_objs:  # 対象となったCurveを選択状態に戻しておく
             curve.select_set(True)
-
+        bpy.context.view_layer.objects.active = backup_active
 
         # ボーンの形状を元のカーブに合わせておく
         # ---------------------------------------------------------------------
-        BoneManager.pose_bone_fit_curve(armature, selected_curve_objs)
-
+        # BoneManager.pose_bone_fit_curve(armature, selected_curve_objs)
 
         return{'FINISHED'}
 
