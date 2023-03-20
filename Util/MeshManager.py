@@ -176,6 +176,7 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list):
                 if vertex_len < curve_length[term_no]:
                     break
             ratio = (vertex_len-curve_length[term_no-1]) / (curve_length[term_no]-curve_length[term_no-1])
+            print(term_no, ratio)
     
             # ボーン番号マーキング
             if ratio <= 0.2:
@@ -190,8 +191,8 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list):
             __add_weight_group(1, straighted_list[list_no], v_no, curve_obj.name, list_no, term_no-1, MirrorName)
 
 
-
 # ウェイトを付け終わった中間Meshを結合して１つのオブジェクトにする
+# =================================================================================================
 def join_and_settings(selected_curve_objs, meshed_curve_list_group):
     for i, curve_obj in enumerate(selected_curve_objs):
         duplicated_list = meshed_curve_list_group[i]

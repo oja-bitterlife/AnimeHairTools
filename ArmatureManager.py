@@ -102,7 +102,6 @@ class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
         # JOIN & 名前設定
         MeshManager.join_and_settings(selected_curve_objs, meshed_curve_list_group)
 
-
         # 後始末
         # ---------------------------------------------------------------------
         bpy.ops.object.select_all(action='DESELECT')
