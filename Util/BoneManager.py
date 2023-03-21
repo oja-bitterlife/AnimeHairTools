@@ -60,7 +60,7 @@ def _create_curve_bones(context, armature, curve_obj, spline_no, meshed_curve_ob
     # マーキンググループのインデックスを調べる
     marking_vg_index = None
     for vg in meshed_curve_obj.vertex_groups:
-        if vg.name == MeshManager.NEAR_BONE_MARKING_WEIGHT_NAME:
+        if vg.name == MeshManager.AHT_BONE_MARKING_NAME:
             marking_vg_index = vg.index
 
     # マーキンググループよりボーン付近頂点を取得

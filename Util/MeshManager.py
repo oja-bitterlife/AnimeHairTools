@@ -5,7 +5,7 @@ from . import ArmatureMode
 from .. import CurveStraighten
 
 
-NEAR_BONE_MARKING_WEIGHT_NAME = "AHT_NEAR_BONE"
+AHT_BONE_MARKING_NAME = "AHT_MARK_BONE"
 
 # Curveをメッシュにコンバート
 # =================================================================================================
@@ -136,10 +136,6 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list):
                 duplicated_list[spline_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, spline_no, point_no, "R"))
                 straighted_list[spline_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, spline_no, point_no, "R"))
 
-    # ボーン地点付近マーキング用
-    for spline_no,spline in enumerate(curve_obj.data.splines):
-        duplicated_list[spline_no].vertex_groups.new(name=NEAR_BONE_MARKING_WEIGHT_NAME)
-
 
     # 頂点ごとにウェイト値を算出
     # -------------------------------------------------------------------------
@@ -161,7 +157,7 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list):
             total_length += (segments[point_no+1].co - segments[point_no].co).length
             curve_length.append(total_length)
 
-        # ストレート側と元形状側のメッシュの頂点番号は同じと信じている
+        # ストレート側と元形状側のメッシュの頂点番号は同じと信じてみる
         mesh = straighted_obj.data
         
         # Meshの頂点ごとにウェイトを計算
@@ -169,26 +165,35 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list):
             world_vpos = (root_matrix @ v.co).xyz
 
             # 射影して距離算出
-            vertex_len = abs((world_vpos - root_point).dot(world_vec))
+            v_len = abs((world_vpos - root_point).dot(world_vec))
 
             # 端点を調べる
             for term_no in range(len(curve_length)):
-                if vertex_len < curve_length[term_no]:
+                if v_len < curve_length[term_no]:
                     break
-            ratio = (vertex_len-curve_length[term_no-1]) / (curve_length[term_no]-curve_length[term_no-1])
-            print(term_no, ratio)
-    
-            # ボーン番号マーキング
-            if ratio <= 0.2:
-                vg = duplicated_list[list_no].vertex_groups[NEAR_BONE_MARKING_WEIGHT_NAME]
-                vg.add([v_no], (term_no)*0.1, 'ADD')
-            if ratio >= 0.8:
-                vg = duplicated_list[list_no].vertex_groups[NEAR_BONE_MARKING_WEIGHT_NAME]
-                vg.add([v_no], (term_no+1)*0.1, 'ADD')
 
             # ウェイト設定
             __add_weight_group(1, duplicated_list[list_no], v_no, curve_obj.name, list_no, term_no-1, MirrorName)
             __add_weight_group(1, straighted_list[list_no], v_no, curve_obj.name, list_no, term_no-1, MirrorName)
+
+
+        # ボーン生成のための情報を取得
+        # -------------------------------------------------------------------------
+        # 頂点がボーン生成に与える影響を格納するウェイト
+        # セグメントごとに頂点全部ウェイト設定
+        for point_no in range(len(spline.points)):
+            # データ格納先作成
+            new_vg = duplicated_list[list_no].vertex_groups.new(name=AHT_BONE_MARKING_NAME + "_%d" % point_no)
+
+            world_ppos = (root_matrix @ spline.points[point_no].co).xyz
+            p_len = abs((world_ppos - root_point).dot(world_vec))
+            for v_no,v in enumerate(mesh.vertices):
+                world_vpos = (root_matrix @ v.co).xyz
+                v_len = abs((world_vpos - root_point).dot(world_vec))
+
+                ratio = abs((v_len-p_len) / total_length)
+                new_vg.add([v_no], ratio, 'ADD')
+
 
 
 # ウェイトを付け終わった中間Meshを結合して１つのオブジェクトにする
