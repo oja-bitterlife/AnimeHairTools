@@ -57,7 +57,7 @@ def create(context, selected_curve_objs):
             meshed_curve_obj.parent = bpy.data.objects.get(context.scene.AHT_armature_name)
             meshed_curve_obj.matrix_parent_inverse = meshed_curve_obj.parent.matrix_world.inverted()
 
-        meshed_curve_list_group.append(duplicated_list)
+        meshed_curve_list_group.append((duplicated_list, straight_points_list))
 
     return meshed_curve_list_group
 
@@ -209,7 +209,7 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list, straight_poin
                 weights.append(ratio)
 
             # normalize
-            weights = [(w/max_ratio) for w in weights]
+            weights = [(w/max_ratio) ** 2 for w in weights]
 
             # 登録
             for v_no,v in enumerate(mesh.vertices):
@@ -221,15 +221,15 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list, straight_poin
 # =================================================================================================
 def join_and_settings(selected_curve_objs, meshed_curve_list_group):
     for i, curve_obj in enumerate(selected_curve_objs):
-        duplicated_list = meshed_curve_list_group[i]
+        (meshed_curve_list, straight_points_list) = meshed_curve_list_group[i]
 
         bpy.ops.object.select_all(action='DESELECT')
 
         # 結合用に生成したメッシュを選択
-        for duplicated_obj in duplicated_list:
+        for duplicated_obj in meshed_curve_list:
             duplicated_obj.select_set(True)
 
-        bpy.context.view_layer.objects.active = duplicated_list[0]
+        bpy.context.view_layer.objects.active = meshed_curve_list[0]
         bpy.ops.object.join()
 
         obj = bpy.context.view_layer.objects.active
