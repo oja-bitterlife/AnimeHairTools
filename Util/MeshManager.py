@@ -25,13 +25,13 @@ def create(context, selected_curve_objs):
         recovery_data = MirrorUtil.disable_mirror_modifires(curve_obj)
 
         # 房ごとにMesh化
-        (duplicated_list, straighted_list) = _create_temp_mesh(context, curve_obj)
+        (duplicated_list, straighted_list, straight_points_list) = _create_temp_mesh(context, curve_obj)
 
         # CurveのMirrorモディファイアを元に戻しておく
         MirrorUtil.recovery_mirror_modifires(recovery_data)
 
         # 頂点ウェイト設定
-        _set_mesh_weights(curve_obj, duplicated_list, straighted_list)
+        _set_mesh_weights(curve_obj, duplicated_list, straighted_list, straight_points_list)
 
         # 頂点ウェイト設定が終わったらstraight側はもういらない
         bpy.ops.object.select_all(action='DESELECT')
@@ -99,7 +99,16 @@ def _create_temp_mesh(context, curve_obj):
         for spline in curve.data.splines:
             if spline.type == "NURBS":
                 CurveStraighten.execute_nurbs_straighten(spline, True, True)
+            else:
+                print("Splineタイプのエラー", spline.type)
     ArmatureMode.return_obuject_mode()
+
+    # ストレート化したときのCurveポイントを保存する
+    straight_points_list = []
+    for curve in straighted_list:
+        for spline in curve.data.splines:
+            # ワールド座標でストレートカーブのポイント位置記録
+            straight_points_list.append([(curve.matrix_world @ spline.points[point_no].co).xyz for point_no in range(len(spline.points))])
 
     # メッシュ化
     bpy.ops.object.select_all(action='DESELECT')
@@ -110,15 +119,15 @@ def _create_temp_mesh(context, curve_obj):
         bpy.context.view_layer.objects.active = straighted_obj
     bpy.ops.object.convert(target='MESH', keep_original=False)
 
-    return (duplicated_list, straighted_list)
+    return (duplicated_list, straighted_list, straight_points_list)
 
 
 # テンポラリメッシュにウェイトを設定する
-def _set_mesh_weights(curve_obj, duplicated_list, straighted_list):
+def _set_mesh_weights(curve_obj, duplicated_list, straighted_list, straight_points_list):
     # 頂点にウェイト設定する内部関数を用意しておく
     # *************************************************************************
-    def __add_weight_group(ratio, target_obj, v_no, name_base, spline_no, segment_no, mirror_name):
-        vw_name = Naming.make_bone_name(name_base, spline_no, segment_no, mirror_name)
+    def __add_weight_group(ratio, target_obj, v_no, name_base, list_no, point_no, mirror_name):
+        vw_name = Naming.make_bone_name(name_base, list_no, point_no, mirror_name)
         vg = target_obj.vertex_groups[vw_name]
         vg.add([v_no], ratio, 'ADD')
     # *************************************************************************
@@ -130,15 +139,15 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list):
 
     # まずはVertexGropusの追加
     # -------------------------------------------------------------------------
-    for spline_no,spline in enumerate(curve_obj.data.splines):
-        for point_no in range(len(spline.points)-1):
-            duplicated_list[spline_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, spline_no, point_no, MirrorName))
-            straighted_list[spline_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, spline_no, point_no, MirrorName))
+    for list_no,_ in enumerate(straight_points_list):
+        for point_no in range(len(straight_points_list[list_no])-1):
+            duplicated_list[list_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, list_no, point_no, MirrorName))
+            straighted_list[list_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, list_no, point_no, MirrorName))
         # .Rも追加
         if MirrorName != None:
-            for point_no in range(len(spline.points)-1):
-                duplicated_list[spline_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, spline_no, point_no, "R"))
-                straighted_list[spline_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, spline_no, point_no, "R"))
+            for point_no in range(len(straight_points_list[list_no])-1):
+                duplicated_list[list_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, list_no, point_no, "R"))
+                straighted_list[list_no].vertex_groups.new(name=Naming.make_bone_name(curve_obj.name, list_no, point_no, "R"))
 
 
     # 頂点ごとにウェイト値を算出
@@ -149,16 +158,14 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list):
     # 房(メッシュ)ごとに処理。
     # Curveのポイント間をつなぐ線分上に射影して、線分の端点２点からの距離でウェイトを設定する
     for list_no,straighted_obj in enumerate(straighted_list):
-        spline = curve_obj.data.splines[list_no]
-        world_vec = (root_matrix @ spline.points[1].co - root_matrix @ spline.points[0].co).xyz.normalized()
-        root_point = (root_matrix @ spline.points[0].co).xyz
+        root_point = straight_points_list[list_no][0]
+        world_vec = (straight_points_list[list_no][1] - root_point).normalized()
 
         # カーブの各セグメントまでの距離を入れる
         curve_length = [0]
-        segments = curve_obj.data.splines[0].points  # 1Curve=1Splineになっているはず
         total_length = 0
-        for point_no in range(len(segments)-1):
-            total_length += (segments[point_no+1].co - segments[point_no].co).length
+        for point_no in range(len(straight_points_list[list_no])-1):
+            total_length += (straight_points_list[list_no][point_no+1] - straight_points_list[list_no][point_no]).length
             curve_length.append(total_length)
 
         # ストレート側と元形状側のメッシュの頂点番号は同じと信じてみる
@@ -172,8 +179,8 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list):
             v_len = abs((world_vpos - root_point).dot(world_vec))
 
             # 端点を調べる
-            for term_no in range(len(curve_length)):
-                if v_len < curve_length[term_no]:
+            for term_no,length in enumerate(curve_length):
+                if v_len < length:
                     break
 
             # ウェイト設定
@@ -185,12 +192,11 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list):
         # -------------------------------------------------------------------------
         # 頂点がボーン生成に与える影響を格納するウェイト
         # セグメントごとに頂点全部ウェイト設定
-        for point_no in range(len(spline.points)):
+        for point_no,point in enumerate(straight_points_list[list_no]):
             # データ格納先作成
             new_vg = duplicated_list[list_no].vertex_groups.new(name=get_bone_gen_info_name(point_no))
 
-            world_ppos = (root_matrix @ spline.points[point_no].co).xyz
-            p_len = abs((world_ppos - root_point).dot(world_vec))
+            p_len = abs((point - root_point).dot(world_vec))
             weights = []
             max_ratio = 0
             for v_no,v in enumerate(mesh.vertices):
@@ -203,7 +209,7 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list):
                 weights.append(ratio)
 
             # normalize
-            weights = [(w/max_ratio) ** 10 for w in weights]
+            weights = [(w/max_ratio) for w in weights]
 
             # 登録
             for v_no,v in enumerate(mesh.vertices):
