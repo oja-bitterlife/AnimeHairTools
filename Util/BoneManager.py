@@ -53,27 +53,23 @@ def _create_curve_bones(context, armature, curve_obj, spline_no, meshed_curve_ob
         v = meshed_curve_obj.matrix_world @ (spline.points[1].co - spline.points[0].co)
         spline_x_axis = mathutils.Vector((0, 0, 1)).cross(v.xyz.normalized()).normalized()
 
-    # 頂点グループごとに、影響度の高い頂点を検出
+    # ボーン生成情報グループよりボーン位置を算出
     # -------------------------------------------------------------------------
-    near_vertex_list = [[] for _ in spline.points]
-
-    # マーキンググループのインデックスを調べる
-    marking_vg_index = None
-    for vg in meshed_curve_obj.vertex_groups:
-        if vg.name == MeshManager.AHT_BONE_MARKING_NAME:
-            marking_vg_index = vg.index
-
-    # マーキンググループよりボーン付近頂点を取得
-    for v in meshed_curve_obj.data.vertices:
-        for vge in v.groups:
-            if vge.group == marking_vg_index and vge.weight != 0:
-                bone_no = int(vge.weight*10)-1  # 1開始を0開始に
-                near_vertex_list[bone_no].append(meshed_curve_obj.matrix_world @ v.co)
-
-    # 影響度の高い頂点の重心を求める
+    # 影響度を元に重心を求める
     center_of_gravity = []
-    for list in near_vertex_list:
-        center_of_gravity.append(sum(list, mathutils.Vector((0, 0, 0))) / len(list))
+    for point_no in range(len(spline.points)):
+        gen_info_weight_name = MeshManager.get_bone_gen_info_name(point_no)
+
+        sum_v = mathutils.Vector((0, 0, 0))
+        total_w = 0
+        for v in meshed_curve_obj.data.vertices:
+            for vge in v.groups:
+                if meshed_curve_obj.vertex_groups[vge.group].name == gen_info_weight_name:
+                    world_pos = (meshed_curve_obj.matrix_world @ v.co).xyz
+                    total_w += vge.weight
+                    sum_v += world_pos * vge.weight
+
+        center_of_gravity.append(sum_v / total_w)
 
     # セグメントごとにボーンを作成する
     # -------------------------------------------------------------------------

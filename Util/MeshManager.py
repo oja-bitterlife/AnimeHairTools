@@ -5,7 +5,11 @@ from . import ArmatureMode
 from .. import CurveStraighten
 
 
-AHT_BONE_MARKING_NAME = "AHT_MARK_BONE"
+AHT_BONE_GEN_INFO_NAME = "AHT_MARK_BONE"
+
+def get_bone_gen_info_name(point_no):
+    return AHT_BONE_GEN_INFO_NAME + "_%d" % point_no
+
 
 # Curveをメッシュにコンバート
 # =================================================================================================
@@ -183,16 +187,27 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list):
         # セグメントごとに頂点全部ウェイト設定
         for point_no in range(len(spline.points)):
             # データ格納先作成
-            new_vg = duplicated_list[list_no].vertex_groups.new(name=AHT_BONE_MARKING_NAME + "_%d" % point_no)
+            new_vg = duplicated_list[list_no].vertex_groups.new(name=get_bone_gen_info_name(point_no))
 
             world_ppos = (root_matrix @ spline.points[point_no].co).xyz
             p_len = abs((world_ppos - root_point).dot(world_vec))
+            weights = []
+            max_ratio = 0
             for v_no,v in enumerate(mesh.vertices):
                 world_vpos = (root_matrix @ v.co).xyz
                 v_len = abs((world_vpos - root_point).dot(world_vec))
 
-                ratio = abs((v_len-p_len) / total_length)
-                new_vg.add([v_no], ratio, 'ADD')
+                # 近いほど1に設定
+                ratio = 1 - abs((v_len-p_len) / total_length)
+                max_ratio = max(max_ratio, ratio)
+                weights.append(ratio)
+
+            # normalize
+            weights = [(w/max_ratio) ** 10 for w in weights]
+
+            # 登録
+            for v_no,v in enumerate(mesh.vertices):
+                new_vg.add([v_no], weights[v_no], 'ADD')
 
 
 
