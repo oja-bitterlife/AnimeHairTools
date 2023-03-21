@@ -220,7 +220,16 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list, straight_poin
 # ウェイトを付け終わった中間Meshを結合して１つのオブジェクトにする
 # =================================================================================================
 def join_and_settings(selected_curve_objs, meshed_curve_list_group):
-    for i, curve_obj in enumerate(selected_curve_objs):
+    # 不要なデータを消す
+    for i,(meshed_curve_list, straight_points_list) in enumerate(meshed_curve_list_group):
+            for meshed_curve_obj in meshed_curve_list:
+                # もう不要なVGであれば削除
+                for vg in meshed_curve_obj.vertex_groups:
+                    if vg.name.startswith(AHT_BONE_GEN_INFO_NAME):  # ボーン生成位置特定用ウェイト
+                        meshed_curve_obj.vertex_groups.remove(vg)
+
+    # 最終設定
+    for i,curve_obj in enumerate(selected_curve_objs):
         (meshed_curve_list, straight_points_list) = meshed_curve_list_group[i]
 
         bpy.ops.object.select_all(action='DESELECT')
@@ -229,9 +238,11 @@ def join_and_settings(selected_curve_objs, meshed_curve_list_group):
         for duplicated_obj in meshed_curve_list:
             duplicated_obj.select_set(True)
 
+        # JOIN
         bpy.context.view_layer.objects.active = meshed_curve_list[0]
         bpy.ops.object.join()
 
+        # 名前の修正
         obj = bpy.context.view_layer.objects.active
         obj.name = Naming.make_mesh_name(curve_obj.name)
 
