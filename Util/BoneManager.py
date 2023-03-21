@@ -8,7 +8,7 @@ from . import MeshManager
 
 # ボーン作成
 # =================================================================================================
-def create(context, meshed_curve_list_group):
+def create(context, selected_curve_objs, meshed_curve_list_group):
     # プラグインUiに設定されているArmatureを使う
     armature = bpy.data.objects[context.scene.AHT_armature_name]
     bpy.context.view_layer.objects.active = armature
@@ -23,15 +23,17 @@ def create(context, meshed_curve_list_group):
 
     # Curveごとに回す
     edit_bones = []
-    for ((meshed_curve_list, straight_points_list)) in meshed_curve_list_group:
+    for i,((meshed_curve_list, straight_points_list)) in enumerate(meshed_curve_list_group):
 
         for list_no,meshed_curve_obj in enumerate(meshed_curve_list):
+            spline = selected_curve_objs[i].data.splines[list_no]
+
             # ミラーチェック
             MirrorName = None if len(MirrorUtil.find_mirror_modifires(meshed_curve_obj)) == 0 else "L"
 
-            edit_bones += _create_curve_bones(context, armature, meshed_curve_obj, straight_points_list[list_no], MirrorName)  # Curve１本１本処理する
+            edit_bones += _create_curve_bones(context, armature, spline, meshed_curve_obj, straight_points_list[list_no], MirrorName)  # Curve１本１本処理する
             if MirrorName != None:
-                edit_bones += _create_curve_bones(context, armature, meshed_curve_obj, straight_points_list[list_no], "R")  # Curve１本１本処理する
+                edit_bones += _create_curve_bones(context, armature, spline, meshed_curve_obj, straight_points_list[list_no], "R")  # Curve１本１本処理する
 
     # OBJECTモードに戻すのを忘れないように
     ArmatureMode.return_obuject_mode(state_backup)
@@ -43,7 +45,7 @@ def create(context, meshed_curve_list_group):
 
 # create bone chain
 # *****************************************************************************
-def _create_curve_bones(context, armature, meshed_curve_obj, straight_points, MirrorName):
+def _create_curve_bones(context, armature, spline, meshed_curve_obj, straight_points, MirrorName):
     # roll計算用
     spline_x_axis = None  # Z軸と進行方向からX軸を算出
     if len(straight_points) >= 2:
@@ -57,16 +59,21 @@ def _create_curve_bones(context, armature, meshed_curve_obj, straight_points, Mi
     for point_no in range(len(straight_points)):
         gen_info_weight_name = MeshManager.get_bone_gen_info_name(point_no)
 
-        sum_v = mathutils.Vector((0, 0, 0))
+        sum_vec = mathutils.Vector((0, 0, 0))
         total_w = 0
         for v in meshed_curve_obj.data.vertices:
             for vge in v.groups:
                 if meshed_curve_obj.vertex_groups[vge.group].name == gen_info_weight_name:
                     world_pos = (meshed_curve_obj.matrix_world @ v.co).xyz
+                    vec = (world_pos - straight_points[0])
                     total_w += vge.weight
-                    sum_v += world_pos * vge.weight
+                    sum_vec += vec * vge.weight
 
-        center_of_gravity.append(sum_v / total_w)
+        center_of_gravity.append(sum_vec / total_w + straight_points[0])
+
+    # 最初と最後は固定
+    center_of_gravity[0] = straight_points[0]
+    center_of_gravity[-1] = (meshed_curve_obj.matrix_world @ spline.points[-1].co).xyz
 
     # セグメントごとにボーンを作成する
     # -------------------------------------------------------------------------

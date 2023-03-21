@@ -98,7 +98,7 @@ class ANIME_HAIR_TOOLS_OT_create(bpy.types.Operator):
         # create mesh
         meshed_curve_list_group = MeshManager.create(context, selected_curve_objs)
         # create bones
-        BoneManager.create(context, meshed_curve_list_group)
+        BoneManager.create(context, selected_curve_objs, meshed_curve_list_group)
         # JOIN & 名前設定
         MeshManager.join_and_settings(selected_curve_objs, meshed_curve_list_group)
 

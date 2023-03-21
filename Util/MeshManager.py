@@ -209,7 +209,7 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list, straight_poin
                 weights.append(ratio)
 
             # normalize
-            weights = [(w/max_ratio) ** 2 for w in weights]
+            weights = [(w/max_ratio) ** 16 for w in weights]
 
             # 登録
             for v_no,v in enumerate(mesh.vertices):
