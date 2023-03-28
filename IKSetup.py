@@ -12,6 +12,9 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
     def execute(self, context):
         armature = context.active_object
 
+        # すでにあるIK関連を消しておく
+        remove_selected_pose_bones(armature, context.selected_pose_bones)
+
         for pose_bone in context.selected_pose_bones:
             # 親のいないボーン(非連結ボーン)は何もしない
             if pose_bone.parent == None:
@@ -24,9 +27,6 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
         return {'FINISHED'}
 
     def IK_setup(self, context, armature, end_bone):
-        # すでにあるIK関連を消しておく
-        ConstraintUtil.remove_ik_and_target(armature, end_bone)
-
         # 生成するBone名
         ik_target_bone_name = Naming.make_ik_target_bone_name(end_bone.name)
 
@@ -45,6 +45,26 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
 
 # IK Remove
 # =================================================================================================
+def remove_selected_pose_bones(armature, selected_pose_bones):
+    # 警告がでてしまうので、IK Constraintを先に消す
+    subtargets = []
+    for pose_bone in selected_pose_bones:
+        subtargets += ConstraintUtil.remove_ik(armature, pose_bone)
+
+    # TargetBoneの回収
+    for pose_bone in selected_pose_bones:
+        if pose_bone.name.startswith(Naming.IK_TARGET_BONE_PREFIX):
+            subtargets.append(pose_bone.name)
+    subtargets = set(subtargets)  # unique
+
+    # TargetBoneを消す
+    bpy.ops.object.mode_set(mode='EDIT')
+    for pose_bone_name in subtargets:
+        edit_bone = armature.data.edit_bones.get(pose_bone_name)
+        if edit_bone:
+            armature.data.edit_bones.remove(edit_bone)
+    bpy.ops.object.mode_set(mode='POSE')
+
 class ANIME_HAIR_TOOLS_OT_ik_remove(bpy.types.Operator):
     bl_idname = "anime_hair_tools.ik_remove"
     bl_label = "IK Remove"
@@ -52,26 +72,7 @@ class ANIME_HAIR_TOOLS_OT_ik_remove(bpy.types.Operator):
     # execute ok
     def execute(self, context):
         armature = context.active_object
-
-        # 警告がでてしまうので、IK Constraintを先に消す
-        subtargets = []
-        for pose_bone in context.selected_pose_bones:
-            subtargets += ConstraintUtil.remove_ik(armature, pose_bone)
-
-        # TargetBoneの回収
-        for pose_bone in context.selected_pose_bones:
-            if pose_bone.name.startswith(Naming.IK_TARGET_BONE_PREFIX):
-                subtargets.append(pose_bone.name)
-        subtargets = set(subtargets)  # unique
-
-        # TargetBoneを消す
-        bpy.ops.object.mode_set(mode='EDIT')
-        for pose_bone_name in subtargets:
-            edit_bone = armature.data.edit_bones.get(pose_bone_name)
-            if edit_bone:
-                armature.data.edit_bones.remove(edit_bone)
-        bpy.ops.object.mode_set(mode='POSE')
-
+        remove_selected_pose_bones(armature, context.selected_pose_bones)
         return {'FINISHED'}
 
 
