@@ -39,15 +39,6 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
         ConstraintUtil.add_ik(armature, end_bone, ik_target_bone_name, 1)
 
 
-    # end_boneからroot_boneまでの距離を計算
-    def check_level_distance(self, root_bone, end_bone, level=1):
-        if end_bone.name == root_bone.name:
-            return level
-        if end_bone.parent == None:
-            return -1
-        return self.check_level_distance(root_bone, end_bone.parent, level+1)
-
-
 # IK Remove
 # =================================================================================================
 class ANIME_HAIR_TOOLS_OT_ik_remove(bpy.types.Operator):
