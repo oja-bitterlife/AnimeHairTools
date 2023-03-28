@@ -1,5 +1,5 @@
 import bpy, mathutils
-from .Util import BoneManager, ConstraintUtil, Naming
+from .Util import ConstraintUtil, Naming
 
 
 # IK Setup
@@ -13,6 +13,10 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
         armature = context.active_object
 
         for pose_bone in context.selected_pose_bones:
+            # 親のいないボーン(非連結ボーン)は何もしない
+            if pose_bone.parent == None:
+                continue
+
             # 終端だったらセットアップ
             if len(pose_bone.children) == 0:
                 self.IK_setup(context, armature, pose_bone)
