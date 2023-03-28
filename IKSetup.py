@@ -12,32 +12,16 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
     def execute(self, context):
         armature = context.active_object
 
-        for root_bone in context.selected_pose_bones:
-            # 一番上の親を探す
-            root_parent = self.find_top_root(root_bone)
-
-            # 終端を探す
-            children_list = BoneManager.pose_bone_gather_children(root_bone, lambda pose_bone: not pose_bone.bone.select)
-            for child in children_list:
-                # 終端だったらセットアップ
-                if len(child.children) == 0:
-                    self.IK_setup(context, armature, root_parent, root_bone, child)
+        for pose_bone in context.selected_pose_bones:
+            # 終端だったらセットアップ
+            if len(pose_bone.children) == 0:
+                self.IK_setup(context, armature, pose_bone)
 
         return {'FINISHED'}
 
-    # 一番上の親を返す
-    def find_top_root(self, pose_bone):
-        if pose_bone.parent:
-            return self.find_top_root(pose_bone.parent)
-        return pose_bone
-
-    def IK_setup(self, context, armature, root_parent, root_bone, end_bone):
+    def IK_setup(self, context, armature, end_bone):
         # すでにあるIK関連を消しておく
         ConstraintUtil.remove_ik_and_target(armature, end_bone)
-
-        # パラメータ取得
-        level = self.check_level_distance(root_bone, end_bone)
-        size = context.scene.AHT_ik_target_size
 
         # 生成するBone名
         ik_target_bone_name = Naming.make_ik_target_bone_name(end_bone.name)
@@ -46,14 +30,13 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='EDIT')
         new_edit_bone = armature.data.edit_bones.new(name=ik_target_bone_name)
         new_edit_bone.head = end_bone.tail
-        new_edit_bone.tail = end_bone.tail+mathutils.Vector((0,0,-size))
+        new_edit_bone.tail = end_bone.tail + armature.matrix_world.inverted() @ mathutils.Vector((0,0,-context.scene.AHT_ik_target_size))
         new_edit_bone.use_deform = False
-        new_edit_bone.parent = armature.data.edit_bones.get(root_parent.name)
  
         bpy.ops.object.mode_set(mode='POSE')
 
         # IK constraintの追加
-        ConstraintUtil.add_ik(armature, end_bone, ik_target_bone_name, level)
+        ConstraintUtil.add_ik(armature, end_bone, ik_target_bone_name, 1)
 
 
     # end_boneからroot_boneまでの距離を計算
@@ -156,4 +139,4 @@ class ANIME_HAIR_TOOLS_PT_ik_setup(bpy.types.Panel):
 # =================================================================================================
 def register():
     # Bone設定
-    bpy.types.Scene.AHT_ik_target_size = bpy.props.FloatProperty(name = "IK Target Size", default=1.0)
+    bpy.types.Scene.AHT_ik_target_size = bpy.props.FloatProperty(name = "IK Target Size", default=0.1)
