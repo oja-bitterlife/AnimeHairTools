@@ -1,7 +1,7 @@
 import bpy
 import math
 
-from .Util.ListupUtil import ListupProperty
+from .Util import Naming
 from .Util import BoneManager, MeshManager
 
 
@@ -23,18 +23,7 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
 
         # root_bone
         # -------------------------------------------------------------------------
-        armature.data.bones[0].name = scene.AHT_root_bone_name
-
-        # parent 設定
-        # -------------------------------------------------------------------------
-        if scene.AHT_parent_target_name.armature == "_empty_for_delete":
-             # parentの削除
-            armature.parent = None
-        else:
-            # parentの設定
-            armature.parent = bpy.data.objects[scene.AHT_parent_target_name.armature]
-            armature.parent_type = "BONE"
-            armature.parent_bone = scene.AHT_parent_target_name.bone
+        armature.data.bones[0].name = scene.AHT_root_bone_name  # 名前を修正
 
         return{'FINISHED'}
 
@@ -70,6 +59,11 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
         armature.data.edit_bones[0].tail = (0, 1, 0)
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.context.object.rotation_euler[0] = -math.pi/2
+
+        # Armatureコンストレイントも用意しておく
+        # -------------------------------------------------------------------------
+        constraint = armature.pose.bones[0].constraints.new("ARMATURE")
+        constraint.name = Naming.make_constraint_name("parent")
 
 
 # create constraints and controll bone
@@ -170,11 +164,6 @@ class ANIME_HAIR_TOOLS_PT_setup_hair_armature(bpy.types.Panel):
         box.prop(context.scene, "AHT_armature_name", text="Armature")
         box.prop(context.scene, "AHT_root_bone_name", text="RootBone")
 
-        # コンストレイント先設定
-        box.label(text="Parent Target:")
-        box.prop(context.scene.AHT_parent_target_name, "armature", text="Armature")
-        box.prop(context.scene.AHT_parent_target_name, "bone", text="Bone")
-
         # 実行
         box.operator("anime_hair_tools.setup_armature")
 
@@ -196,8 +185,6 @@ def register():
     # Armature設定用
     bpy.types.Scene.AHT_armature_name = bpy.props.StringProperty(name = "armature name", default="AHT_Armature")
     bpy.types.Scene.AHT_root_bone_name = bpy.props.StringProperty(name = "bone root name", default="AHT_RootBone")
-
-    bpy.types.Scene.AHT_parent_target_name = bpy.props.PointerProperty(type=ListupProperty)
 
     # Bone設定
     bpy.types.Scene.AHT_bbone = bpy.props.IntProperty(name = "BendyBone split", default=3, min=1, max=32)

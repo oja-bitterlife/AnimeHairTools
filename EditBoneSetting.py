@@ -1,8 +1,6 @@
 import bpy
 import math
 
-from .Util.ListupUtil import ListupProperty
-
 
 # 選択中BoneのBendyBoneの設定
 # =================================================================================================
