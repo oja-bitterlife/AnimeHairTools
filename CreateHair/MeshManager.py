@@ -1,14 +1,8 @@
 import bpy, math
 
-from . import Naming, MirrorUtil
-from . import ArmatureMode
+from ..Util import Naming
+from . import ArmatureMode, MirrorUtil
 from .. import CurveStraighten
-
-
-AHT_BONE_GEN_INFO_NAME = "AHT_MARK_BONE"
-
-def get_bone_gen_info_name(point_no):
-    return AHT_BONE_GEN_INFO_NAME + "_%d" % point_no
 
 
 # Curveをメッシュにコンバート
@@ -194,7 +188,7 @@ def _set_mesh_weights(curve_obj, duplicated_list, straighted_list, straight_poin
         # セグメントごとに頂点全部ウェイト設定
         for point_no,point in enumerate(straight_points_list[list_no]):
             # データ格納先作成
-            new_vg = duplicated_list[list_no].vertex_groups.new(name=get_bone_gen_info_name(point_no))
+            new_vg = duplicated_list[list_no].vertex_groups.new(name=Naming.get_bone_gen_info_name(point_no))
 
             p_len = abs((point - root_point).dot(world_vec))
             weights = []
@@ -225,7 +219,7 @@ def join_and_settings(selected_curve_objs, meshed_curve_list_group):
             for meshed_curve_obj in meshed_curve_list:
                 # もう不要なVGであれば削除
                 for vg in meshed_curve_obj.vertex_groups:
-                    if vg.name.startswith(AHT_BONE_GEN_INFO_NAME):  # ボーン生成位置特定用ウェイト
+                    if vg.name.startswith(Naming.AHT_BONE_GEN_INFO_NAME):  # ボーン生成位置特定用ウェイト
                         meshed_curve_obj.vertex_groups.remove(vg)
 
     # 最終設定

@@ -2,8 +2,8 @@
 import bpy, math, mathutils
 import re
 
-from . import Naming, ArmatureMode, MirrorUtil
-from . import MeshManager
+from ..Util import Naming
+from . import ArmatureMode, MirrorUtil
 
 
 # ボーン作成
@@ -57,7 +57,7 @@ def _create_curve_bones(context, armature, spline, meshed_curve_obj, straight_po
     # 影響度を元に重心を求める
     center_of_gravity = []
     for point_no in range(len(straight_points)):
-        gen_info_weight_name = MeshManager.get_bone_gen_info_name(point_no)
+        gen_info_weight_name = Naming.get_bone_gen_info_name(point_no)
 
         sum_vec = mathutils.Vector((0, 0, 0))
         total_w = 0
@@ -164,24 +164,6 @@ def remove(context, selected_curve_objs):
 
     # OBJECTモードに戻すのを忘れないように
     ArmatureMode.return_obuject_mode(state_backup)
-
-
-# pose_boneの子を再帰的に選択する
-# =================================================================================================
-def pose_bone_gather_children(pose_bone, select_func=None):
-    pose_bone_list = []
-    for child_pose_bone in pose_bone.children:
-        # 選択関数があれば選択するかチェック
-        if select_func != None:
-            if not select_func(child_pose_bone):
-                continue  # 非選択になったら処理しない
-        # 登録
-        pose_bone_list.append(child_pose_bone)
-
-        # 再帰で潜って追加していく
-        pose_bone_list.extend(pose_bone_gather_children(child_pose_bone))
-
-    return pose_bone_list
 
 
 # pose_boneをCurveに沿って回転させる

@@ -1,8 +1,8 @@
 import bpy
 import math
 
-from .Util import Naming
-from .Util import BoneManager, MeshManager
+from ..Util import Naming
+from . import BoneManager, MeshManager
 
 
 # AHT用のArmatureのセットアップを行う
@@ -146,49 +146,43 @@ class ANIME_HAIR_TOOLS_OT_remove(bpy.types.Operator):
 
 # UI描画設定
 # =================================================================================================
-class ANIME_HAIR_TOOLS_PT_setup_hair_armature(bpy.types.Panel):
-    bl_label = "Setup Hair Armature"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_parent_id = "APT_HAIR_PT_UI"
-    bl_options = {'HEADER_LAYOUT_EXPAND'}
+classes = [
+    ANIME_HAIR_TOOLS_OT_setup_armature,
+    ANIME_HAIR_TOOLS_OT_create,
+    ANIME_HAIR_TOOLS_OT_remove,
+]
 
-    def draw(self, context):
-        # Armature生成
-        # ---------------------------------------------------------------------
-        self.layout.label(text="Armature and RootBone Setting:")
-        box = self.layout.box()
-        box.enabled = context.mode == "OBJECT"
+def draw(parent, context, layout):
+    # Armature生成
+    # ---------------------------------------------------------------------
+    layout.label(text="Armature and RootBone Setting:")
+    box = layout.box()
+    box.enabled = context.mode == "OBJECT"
 
-        # ATHのArmatureの設定
-        box.prop(context.scene, "AHT_armature_name", text="Armature")
-        box.prop(context.scene, "AHT_root_bone_name", text="RootBone")
+    # ATHのArmatureの設定
+    box.prop(context.scene, "AHT_armature_name", text="Armature")
+    box.prop(context.scene, "AHT_root_bone_name", text="RootBone")
 
-        # 実行
-        box.operator("anime_hair_tools.setup_armature")
+    # 実行
+    box.operator("anime_hair_tools.setup_armature")
 
-        # Mesh化&Bone生成
-        # ---------------------------------------------------------------------
-        self.layout.label(text="Mesh & Bones Setting:")
-        box = self.layout.box()
-        box.enabled = context.mode == "OBJECT" and (bpy.context.view_layer.objects.active != None and bpy.context.view_layer.objects.active.type == "CURVE")
+    # Mesh化&Bone生成
+    # ---------------------------------------------------------------------
+    layout.label(text="Mesh & Bones Setting:")
+    box = layout.box()
+    box.enabled = context.mode == "OBJECT" and (bpy.context.view_layer.objects.active != None and bpy.context.view_layer.objects.active.type == "CURVE")
 
-        box.prop(context.scene, "AHT_subdivision", text="Use Subdivision Modifire")
-        box.prop(context.scene, "AHT_bbone", text="Bendy Bones")
-        box.prop(context.scene, "AHT_create_layer", text="Bone Create Layer")
-        box.operator("anime_hair_tools.create")
-        box.operator("anime_hair_tools.remove")
+    box.prop(context.scene, "AHT_subdivision", text="Use Subdivision Modifire")
+    box.prop(context.scene, "AHT_bbone", text="Bendy Bones")
+    box.prop(context.scene, "AHT_create_layer", text="Bone Create Layer")
+    box.operator("anime_hair_tools.create")
+    box.operator("anime_hair_tools.remove")
 
 
-# =================================================================================================
 def register():
-    # Armature設定用
-    bpy.types.Scene.AHT_armature_name = bpy.props.StringProperty(name = "armature name", default="AHT_Armature")
-    bpy.types.Scene.AHT_root_bone_name = bpy.props.StringProperty(name = "bone root name", default="AHT_RootBone")
+    for cls in classes:
+        bpy.utils.register_class(cls)
 
-    # Bone設定
-    bpy.types.Scene.AHT_bbone = bpy.props.IntProperty(name = "BendyBone split", default=3, min=1, max=32)
-    bpy.types.Scene.AHT_create_layer = bpy.props.IntProperty(name = "Bone Create Layer", default=1, min=1, max=32)
-
-    # モディファイア設定
-    bpy.types.Scene.AHT_subdivision = bpy.props.BoolProperty(name = "With Subdivision", default=True)
+def unregister():
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)

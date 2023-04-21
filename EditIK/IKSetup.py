@@ -1,5 +1,7 @@
 import bpy, mathutils
-from .Util import ConstraintUtil, Naming
+
+from ..Util import Naming
+from . import IKUtil
 
 
 # IK Setup
@@ -40,7 +42,7 @@ class ANIME_HAIR_TOOLS_OT_ik_setup(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='POSE')
 
         # IK constraintの追加
-        ConstraintUtil.add_ik(armature, end_bone, ik_target_bone_name, 1)
+        IKUtil.add_ik(armature, end_bone, ik_target_bone_name, 1)
 
 
 # IK Remove
@@ -49,7 +51,7 @@ def remove_selected_pose_bones(armature, selected_pose_bones):
     # 警告がでてしまうので、IK Constraintを先に消す
     subtargets = []
     for pose_bone in selected_pose_bones:
-        subtargets += ConstraintUtil.remove_ik(armature, pose_bone)
+        subtargets += IKUtil.remove_ik(armature, pose_bone)
 
     # TargetBoneの回収
     for pose_bone in selected_pose_bones:
@@ -112,27 +114,33 @@ class ANIME_HAIR_TOOLS_OT_ik_disable(bpy.types.Operator):
 
 # UI描画設定
 # =================================================================================================
-class ANIME_HAIR_TOOLS_PT_ik_setup(bpy.types.Panel):
-    bl_label = "IK Setup"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_parent_id = "APT_HAIR_PT_UI"
-    bl_options = {'DEFAULT_CLOSED'}
+classes = [
+    ANIME_HAIR_TOOLS_OT_ik_setup,
+    ANIME_HAIR_TOOLS_OT_ik_remove,
+    ANIME_HAIR_TOOLS_OT_ik_enable,
+    ANIME_HAIR_TOOLS_OT_ik_disable,
+]
 
-    def draw(self, context):
-        if context.mode != "POSE":
-            self.layout.enabled = False
+def draw(parent, context, layout):
+    if context.mode != "POSE":
+        layout.enabled = False
 
-        box = self.layout.box()
-        box.prop(context.scene, "AHT_ik_target_size", text="IK Target Size")
-        box.operator("anime_hair_tools.ik_setup")
-        box.operator("anime_hair_tools.ik_remove")
-        box = self.layout.box()
-        box.operator("anime_hair_tools.ik_enable")
-        box.operator("anime_hair_tools.ik_disable")
+    box = layout.box()
+    box.prop(context.scene, "AHT_ik_target_size", text="IK Target Size")
+    box.operator("anime_hair_tools.ik_setup")
+    box.operator("anime_hair_tools.ik_remove")
+    box = layout.box()
+    box.operator("anime_hair_tools.ik_enable")
+    box.operator("anime_hair_tools.ik_disable")
 
 
-# =================================================================================================
 def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+
     # Bone設定
     bpy.types.Scene.AHT_ik_target_size = bpy.props.FloatProperty(name = "IK Target Size", default=0.1)
+
+def unregister():
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)

@@ -46,3 +46,9 @@ def make_constraint_name(base_name):
     return CONSTRAINT_PREFIX+base_name
 
 
+# VertexGroup
+# *****************************************************************************
+# その頂点がどのBoneに影響されるかを保存するVertexGroupにつける名前(テンポラリ)
+AHT_BONE_GEN_INFO_NAME = "AHT_MARK_BONE"
+def get_bone_gen_info_name(point_no):
+    return AHT_BONE_GEN_INFO_NAME + "_%d" % point_no

@@ -25,16 +25,14 @@ def init():
 
     # 並び替え
     from . import AnimeHairTools
-    from . import ArmatureManager
-    from . import CopyAction
-    from . import EditBoneSetting
-    from . import IKSetup
+    from . import UI_CreateHair
+    from . import UI_EditBone
+    from . import UI_EditIK
     orders = [
         AnimeHairTools.ANIME_HAIR_TOOLS_PT_ui,
-        ArmatureManager.ANIME_HAIR_TOOLS_PT_setup_hair_armature,
-        EditBoneSetting.ANIME_HAIR_TOOLS_PT_bone_setting,
-        IKSetup.ANIME_HAIR_TOOLS_PT_ik_setup,
-        CopyAction.ANIME_HAIR_TOOLS_PT_copy_action,
+        UI_CreateHair.ANIME_HAIR_TOOLS_PT_create_hair,
+        UI_EditBone.ANIME_HAIR_TOOLS_PT_edit_bone,
+        UI_EditIK.ANIME_HAIR_TOOLS_PT_edit_ik,
     ]
     no_ordered = filter(lambda c: c not in orders, ordered_classes)
     ordered_classes = list(orders) + list(no_ordered)
