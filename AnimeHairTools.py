@@ -1,8 +1,5 @@
 import bpy
 
-from . import CurveStraighten
-from . import MirrorEdit
-
 # Main UI
 # ===========================================================================================
 # 3DView Tools Panel
@@ -16,9 +13,3 @@ class ANIME_HAIR_TOOLS_PT_ui(bpy.types.Panel):
 
     def draw(self, context):
         pass
-        # # 状態によって使うUIを切り替える
-        # if context.mode == "EDIT_CURVE":
-        #     MirrorEdit.ui_draw(context, self.layout)
-        #     CurveStraighten.ui_draw(context, self.layout)
-        # if context.mode == "EDIT_MESH":
-        #     MirrorEdit.ui_draw(context, self.layout)

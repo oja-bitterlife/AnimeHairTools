@@ -67,13 +67,27 @@ def execute_nurbs_straighten(spline, keep_length, is_force=False):
 
 # UI描画設定
 # =================================================================================================
-def ui_draw(context, layout):
-    layout.label(text="Curve Arrange:")
+label = "Curve Arrange"
+
+classes = [
+    ANIME_HAIR_TOOLS_OT_curve_straighten,
+]
+
+def draw(parent, context, layout):
+    if context.mode != "EDIT_CURVE":
+        layout.enabled = False
+
     box = layout.box()
     box.prop(context.scene, "AHT_straighten_keep_length", text="Keep Length")
     box.operator("anime_hair_tools.curve_straighten")
 
 
-# =================================================================================================
 def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+
     bpy.types.Scene.AHT_straighten_keep_length = bpy.props.BoolProperty(name = "Kepp Length", default=True)
+
+def unregister():
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)

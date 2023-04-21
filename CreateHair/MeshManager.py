@@ -2,7 +2,7 @@ import bpy, math
 
 from ..Util import Naming
 from . import ArmatureMode, MirrorUtil
-from .. import CurveStraighten
+from ..CurveUtil import CurveStraighten
 
 
 # Curveをメッシュにコンバート
