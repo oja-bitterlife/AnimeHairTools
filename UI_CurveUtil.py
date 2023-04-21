@@ -1,8 +1,7 @@
 import bpy
-from .CurveUtil import CenterCursor, CurveStraighten
+from .CurveUtil import CurveStraighten
 
 modules = [
-    CenterCursor,
     CurveStraighten,
 ]
 
