@@ -1,6 +1,16 @@
 import bpy
 import math
 
+# Utility
+# =================================================================================================
+# boneが含まれているレイヤーがArmatureの表示レイヤーになっているかどうか(非表示レイヤーは処理しない)
+def is_layer_enable(armature, edit_bone):
+    # 所属コレクションのどれかが有効なら処理対象
+    for collection in edit_bone.collections:
+        if collection.is_visible:
+            return True
+    return True
+
 
 # 選択中BoneのBendyBoneの設定
 # =================================================================================================
@@ -111,13 +121,6 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_disconnect(bpy.types.Operator):
 
         return{'FINISHED'}
 
-
-# boneが含まれているレイヤーがArmatureの表示レイヤーになっているかどうか
-def is_layer_enable(armature, edit_bone):
-    for i, b in enumerate(edit_bone.layers):
-        if b:
-            return armature.data.layers[i]
-    return False
 
 
 # UI描画設定
