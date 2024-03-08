@@ -14,16 +14,23 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
     # execute
     def execute(self, context):
         scene = context.scene
+
         # armature
         # -------------------------------------------------------------------------
         # ない時だけ新たに作る
         if scene.AHT_armature_name not in bpy.data.objects.keys():
             self.create_armature(context)
+
+        # 作成したアーマチュアを拾う
         armature = bpy.data.objects[scene.AHT_armature_name]
 
         # root_bone
         # -------------------------------------------------------------------------
         armature.data.bones[0].name = scene.AHT_root_bone_name  # 名前を修正
+
+        # コレクション名変更
+        if len(armature.data.collections) == 1 and armature.data.collections[0].name == "Bones":  # 作りたてだったら
+            armature.data.collections[0].name = scene.AHT_root_bone_name
 
         return{'FINISHED'}
 
