@@ -13,10 +13,13 @@ def create(context, selected_curve_objs, meshed_curve_list_group):
     armature = bpy.data.objects[context.scene.AHT_armature_name]
     bpy.context.view_layer.objects.active = armature
 
-    # Layerのバックアップとwork用LayerのみON
-    backup_layers = list(armature.data.layers)
-    setup_layers = [i == context.scene.AHT_create_layer-1 for i in range(len(backup_layers))]
-    armature.data.layers = setup_layers
+    # BoneCollectionがなければ作っておく
+    for curve in selected_curve_objs:
+        if armature.data.collections.get(curve.name) == None:
+            armature.data.collections.new(curve.name)
+
+    # コレクション名とインデックスのペアを取得
+    BoneCollectionNames = {collection.name: i for i, collection in enumerate(armature.data.collections.values())}
 
     # to edit-mode
     state_backup = ArmatureMode.to_edit_mode(context, armature)
@@ -24,8 +27,10 @@ def create(context, selected_curve_objs, meshed_curve_list_group):
     # Curveごとに回す
     edit_bones = []
     for i,((meshed_curve_list, straight_points_list)) in enumerate(meshed_curve_list_group):
-
         for list_no,meshed_curve_obj in enumerate(meshed_curve_list):
+            # 格納先のコレクションをアクティブに
+            armature.data.collections.active_index = BoneCollectionNames[selected_curve_objs[i].name]
+
             spline = selected_curve_objs[i].data.splines[list_no]
 
             # ミラーチェック
@@ -37,10 +42,6 @@ def create(context, selected_curve_objs, meshed_curve_list_group):
 
     # OBJECTモードに戻すのを忘れないように
     ArmatureMode.return_obuject_mode(state_backup)
-
-    # Boneを作ったLayerも有効にして戻す
-    backup_layers[context.scene.AHT_create_layer-1] = True
-    armature.data.layers = backup_layers
 
 
 # create bone chain
