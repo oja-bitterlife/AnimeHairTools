@@ -113,7 +113,7 @@ def _create_curve_bones(context, armature, spline, meshed_curve_obj, straight_po
             if i == 0:  # 始点のrollですべてを設定
                 x_axis = armature.matrix_world @ new_bone.x_axis
                 y_axis = armature.matrix_world @ new_bone.y_axis
-                roll = math.acos(spline_x_axis.dot(x_axis))
+                roll = math.acos(max(-1, min(1, spline_x_axis.dot(x_axis))))
                 # 三重積で回転方向をチェック
                 if spline_x_axis.cross(x_axis).dot(y_axis) > 0:
                     roll = -roll  # 逆回転
