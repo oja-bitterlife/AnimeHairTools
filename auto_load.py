@@ -25,13 +25,13 @@ def init():
 
     # 並び替え
     from . import AnimeHairTools
-    from . import UI_CreateHair
+    from . import UI_SetupArmature
     from . import UI_EditBone
     from . import UI_EditIK
     from . import UI_CurveUtil
     orders = [
         AnimeHairTools.ANIME_HAIR_TOOLS_PT_ui,
-        UI_CreateHair.ANIME_HAIR_TOOLS_PT_create_hair,
+        UI_SetupArmature.ANIME_HAIR_TOOLS_PT_setup_armature,
         UI_EditBone.ANIME_HAIR_TOOLS_PT_edit_bone,
         UI_EditIK.ANIME_HAIR_TOOLS_PT_edit_ik,
         UI_CurveUtil.ANIME_HAIR_TOOLS_PT_curve_util,

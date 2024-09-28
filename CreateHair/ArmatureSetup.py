@@ -1,9 +1,7 @@
 import bpy
 import math
 
-from ..Util import Naming
-from . import BoneManager, MeshManager
-
+from . import BoneManager
 
 # AHT用のArmatureのセットアップを行う
 # =================================================================================================
@@ -18,15 +16,17 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
         # armature
         # -------------------------------------------------------------------------
         # ない時だけ新たに作る
-        if scene.AHT_armature_name not in bpy.data.objects.keys():
-            self.create_armature(context)
-
-        # 作成したアーマチュアを拾う
-        armature = bpy.data.objects[scene.AHT_armature_name]
+        if scene.AHT_armature_name in bpy.data.objects.keys():
+            armature = bpy.data.objects[scene.AHT_armature_name]
+        else:
+            armature = self.create_armature(context)
 
         # root_bone
         # -------------------------------------------------------------------------
         armature.data.bones[0].name = scene.AHT_root_bone_name  # 名前を修正
+
+        # 親変更
+
 
         # コレクション名変更
         if len(armature.data.collections) == 1 and armature.data.collections[0].name == "Bones":  # 作りたてだったら
@@ -59,18 +59,23 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
 
         # 見やすいように奥向きに設定しておく
         # -------------------------------------------------------------------------
-        bpy.ops.object.select_all(action='DESELECT')
-        bpy.context.view_layer.objects.active = armature
-        bpy.ops.object.mode_set(mode='EDIT')
-        armature.data.edit_bones[0].select = True
-        armature.data.edit_bones[0].tail = (0, 1, 0)
-        bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.context.object.rotation_euler[0] = -math.pi/2
+        # bpy.ops.object.select_all(action='DESELECT')
+        # bpy.context.view_layer.objects.active = armature
+        # bpy.ops.object.mode_set(mode='EDIT')
+        # armature.data.edit_bones[0].select = True
+        # armature.data.edit_bones[0].tail = (0, 1, 0)
+        # bpy.ops.object.mode_set(mode='POSE')
+        # bpy.context.active_pose_bone.rotation_mode = 'XYZ'
+        # bpy.ops.object.mode_set(mode='OBJECT')
+
+
 
         # Armatureコンストレイントも用意しておく
         # -------------------------------------------------------------------------
-        constraint = armature.pose.bones[0].constraints.new("ARMATURE")
-        constraint.name = Naming.make_constraint_name("parent")
+        # constraint = armature.pose.bones[0].constraints.new("ARMATURE")
+        # constraint.name = Naming.make_constraint_name("parent")
+
+        return armature
 
 
 # create constraints and controll bone
@@ -169,6 +174,10 @@ def draw(parent, context, layout):
     # ATHのArmatureの設定
     box.prop(context.scene, "AHT_armature_name", text="Armature")
     box.prop(context.scene, "AHT_root_bone_name", text="RootBone")
+    box.prop(context.scene, "AHT_parent_armature_name", text="ParentArmature")
+    row = box.row()
+    row.prop(context.scene, "AHT_parent_bone_group", text="ParentBone")
+    row.prop(context.scene, "AHT_parent_bone_name", text="")
 
     # 実行
     box.operator("anime_hair_tools.setup_armature")

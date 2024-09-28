@@ -15,8 +15,8 @@ bl_info = {
     "name" : "AnimeHairTools",
     "author" : "oja",
     "description" : "",
-    "blender" : (4, 0, 0),
-    "version" : (0, 4, 0),
+    "blender" : (4, 2, 0),
+    "version" : (2, 0, 0),
     "location" : "",
     "warning" : "",
     "category" : "Animation"
