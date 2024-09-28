@@ -1,7 +1,8 @@
-import bpy
+import bpy, mathutils
 import math
 
 from . import BoneManager
+from ..Util import Naming
 
 # AHT用のArmatureのセットアップを行う
 # =================================================================================================
@@ -13,6 +14,9 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene
 
+        parent_armature = bpy.data.objects[scene.AHT_parent_armature_name]
+        parent_bone = parent_armature.data.bones[scene.AHT_parent_bone_name]
+
         # armature
         # -------------------------------------------------------------------------
         # ない時だけ新たに作る
@@ -21,16 +25,24 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
         else:
             armature = self.create_armature(context)
 
+        armature.parent = parent_armature
+
         # root_bone
         # -------------------------------------------------------------------------
         armature.data.bones[0].name = scene.AHT_root_bone_name  # 名前を修正
+        armature.parent = parent_armature
+        armature.parent_type = 'BONE'
+        armature.parent_bone = parent_bone.name
 
-        # 親変更
+        # 設定
+        # -------------------------------------------------------------------------
+        context.view_layer.objects.active = armature
 
-
-        # コレクション名変更
-        if len(armature.data.collections) == 1 and armature.data.collections[0].name == "Bones":  # 作りたてだったら
-            armature.data.collections[0].name = scene.AHT_root_bone_name
+        # 座標設定
+        bpy.ops.object.mode_set(mode='EDIT')
+        armature.data.edit_bones[0].head = parent_bone.head
+        armature.data.edit_bones[0].tail = parent_bone.head + mathutils.Vector((0, 0, -0.5))
+        bpy.ops.object.mode_set(mode='OBJECT')
 
         return{'FINISHED'}
 
@@ -68,12 +80,13 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
         # bpy.context.active_pose_bone.rotation_mode = 'XYZ'
         # bpy.ops.object.mode_set(mode='OBJECT')
 
-
+        # 初回限定処理
+        # -------------------------------------------------------------------------
+        armature.data.collections[0].name = "AHT_Root"
 
         # Armatureコンストレイントも用意しておく
-        # -------------------------------------------------------------------------
-        # constraint = armature.pose.bones[0].constraints.new("ARMATURE")
-        # constraint.name = Naming.make_constraint_name("parent")
+        constraint = armature.pose.bones[0].constraints.new("ARMATURE")
+        constraint.name = Naming.make_constraint_name("parent")
 
         return armature
 

@@ -27,9 +27,14 @@ def get_armature_names(self, context):
     return [(armature.name, armature.name, "") for armature in objs if armature.type == "ARMATURE"]
 
 def get_bone_names(self, context):
+    if context.scene.AHT_parent_armature_name == "":
+        return []
+
     bones = context.blend_data.objects[context.scene.AHT_parent_armature_name].data.bones
-    # 変数aにAHT_parent_bone_groupを設定
-    return [(bone.name, bone.name, "") for bone in bones if context.scene.AHT_parent_bone_group in bone.collections]
+    if context.scene.AHT_parent_bone_group == "":  # 全部
+        return [(bone.name, bone.name, "") for bone in bones]
+    else:  # Boneコレクションでフィルタ
+        return [(bone.name, bone.name, "") for bone in bones if context.scene.AHT_parent_bone_group in bone.collections]
 
 def register():
     for module in modules:

@@ -3,7 +3,6 @@ import bpy, math, mathutils
 import re
 
 from ..Util import Naming
-from . import ArmatureMode
 
 
 # ボーン作成
