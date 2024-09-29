@@ -1,5 +1,6 @@
 import bpy
 from .CreateHair import ArmatureSetup, BoneManager
+from .Util import Naming
 
 modules = [
     ArmatureSetup,
@@ -17,7 +18,7 @@ class ANIME_HAIR_TOOLS_PT_setup_armature(bpy.types.Panel):
     def draw(self, context):
         # Armature生成
         # ---------------------------------------------------------------------
-        self.layout.label(text="Armature and RootBone Setting:")
+        self.layout.label(text="Setup Armature and RootBone:")
         box = self.layout.box()
         box.enabled = context.mode == "OBJECT"
 
@@ -36,7 +37,11 @@ class ANIME_HAIR_TOOLS_PT_setup_armature(bpy.types.Panel):
         # ---------------------------------------------------------------------
         self.layout.label(text="Bones Setting:")
         box = self.layout.box()
-        box.enabled = context.mode == "OBJECT" and (bpy.context.view_layer.objects.active != None and bpy.context.view_layer.objects.active.type == "CURVE")
+
+        # 有効条件確認
+        selected_curve_objs = [obj for obj in context.selected_objects if obj.type == "CURVE"]
+        has_aht_armature = bpy.data.objects.get(context.scene.AHT_armature_name) != None
+        box.enabled = context.mode == "OBJECT" and has_aht_armature and len(selected_curve_objs) > 0
 
         box.prop(context.scene, "AHT_create_layer", text="Create Layer")
         box.operator("anime_hair_tools.create")
@@ -70,7 +75,7 @@ def register():
     bpy.types.Scene.AHT_parent_bone_group = bpy.props.StringProperty(name = "parent bone group", default="Bones")
     bpy.types.Scene.AHT_parent_bone_name = bpy.props.EnumProperty(name = "parent bone name", items=get_bone_names)
 
-    bpy.types.Scene.AHT_create_layer = bpy.props.StringProperty(name = "bone create layer", default="AHT_HairBones")
+    bpy.types.Scene.AHT_create_layer = bpy.props.StringProperty(name = "bone create layer", default=Naming.make_bone_collection_name("Hair"))
 
 def unregister():
     for module in modules:

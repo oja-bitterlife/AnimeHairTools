@@ -7,7 +7,7 @@ from ..Util import Naming
 # =================================================================================================
 class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
     bl_idname = "anime_hair_tools.setup_armature"
-    bl_label = "Setup Armature and RootBone"
+    bl_label = "Create & Setup"
 
     # execute
     def execute(self, context):
@@ -77,50 +77,9 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
 
         # 初回限定処理
         # -------------------------------------------------------------------------
-        armature.data.collections[0].name = "AHT_Root"
+        armature.data.collections[0].name = Naming.make_bone_collection_name("Root")
 
         return armature
-
-
-# create constraints and controll bone
-# =================================================================================================
-class ANIME_HAIR_TOOLS_OT_create_bones(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.create"
-    bl_label = "Create Bones"
-
-    # execute ok
-    def execute(self, context):
-        armature = bpy.data.objects[context.scene.AHT_armature_name]
-        # selected_curve_objs = [obj for obj in context.selected_objects if obj.type == "CURVE"]
-        # backup_active = bpy.context.view_layer.objects.active
-
-        # # Curveが１つも選択されていなかった
-        # if len(selected_curve_objs) == 0:
-        #     return{'FINISHED'}
-
-        # # 一旦今までのものを削除
-        # # ---------------------------------------------------------------------
-        # BoneManager.remove(context, selected_curve_objs)  # Boneを削除
-
-        # # 作り直す
-        # # ---------------------------------------------------------------------
-        # # create bones
-        # BoneManager.create(context, selected_curve_objs, meshed_curve_list_group)
-
-        # # 後始末
-        # # ---------------------------------------------------------------------
-        # bpy.ops.object.select_all(action='DESELECT')
-        # for curve in selected_curve_objs:  # 対象となったCurveを選択状態に戻しておく
-        #     curve.select_set(True)
-        # bpy.context.view_layer.objects.active = backup_active
-
-        return{'FINISHED'}
-
-
-    # ATH_Armatureを先に作る必要がある
-    @classmethod
-    def poll(cls, context):
-        return bpy.data.objects.get(context.scene.AHT_armature_name) != None
 
 
 # Delete the constraints added for management
@@ -159,7 +118,6 @@ class ANIME_HAIR_TOOLS_OT_remove(bpy.types.Operator):
 # =================================================================================================
 classes = [
     ANIME_HAIR_TOOLS_OT_setup_armature,
-    ANIME_HAIR_TOOLS_OT_create_bones,
     ANIME_HAIR_TOOLS_OT_remove,
 ]
 

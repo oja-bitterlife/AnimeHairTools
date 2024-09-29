@@ -7,6 +7,41 @@ from ..Util import Naming
 
 # ボーン作成
 # =================================================================================================
+# create constraints and controll bone
+# =================================================================================================
+class ANIME_HAIR_TOOLS_OT_create_bones(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.create"
+    bl_label = "Create Bones"
+
+    # execute ok
+    def execute(self, context):
+        armature = bpy.data.objects[context.scene.AHT_armature_name]
+        selected_curve_objs = [obj for obj in context.selected_objects if obj.type == "CURVE"]
+        backup_active = bpy.context.view_layer.objects.active
+
+        # # Curveが１つも選択されていなかった
+        # if len(selected_curve_objs) == 0:
+        #     return{'FINISHED'}
+
+        # # 一旦今までのものを削除
+        # # ---------------------------------------------------------------------
+        # BoneManager.remove(context, selected_curve_objs)  # Boneを削除
+
+        # # 作り直す
+        # # ---------------------------------------------------------------------
+        # # create bones
+        # BoneManager.create(context, selected_curve_objs, meshed_curve_list_group)
+
+        # # 後始末
+        # # ---------------------------------------------------------------------
+        # bpy.ops.object.select_all(action='DESELECT')
+        # for curve in selected_curve_objs:  # 対象となったCurveを選択状態に戻しておく
+        #     curve.select_set(True)
+        # bpy.context.view_layer.objects.active = backup_active
+
+        return{'FINISHED'}
+
+
 def create(context, selected_curve_objs, meshed_curve_list_group):
     # プラグインUiに設定されているArmatureを使う
     armature = bpy.data.objects[context.scene.AHT_armature_name]
@@ -219,3 +254,17 @@ def _rec_pose_bone_fit_process(armature, curve_obj, spline_no, point_no, parent_
         parent_pose_qt @ pose_bone.rotation_quaternion,
         LR)
 
+
+# UI描画設定
+# =================================================================================================
+classes = [
+    ANIME_HAIR_TOOLS_OT_create_bones,
+]
+
+def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+
+def unregister():
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
