@@ -84,9 +84,9 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
 
 # Delete the constraints added for management
 # =================================================================================================
-class ANIME_HAIR_TOOLS_OT_remove(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.remove"
-    bl_label = "Remove Bones"
+class ANIME_HAIR_TOOLS_OT_remove_all(bpy.types.Operator):
+    bl_idname = "anime_hair_tools.remove_all"
+    bl_label = "Remove All"
 
     # execute ok
     def execute(self, context):
@@ -118,7 +118,7 @@ class ANIME_HAIR_TOOLS_OT_remove(bpy.types.Operator):
 # =================================================================================================
 classes = [
     ANIME_HAIR_TOOLS_OT_setup_armature,
-    ANIME_HAIR_TOOLS_OT_remove,
+    ANIME_HAIR_TOOLS_OT_remove_all,
 ]
 
 def register():
