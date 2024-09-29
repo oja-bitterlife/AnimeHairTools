@@ -165,8 +165,8 @@ def remove(context, armature, selected_curve_objs):
         for bone in armature.data.edit_bones:
             bone.select = bone.name.startswith(bone_basename)
 
-    # 一括削除
-    bpy.ops.armature.delete()
+        # 一括削除(Curveごとじゃないと失敗する)
+        bpy.ops.armature.delete()
 
     # OBJECTモードに戻すのを忘れないように
     bpy.ops.object.mode_set(mode='OBJECT')
