@@ -111,9 +111,18 @@ def _create_curve_bones(context, armature, curve, spline_no, spline):
         new_bone.tail= end.xyz
 
         # rollも設定
-        forward_axis = curve.matrix_world.to_3x3() @ mathutils.Vector((0, 0, -1))
+        forward_axis = world_matrix.to_3x3() @ mathutils.Vector((0, 1, 0))
         z_axis = new_bone.y_axis.cross(forward_axis).normalized()
         new_bone.align_roll(-z_axis)
+       
+            # if i == 0:  # 始点のrollですべてを設定
+            #     x_axis = armature.matrix_world @ new_bone.x_axis
+            #     y_axis = armature.matrix_world @ new_bone.y_axis
+            #     roll = math.acos(max(-1, min(1, spline_x_axis.dot(x_axis))))
+            #     # 三重積で回転方向をチェック
+            #     if spline_x_axis.cross(x_axis).dot(y_axis) > 0:
+            #         roll = -roll  # 逆回転
+            # new_bone.roll += roll
 
         # # .R側だった場合はBoneをX軸反転
         # if MirrorName == "R":
