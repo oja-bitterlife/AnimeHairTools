@@ -3,38 +3,13 @@ import math
 
 # Utility
 # =================================================================================================
-# boneが含まれているレイヤーがArmatureの表示レイヤーになっているかどうか(非表示レイヤーは処理しない)
-def is_layer_enable(armature, edit_bone):
+# BoneCollectionが表示になっているかどうか(非表示レイヤーは処理しない)
+def is_bone_collection_enable(armature, edit_bone):
     # 所属コレクションのどれかが有効なら処理対象
     for collection in edit_bone.collections:
         if collection.is_visible:
             return True
     return True
-
-
-# 選択中BoneのBendyBoneの設定
-# =================================================================================================
-class ANIME_HAIR_TOOLS_OT_setup_bendy_bone(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.setup_bendy_bone"
-    bl_label = "Setup Bendy Bone"
-
-    # execute
-    def execute(self, context):
-        # 編集対象ボーンの回収
-        armature = context.active_object
-        selected_bones = []
-        for bone in armature.data.edit_bones:
-            if bone.select and is_layer_enable(armature, bone):
-                selected_bones.append(bone)
-
-        if context.scene.AHT_bbone < 1:
-            context.scene.AHT_bbone = 1
-
-        # connect
-        for bone in selected_bones:
-            bone.bbone_segments = context.scene.AHT_bbone
-
-        return{'FINISHED'}
 
 
 # 選択中のBoneのRollを設定する
@@ -49,7 +24,7 @@ class ANIME_HAIR_TOOLS_OT_reset_bone_roll(bpy.types.Operator):
         armature = context.active_object
         selected_bones = []
         for bone in armature.data.edit_bones:
-            if bone.select and is_layer_enable(armature, bone):
+            if bone.select and is_bone_collection_enable(armature, bone):
                 selected_bones.append(bone)
 
         for bone in selected_bones:
@@ -67,7 +42,7 @@ class ANIME_HAIR_TOOLS_OT_copy_active_roll(bpy.types.Operator):
         armature = context.active_object
         selected_bones = []
         for bone in armature.data.edit_bones:
-            if bone.select and is_layer_enable(armature, bone):
+            if bone.select and is_bone_collection_enable(armature, bone):
                 selected_bones.append(bone)
 
         for bone in selected_bones:
@@ -92,7 +67,7 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_connect(bpy.types.Operator):
         armature = context.active_object
         selected_bones = []
         for bone in armature.data.edit_bones:
-            if bone.select_head and is_layer_enable(armature, bone):
+            if bone.select_head and is_bone_collection_enable(armature, bone):
                 selected_bones.append(bone)
 
         # connect
@@ -112,7 +87,7 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_disconnect(bpy.types.Operator):
         armature = context.active_object
         selected_bones = []
         for bone in armature.data.edit_bones:
-            if bone.select_head and is_layer_enable(armature, bone):
+            if bone.select_head and is_bone_collection_enable(armature, bone):
                 selected_bones.append(bone)
 
         # disconnect
@@ -126,7 +101,6 @@ class ANIME_HAIR_TOOLS_OT_setup_bone_disconnect(bpy.types.Operator):
 # UI描画設定
 # =================================================================================================
 classes = [
-    ANIME_HAIR_TOOLS_OT_setup_bendy_bone,
     ANIME_HAIR_TOOLS_OT_reset_bone_roll,
     ANIME_HAIR_TOOLS_OT_copy_active_roll,
     ANIME_HAIR_TOOLS_OT_setup_bone_connect,
@@ -147,14 +121,9 @@ def draw(parent, context, layout):
     # 選択中BoneのConnect/Disconnect
     layout.label(text="Bone Connect Setting:")
     box = layout.box()
-    box.operator("anime_hair_tools.setup_bone_connect")
-    box.operator("anime_hair_tools.setup_bone_disconnect")
-
-    # 選択中BoneのBendyBoneの設定
-    layout.label(text="Bendy Bone Setting:")
-    box = layout.box()
-    box.prop(context.scene, "AHT_bbone", text="BendyBones")
-    box.operator("anime_hair_tools.setup_bendy_bone")
+    row = box.row()
+    row.operator("anime_hair_tools.setup_bone_connect")
+    row.operator("anime_hair_tools.setup_bone_disconnect")
 
 
 def register():
