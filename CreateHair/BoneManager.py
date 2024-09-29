@@ -71,12 +71,6 @@ def create(context, armature, selected_curve_objs):
 # create bone chain
 # *****************************************************************************
 def _create_curve_bones(context, armature, curve, spline_no, spline):
-    # roll計算用
-    # spline_x_axis = None  # Z軸と進行方向からX軸を算出
-    # if len(spline.points) >= 2:
-    #     v = spline.points[1] - spline.points[0]
-    #     spline_x_axis = mathutils.Vector((0, 0, 1)).cross(v.xyz.normalized()).normalized()
-
     # セグメントごとにボーンを作成する
     created_bones = []
     for point_no in range(len(spline.points)-1):  # ボーンの数はセグメント数-1
@@ -114,16 +108,8 @@ def _create_curve_bones(context, armature, curve, spline_no, spline):
         forward_axis = world_matrix.to_3x3() @ mathutils.Vector((0, 1, 0))
         z_axis = new_bone.y_axis.cross(forward_axis).normalized()
         new_bone.align_roll(-z_axis)
+        new_bone.roll += spline.points[point_no].tilt
        
-            # if i == 0:  # 始点のrollですべてを設定
-            #     x_axis = armature.matrix_world @ new_bone.x_axis
-            #     y_axis = armature.matrix_world @ new_bone.y_axis
-            #     roll = math.acos(max(-1, min(1, spline_x_axis.dot(x_axis))))
-            #     # 三重積で回転方向をチェック
-            #     if spline_x_axis.cross(x_axis).dot(y_axis) > 0:
-            #         roll = -roll  # 逆回転
-            # new_bone.roll += roll
-
         # # .R側だった場合はBoneをX軸反転
         # if MirrorName == "R":
         #     bgn.x = -bgn.x
