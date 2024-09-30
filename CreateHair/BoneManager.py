@@ -50,6 +50,7 @@ def create(context, armature, selected_curve_objs):
     armature.data.collections.active_index = armature.data.collections.find(bone_collection_name)
 
     # Curveごとに回す
+    point_offset = 0
     for curve in selected_curve_objs:
         # Curve１本１本処理する
         for spline_no in range(len(curve.data.splines)):
@@ -57,8 +58,10 @@ def create(context, armature, selected_curve_objs):
             _create_curve_bones(context, armature, curve, spline_no)
 
             # hookモディファイア生成
-            _create_curve_modifires(context, armature, curve, spline_no)
+            _create_curve_modifires(context, armature, curve, spline_no, point_offset)
 
+            # Curve上のセグメントのインデックスを取得するためのオフセット
+            point_offset += len(curve.data.splines[spline_no].points)
 
 # create bone chain
 # *****************************************************************************
@@ -107,7 +110,7 @@ def _create_curve_bones(context, armature, curve, spline_no):
 
     bpy.ops.object.mode_set(mode='OBJECT')
 
-def _create_curve_modifires(context, armature, curve, spline_no):
+def _create_curve_modifires(context, armature, curve, spline_no, point_offset):
     bpy.context.view_layer.objects.active = curve
     bpy.ops.object.mode_set(mode='EDIT')
 
@@ -129,7 +132,7 @@ def _create_curve_modifires(context, armature, curve, spline_no):
         curve.modifiers.move(len(curve.modifiers)-1, len(curve.modifiers)-1-original_mods_num)
 
         # セグメントをassignする
-        hook.vertex_indices_set([point_no+1])
+        hook.vertex_indices_set([point_no+1+point_offset])
 
     bpy.ops.object.mode_set(mode='OBJECT')
 
