@@ -52,16 +52,22 @@ def create(context, armature, selected_curve_objs):
     # Curveごとに回す
     for curve in selected_curve_objs:
         # Curve１本１本処理する
-        for spline_no,spline in enumerate(curve.data.splines):
-            _create_curve_bones(context, armature, curve, spline, spline_no)
-            _create_curve_modifires(context, armature, curve, spline, spline_no)
+        for spline_no in range(len(curve.data.splines)):
+            # ボーン生成
+            _create_curve_bones(context, armature, curve, spline_no)
+
+            # hookモディファイア生成
+            _create_curve_modifires(context, armature, curve, spline_no)
 
 
 # create bone chain
 # *****************************************************************************
-def _create_curve_bones(context, armature, curve, spline, spline_no):
+def _create_curve_bones(context, armature, curve, spline_no):
     bpy.context.view_layer.objects.active = armature
     bpy.ops.object.mode_set(mode='EDIT')
+
+    # mode_setの後でないと取得してはいけない
+    spline = curve.data.splines[spline_no]
 
     # セグメントごとにボーンを作成する
     for point_no in range(len(spline.points)-1):  # ボーンの数はセグメント数-1
@@ -101,9 +107,12 @@ def _create_curve_bones(context, armature, curve, spline, spline_no):
 
     bpy.ops.object.mode_set(mode='OBJECT')
 
-def _create_curve_modifires(context, armature, curve, spline, spline_no):
+def _create_curve_modifires(context, armature, curve, spline_no):
     bpy.context.view_layer.objects.active = curve
     bpy.ops.object.mode_set(mode='EDIT')
+
+    # mode_setの後でないと取得してはいけない
+    spline = curve.data.splines[spline_no]
 
     # 最初からあるモディファイアの数
     original_mods_num = len(curve.modifiers)
