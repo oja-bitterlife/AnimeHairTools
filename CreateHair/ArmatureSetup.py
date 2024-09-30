@@ -82,43 +82,10 @@ class ANIME_HAIR_TOOLS_OT_setup_armature(bpy.types.Operator):
         return armature
 
 
-# Delete the constraints added for management
-# =================================================================================================
-class ANIME_HAIR_TOOLS_OT_remove_all(bpy.types.Operator):
-    bl_idname = "anime_hair_tools.remove_all"
-    bl_label = "Remove All"
-
-    # execute ok
-    def execute(self, context):
-        # backup_active = bpy.context.view_layer.objects.active
-
-        # selected_curve_objs = [obj for obj in context.selected_objects if obj.type == "CURVE"]
-        # # Curveが１つも選択されていなかった
-        # if len(selected_curve_objs) == 0:
-        #     return{'FINISHED'}
-
-        # # remove child bones
-        # if bpy.data.objects.get(context.scene.AHT_armature_name) != None:  # ATHのArmatureがあるときだけBoneを消せる
-        #     BoneManager.remove(context, selected_curve_objs)  # ボーンを削除
-
-        # # remove mesh
-        # MeshManager.remove(context, selected_curve_objs)
-
-        # # 後始末
-        # # ---------------------------------------------------------------------
-        # bpy.ops.object.select_all(action='DESELECT')
-        # for curve in selected_curve_objs:  # 対象となったCurveを選択状態に戻しておく
-        #     curve.select_set(True)
-        # bpy.context.view_layer.objects.active = backup_active
-
-        return{'FINISHED'}
-
-
 # UI描画設定
 # =================================================================================================
 classes = [
     ANIME_HAIR_TOOLS_OT_setup_armature,
-    ANIME_HAIR_TOOLS_OT_remove_all,
 ]
 
 def register():

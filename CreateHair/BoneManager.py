@@ -1,4 +1,3 @@
-
 import bpy, math, mathutils
 import re
 
@@ -7,7 +6,7 @@ from ..Util import Naming
 
 # ボーン作成
 # =================================================================================================
-# create constraints and controll bone
+# create controll bone
 # =================================================================================================
 class ANIME_HAIR_TOOLS_OT_create_bones(bpy.types.Operator):
     bl_idname = "anime_hair_tools.create"
@@ -50,29 +49,23 @@ def create(context, armature, selected_curve_objs):
     # 格納先のコレクションをアクティブに
     armature.data.collections.active_index = armature.data.collections.find(bone_collection_name)
 
-    # to edit-mode
-    bpy.ops.object.mode_set(mode='EDIT')
-
     # Curveごとに回す
     for curve in selected_curve_objs:
         # Curve１本１本処理する
         for spline_no,spline in enumerate(curve.data.splines):
-            # # ミラーチェック
-            # MirrorName = None if len(MirrorUtil.find_mirror_modifires(meshed_curve_obj)) == 0 else "L"
-
-            _create_curve_bones(context, armature, curve, spline_no, spline)
-            # if MirrorName != None:
-            #     edit_bones += _create_curve_bones(context, armature, spline, meshed_curve_obj, straight_points_list[list_no], "R")  # Curve１本１本処理する
-
-    # OBJECTモードに戻すのを忘れないように
-    bpy.ops.object.mode_set(mode='OBJECT')
+            bone_names = _create_curve_bones(context, armature, curve, spline_no, spline)
+            _create_curve_modifires(context, armature, curve, spline_no, spline, bone_names)
 
 
 # create bone chain
 # *****************************************************************************
 def _create_curve_bones(context, armature, curve, spline_no, spline):
+    bpy.context.view_layer.objects.active = armature
+    bpy.ops.object.mode_set(mode='EDIT')
+
+    created_bone_names = []  # EDITモードを抜けても使えるよう文字列で保存
+
     # セグメントごとにボーンを作成する
-    created_bones = []
     for point_no in range(len(spline.points)-1):  # ボーンの数はセグメント数-1
         # if MirrorName == "R" and meshed_curve_obj.vertex_groups[i].name.endswith(".L"):
         #     bone_name = bone_name[:-2] + ".R"  # R側
@@ -83,7 +76,7 @@ def _create_curve_bones(context, armature, curve, spline_no, spline):
         new_bone = armature.data.edit_bones[bone_name]
 
         # 作ったボーンを覚えておく
-        created_bones.append(new_bone)
+        created_bone_names.append(new_bone.name)
 
         # Bone設定
         # ---------------------------------------------------------------------
@@ -98,7 +91,7 @@ def _create_curve_bones(context, armature, curve, spline_no, spline):
             new_bone.head = bgn.xyz
             new_bone.use_connect = False
         else:
-            new_bone.parent = created_bones[point_no-1]
+            new_bone.parent = armature.data.edit_bones[created_bone_names[point_no-1]]
             new_bone.head = new_bone.parent.tail
             new_bone.use_connect = True
 
@@ -109,26 +102,31 @@ def _create_curve_bones(context, armature, curve, spline_no, spline):
         z_axis = new_bone.y_axis.cross(forward_axis).normalized()
         new_bone.align_roll(-z_axis)
         new_bone.roll += spline.points[point_no].tilt
-       
-        # # .R側だった場合はBoneをX軸反転
-        # if MirrorName == "R":
-        #     bgn.x = -bgn.x
-        #     end.x = -end.x
 
-        #     # head/tailを設定しなおし(Roll設定に影響しないよう代入しなおしで実施)
-        #     if i == 0:
-        #         new_bone.head = bgn.xyz  # disconnected head setup
-        #     new_bone.tail = end.xyz
+    bpy.ops.object.mode_set(mode='OBJECT')
+    return created_bone_names
 
-        #     # Mirror側はrollが逆転
-        #     new_bone.roll = -new_bone.roll
+def _create_curve_modifires(context, armature, curve, spline_no, spline, bone_names):
+    bpy.context.view_layer.objects.active = curve
+    bpy.ops.object.mode_set(mode='EDIT')
 
-    return created_bones
+    # セグメントごとにhookを作成
+    original_mods_num = len(curve.modifiers)
+    for point_no in range(len(spline.points)-1):  # ボーンの数はセグメント数-1
+        hook = curve.modifiers.new(type = "HOOK", name = Naming.make_hook_name(bone_names[point_no]))
+        hook.object = armature
+        hook.subtarget = bone_names[point_no]
+        hook.show_expanded = False
 
+        # 最後尾に付いたhookを前に移動させる
+        curve.modifiers.move(len(curve.modifiers)-1, len(curve.modifiers)-1-original_mods_num)
+
+
+    bpy.ops.object.mode_set(mode='OBJECT')
 
 # 削除
 # =================================================================================================
-# Delete the constraints added for management
+# Delete bones and modifires
 # =================================================================================================
 class ANIME_HAIR_TOOLS_OT_remove_bones(bpy.types.Operator):
     bl_idname = "anime_hair_tools.remove"
@@ -168,9 +166,15 @@ def remove(context, armature, selected_curve_objs):
         # 一括削除(Curveごとじゃないと失敗する)
         bpy.ops.armature.delete()
 
-    # OBJECTモードに戻すのを忘れないように
+    # OBJECTモードに戻す
     bpy.ops.object.mode_set(mode='OBJECT')
 
+    # hookも削除する
+    for curve_obj in selected_curve_objs:
+        for mod in curve_obj.modifiers:
+            # 名前で判別
+            if mod.type == "HOOK" and mod.name.startswith(Naming.HOOK_PREFIX):
+                curve_obj.modifiers.remove(mod)
 
 
 # UI描画設定

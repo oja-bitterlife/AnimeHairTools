@@ -26,7 +26,7 @@ def make_bone_collection_name(collection_name):
 
 # Constraint
 # *****************************************************************************
-CONSTRAINT_PREFIX = "AHT_const_"
+HOOK_PREFIX = "AHT_Hook_"
 
-def make_constraint_name(base_name):
-    return CONSTRAINT_PREFIX + base_name
+def make_hook_name(target_bone_name):
+    return HOOK_PREFIX + target_bone_name
