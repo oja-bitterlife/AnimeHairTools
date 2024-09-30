@@ -110,8 +110,10 @@ def _create_curve_modifires(context, armature, curve, spline_no, spline, bone_na
     bpy.context.view_layer.objects.active = curve
     bpy.ops.object.mode_set(mode='EDIT')
 
-    # セグメントごとにhookを作成
+    # 最初からあるモディファイアの数
     original_mods_num = len(curve.modifiers)
+
+    # セグメントごとにhookを作成
     for point_no in range(len(spline.points)-1):  # ボーンの数はセグメント数-1
         hook = curve.modifiers.new(type = "HOOK", name = Naming.make_hook_name(bone_names[point_no]))
         hook.object = armature
@@ -121,6 +123,8 @@ def _create_curve_modifires(context, armature, curve, spline_no, spline, bone_na
         # 最後尾に付いたhookを前に移動させる
         curve.modifiers.move(len(curve.modifiers)-1, len(curve.modifiers)-1-original_mods_num)
 
+        # セグメントをassignする
+        hook.vertex_indices_set([point_no+1])
 
     bpy.ops.object.mode_set(mode='OBJECT')
 
