@@ -53,17 +53,15 @@ def create(context, armature, selected_curve_objs):
     for curve in selected_curve_objs:
         # Curve１本１本処理する
         for spline_no,spline in enumerate(curve.data.splines):
-            bone_names = _create_curve_bones(context, armature, curve, spline_no, spline)
-            _create_curve_modifires(context, armature, curve, spline_no, spline, bone_names)
+            _create_curve_bones(context, armature, curve, spline, spline_no)
+            _create_curve_modifires(context, armature, curve, spline, spline_no)
 
 
 # create bone chain
 # *****************************************************************************
-def _create_curve_bones(context, armature, curve, spline_no, spline):
+def _create_curve_bones(context, armature, curve, spline, spline_no):
     bpy.context.view_layer.objects.active = armature
     bpy.ops.object.mode_set(mode='EDIT')
-
-    created_bone_names = []  # EDITモードを抜けても使えるよう文字列で保存
 
     # セグメントごとにボーンを作成する
     for point_no in range(len(spline.points)-1):  # ボーンの数はセグメント数-1
@@ -74,9 +72,6 @@ def _create_curve_bones(context, armature, curve, spline_no, spline):
         bone_name = Naming.make_bone_name(curve.name, spline_no, point_no)
         bpy.ops.armature.bone_primitive_add(name=bone_name)
         new_bone = armature.data.edit_bones[bone_name]
-
-        # 作ったボーンを覚えておく
-        created_bone_names.append(new_bone.name)
 
         # Bone設定
         # ---------------------------------------------------------------------
@@ -91,7 +86,8 @@ def _create_curve_bones(context, armature, curve, spline_no, spline):
             new_bone.head = bgn.xyz
             new_bone.use_connect = False
         else:
-            new_bone.parent = armature.data.edit_bones[created_bone_names[point_no-1]]
+            parent_bone_name = Naming.make_bone_name(curve.name, spline_no, point_no-1)
+            new_bone.parent = armature.data.edit_bones[parent_bone_name]
             new_bone.head = new_bone.parent.tail
             new_bone.use_connect = True
 
@@ -104,9 +100,8 @@ def _create_curve_bones(context, armature, curve, spline_no, spline):
         new_bone.roll += spline.points[point_no].tilt
 
     bpy.ops.object.mode_set(mode='OBJECT')
-    return created_bone_names
 
-def _create_curve_modifires(context, armature, curve, spline_no, spline, bone_names):
+def _create_curve_modifires(context, armature, curve, spline, spline_no):
     bpy.context.view_layer.objects.active = curve
     bpy.ops.object.mode_set(mode='EDIT')
 
@@ -115,9 +110,10 @@ def _create_curve_modifires(context, armature, curve, spline_no, spline, bone_na
 
     # セグメントごとにhookを作成
     for point_no in range(len(spline.points)-1):  # ボーンの数はセグメント数-1
-        hook = curve.modifiers.new(type = "HOOK", name = Naming.make_hook_name(bone_names[point_no]))
+        bone_name = Naming.make_bone_name(curve.name, spline_no, point_no)
+        hook = curve.modifiers.new(type = "HOOK", name = Naming.make_hook_name(bone_name))
         hook.object = armature
-        hook.subtarget = bone_names[point_no]
+        hook.subtarget = bone_name
         hook.show_expanded = False
 
         # 最後尾に付いたhookを前に移動させる
