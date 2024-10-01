@@ -72,6 +72,10 @@ def _create_curve_bones(context, armature, curve, spline_no):
     # mode_setの後でないと取得してはいけない
     spline = curve.data.splines[spline_no]
 
+
+    # 連結最初のボーンを基準にする
+    first_bone = None
+
     # セグメントごとにボーンを作成する
     for point_no in range(len(spline.points)-1):  # ボーンの数はセグメント数-1
         # if MirrorName == "R" and meshed_curve_obj.vertex_groups[i].name.endswith(".L"):
@@ -103,10 +107,28 @@ def _create_curve_bones(context, armature, curve, spline_no):
         new_bone.tail= end.xyz
 
         # rollも設定
-        forward_axis = world_matrix.to_3x3() @ mathutils.Vector((0, 1, 0))
-        z_axis = new_bone.y_axis.cross(forward_axis).normalized()
-        new_bone.align_roll(-z_axis)
-        new_bone.roll += spline.points[point_no].tilt
+        if point_no == 0:
+            first_bone = new_bone
+
+            z_axis = (world_matrix.to_3x3() @ mathutils.Vector((0, 0, -1))).normalized()
+            # 真下対応(z軸がy軸と重なる)
+            if math.fabs(z_axis.dot(new_bone.y_axis)) >= 1:
+                z_axis = (world_matrix.to_3x3() @ mathutils.Vector((0, 1, 0))).normalized()
+
+            new_bone.align_roll(z_axis)
+        else:
+            # 一つ前のベクトルとの接合点
+            z_axis = (new_bone.y_axis - new_bone.parent.y_axis).normalized()
+
+            # 直線対応
+            if z_axis.length < 0.01:  # ゼロベクトル
+                z_axis = first_bone.z_axis
+
+            new_bone.align_roll(z_axis)
+
+            # 海老反り結合の場合反転させる
+            if first_bone.x_axis.dot(new_bone.x_axis) < 0:
+                new_bone.roll += math.pi
 
     bpy.ops.object.mode_set(mode='OBJECT')
 
