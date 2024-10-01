@@ -106,29 +106,11 @@ def _create_curve_bones(context, armature, curve, spline_no):
 
         new_bone.tail= end.xyz
 
-        # rollも設定
-        if point_no == 0:
-            first_bone = new_bone
-
-            z_axis = (world_matrix.to_3x3() @ mathutils.Vector((0, 0, -1))).normalized()
-            # 真下対応(z軸がy軸と重なる)
-            if math.fabs(z_axis.dot(new_bone.y_axis)) >= 1:
-                z_axis = (world_matrix.to_3x3() @ mathutils.Vector((0, 1, 0))).normalized()
-
-            new_bone.align_roll(z_axis)
-        else:
-            # 一つ前のベクトルとの接合点
-            z_axis = (new_bone.y_axis - new_bone.parent.y_axis).normalized()
-
-            # 直線対応
-            if z_axis.length < 0.01:  # ゼロベクトル
-                z_axis = first_bone.z_axis
-
-            new_bone.align_roll(z_axis)
-
-            # 海老反り結合の場合反転させる
-            if first_bone.x_axis.dot(new_bone.x_axis) < 0:
-                new_bone.roll += math.pi
+        # rollも設定(オブジェクト中心ベース)
+        x_axis = spline.points[point_no].co.xyz.normalized().cross(mathutils.Vector((0, 0, -1))).normalized()
+        z_axis = x_axis.cross(new_bone.y_axis).normalized()
+        new_bone.align_roll(z_axis)
+        new_bone.roll += spline.points[point_no].tilt*0.5  # tiltも反映(360度で半周してる？)
 
     bpy.ops.object.mode_set(mode='OBJECT')
 
