@@ -107,7 +107,9 @@ def _create_curve_bones(context, armature, curve, spline_no):
         new_bone.tail= end.xyz
 
         # rollも設定(オブジェクト中心ベース)
-        x_axis = spline.points[point_no].co.xyz.normalized().cross(mathutils.Vector((0, 0, -1))).normalized()
+        print(spline.points[point_no].co.xyz)
+        x_axis = spline.points[point_no].co.xyz.normalized().cross(mathutils.Vector((0, 0, -1))).normalized()  # local
+        x_axis = (world_matrix.to_3x3() @ x_axis).normalized()
         z_axis = x_axis.cross(new_bone.y_axis).normalized()
         new_bone.align_roll(z_axis)
         new_bone.roll += spline.points[point_no].tilt*0.5  # tiltも反映(360度で半周してる？)
