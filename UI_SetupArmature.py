@@ -73,7 +73,7 @@ def register():
     bpy.types.Scene.AHT_armature_name = bpy.props.StringProperty(name = "armature name", default="AHT_Armature")
     bpy.types.Scene.AHT_root_bone_name = bpy.props.StringProperty(name = "root bone name", default="AHT_RootBone")
     bpy.types.Scene.AHT_parent_armature_name = bpy.props.EnumProperty(name = "parent armature name", items=get_armature_names)
-    bpy.types.Scene.AHT_parent_bone_group = bpy.props.StringProperty(name = "parent bone group", default="Bones")
+    bpy.types.Scene.AHT_parent_bone_group = bpy.props.StringProperty(name = "parent bone group")
     bpy.types.Scene.AHT_parent_bone_name = bpy.props.EnumProperty(name = "parent bone name", items=get_bone_names)
 
     bpy.types.Scene.AHT_bone_collection_name = bpy.props.StringProperty(name = "bone create layer", default=Naming.make_bone_collection_name("Hair"))

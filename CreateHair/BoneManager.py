@@ -50,9 +50,9 @@ def create(context, armature, selected_curve_objs):
     armature.data.collections.active_index = armature.data.collections.find(bone_collection_name)
 
     # Curveごとに回す
-    point_offset = 0
     for curve in selected_curve_objs:
         # Curve１本１本処理する
+        point_offset = 0
         for spline_no in range(len(curve.data.splines)):
             # ボーン生成
             _create_curve_bones(context, armature, curve, spline_no)
