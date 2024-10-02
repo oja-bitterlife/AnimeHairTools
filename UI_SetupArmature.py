@@ -67,6 +67,17 @@ def get_bone_names(self, context):
     else:  # Boneコレクションでフィルタ
         return [(bone.name, bone.name, "") for bone in bones if context.scene.AHT_parent_bone_group in bone.collections]
 
+def get_bone_collection_names(self, context):
+    if context.scene.AHT_armature_name == "":
+        return []
+    
+    armature = context.blend_data.objects.get(context.scene.AHT_armature_name)
+    if armature == None:
+        return []
+
+    bone_collections = armature.data.collections
+    return [(collection.name, collection.name, "") for collection in bone_collections]
+
 def register():
     for module in modules:
         if hasattr(module, "register"):
@@ -79,7 +90,7 @@ def register():
     bpy.types.Scene.AHT_parent_bone_group = bpy.props.StringProperty(name = "parent bone group")
     bpy.types.Scene.AHT_parent_bone_name = bpy.props.EnumProperty(name = "parent bone name", items=get_bone_names)
 
-    bpy.types.Scene.AHT_bone_collection_name = bpy.props.StringProperty(name = "bone create layer", default=Naming.make_bone_collection_name("Hair"))
+    bpy.types.Scene.AHT_bone_collection_name = bpy.props.EnumProperty(name = "bone create layer", items=get_bone_collection_names)
     bpy.types.Scene.AHT_roll_ref = bpy.props.EnumProperty(name = "roll reference", items=(('obj','Object',''),('cursor','3D Cursor','')))
 
 def unregister():
