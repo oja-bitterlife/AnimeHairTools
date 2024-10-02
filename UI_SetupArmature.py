@@ -44,6 +44,7 @@ class ANIME_HAIR_TOOLS_PT_setup_armature(bpy.types.Panel):
         box.enabled = context.mode == "OBJECT" and has_aht_armature and len(selected_curve_objs) > 0
 
         box.prop(context.scene, "AHT_bone_collection_name", text="Bone Collection")
+        box.row().prop(context.scene, 'AHT_roll_ref', expand=True)
         box.operator("anime_hair_tools.create")
         box.operator("anime_hair_tools.remove")
 
@@ -76,6 +77,7 @@ def register():
     bpy.types.Scene.AHT_parent_bone_name = bpy.props.EnumProperty(name = "parent bone name", items=get_bone_names)
 
     bpy.types.Scene.AHT_bone_collection_name = bpy.props.StringProperty(name = "bone create layer", default=Naming.make_bone_collection_name("Hair"))
+    bpy.types.Scene.AHT_roll_ref = bpy.props.EnumProperty(name = "roll reference", items=(('obj','Object',''),('cursor','3D Cursor','')))
 
 def unregister():
     for module in modules:

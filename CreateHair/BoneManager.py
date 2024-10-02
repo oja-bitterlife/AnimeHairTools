@@ -72,6 +72,12 @@ def _create_curve_bones(context, armature, curve, spline_no):
     # mode_setの後でないと取得してはいけない
     spline = curve.data.splines[spline_no]
 
+    # rollの計算の原点となるCurveの基準ローカル座標
+    curve_local_org = mathutils.Vector((0, 0, 0))  # ローカル座標なので基本は原点
+    if context.scene.AHT_roll_ref == "cursor":
+        # 3Dカーソルの座標を基準に変更する
+        cursor = bpy.context.scene.cursor.location
+        curve_local_org = cursor - (curve.matrix_world @ mathutils.Vector((0, 0, 0)))  # 3d cursorをcurveのlocal座標に変換
 
     # 連結最初のボーンを基準にする
     first_bone = None
@@ -107,9 +113,11 @@ def _create_curve_bones(context, armature, curve, spline_no):
         new_bone.tail= end.xyz
 
         # rollも設定(オブジェクト中心ベース)
-        print(spline.points[point_no].co.xyz)
-        x_axis = spline.points[point_no].co.xyz.normalized().cross(mathutils.Vector((0, 0, -1))).normalized()  # local
-        x_axis = (world_matrix.to_3x3() @ x_axis).normalized()
+        base_vec = (spline.points[point_no].co.xyz - curve_local_org).normalized()  # 基準位置からセグメントへのベクトルが放射方向基準
+
+        x_axis = base_vec.cross(mathutils.Vector((0, 0, -1))).normalized()  # curve座標系での回転軸
+        x_axis = (world_matrix.to_3x3() @ x_axis).normalized()  # 座標系に変換
+
         z_axis = x_axis.cross(new_bone.y_axis).normalized()
         new_bone.align_roll(z_axis)
         new_bone.roll += spline.points[point_no].tilt*0.5  # tiltも反映(360度で半周してる？)

@@ -22,14 +22,14 @@ class ANIME_HAIR_TOOLS_OT_curve_straighten(bpy.types.Operator):
         for curve in selected_curve_objs:
             for spline in curve.data.splines:
                 if spline.type == "NURBS":
-                    execute_nurbs_straighten(spline, context.scene.AHT_straighten_keep_length)
+                    execute_nurbs_straighten(spline)
                 elif spline.type == "BEZIER":
                     return "unsupported type: %s" % spline.type
                 else:
                     return "unknown type: %s" % spline.type
         return ""
 
-def execute_nurbs_straighten(spline, keep_length, is_force=False):
+def execute_nurbs_straighten(spline, force_all=False):
     # Curveを移動させると移動前のポイントとの長さが変わるので、先に長さだけ抜き出しておく
     length_list = []
     for i, point in enumerate(spline.points):
@@ -42,7 +42,7 @@ def execute_nurbs_straighten(spline, keep_length, is_force=False):
     for i, point in enumerate(spline.points):
         # まだ方向が未定(選択点を見つけていない)
         if vec == None:
-            if point.select or is_force:
+            if point.select or force_all:
                 # 方向取得
                 if i == 0:
                     # 最初が選択されてるときは次のポイントとの直線
@@ -52,13 +52,6 @@ def execute_nurbs_straighten(spline, keep_length, is_force=False):
                 else:
                     # 前のポイントとの直線
                     vec = (point.co.xyz - spline.points[i-1].co.xyz).normalized()
-
-                # keep length じゃなければconstant化
-                if not keep_length:
-                    total_length = sum(length_list[i+1:])
-                    constant_length = total_length / (len(length_list)-(i+1))
-                    for j in range(i+1, len(length_list)):
-                        length_list[j] = constant_length
 
         else:
             # 選択点以降はまっすぐに配置しなおす
@@ -78,15 +71,12 @@ def draw(parent, context, layout):
         layout.enabled = False
 
     box = layout.box()
-    box.prop(context.scene, "AHT_straighten_keep_length", text="Keep Length")
     box.operator("anime_hair_tools.curve_straighten")
 
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-
-    bpy.types.Scene.AHT_straighten_keep_length = bpy.props.BoolProperty(name = "Kepp Length", default=True)
 
 def unregister():
     for cls in reversed(classes):
