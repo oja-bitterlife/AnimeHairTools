@@ -44,7 +44,10 @@ class ANIME_HAIR_TOOLS_PT_setup_armature(bpy.types.Panel):
         box.enabled = context.mode == "OBJECT" and has_aht_armature and len(selected_curve_objs) > 0
 
         box.prop(context.scene, "AHT_bone_collection_name", text="Bone Collection")
-        box.row().prop(context.scene, 'AHT_roll_ref', expand=True)
+        row = box.row()
+        row.alignment = 'LEFT'
+        row.label(text="Origin:")
+        row.prop(context.scene, 'AHT_roll_ref', expand=True)
         box.operator("anime_hair_tools.create")
         box.operator("anime_hair_tools.remove")
 
