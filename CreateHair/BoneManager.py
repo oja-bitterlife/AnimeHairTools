@@ -143,7 +143,10 @@ def _create_curve_modifires(context, armature, curve, spline_no, point_offset):
         curve.modifiers.move(len(curve.modifiers)-1, len(curve.modifiers)-1-original_mods_num)
 
         # セグメントをassignする
-        hook.vertex_indices_set([point_no+1+point_offset])
+        hook_points = [point_no+1 + point_offset]
+        if point_no == 0:  # 最初を含ませる
+            hook_points.append(point_no + point_offset)
+        hook.vertex_indices_set(hook_points)
 
     bpy.ops.object.mode_set(mode='OBJECT')
 
