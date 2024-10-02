@@ -84,9 +84,6 @@ def _create_curve_bones(context, armature, curve, spline_no):
 
     # セグメントごとにボーンを作成する
     for point_no in range(len(spline.points)-1):  # ボーンの数はセグメント数-1
-        # if MirrorName == "R" and meshed_curve_obj.vertex_groups[i].name.endswith(".L"):
-        #     bone_name = bone_name[:-2] + ".R"  # R側
-
         # ボーン作成
         bone_name = Naming.make_bone_name(curve.name, spline_no, point_no)
         bpy.ops.armature.bone_primitive_add(name=bone_name)

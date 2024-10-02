@@ -5,7 +5,7 @@ import bpy
 # =================================================================================================
 class ANIME_HAIR_TOOLS_OT_curve_straighten(bpy.types.Operator):
     bl_idname = "anime_hair_tools.curve_straighten"
-    bl_label = "Straighten"
+    bl_label = "Curve Straighten"
 
     # execute ok
     def execute(self, context):
@@ -60,8 +60,6 @@ def execute_nurbs_straighten(spline, force_all=False):
 
 # UI描画設定
 # =================================================================================================
-label = "Curve Arrange"
-
 classes = [
     ANIME_HAIR_TOOLS_OT_curve_straighten,
 ]
@@ -70,8 +68,7 @@ def draw(parent, context, layout):
     if context.mode != "EDIT_CURVE":
         layout.enabled = False
 
-    box = layout.box()
-    box.operator("anime_hair_tools.curve_straighten")
+    layout.operator("anime_hair_tools.curve_straighten")
 
 
 def register():
