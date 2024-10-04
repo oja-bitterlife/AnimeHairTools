@@ -79,8 +79,8 @@ def _create_curve_bones(context, armature, curve, spline_no):
         cursor = bpy.context.scene.cursor.location
         curve_local_org = cursor - (curve.matrix_world @ mathutils.Vector((0, 0, 0)))  # 3d cursorをcurveのlocal座標に変換
 
-    # 連結最初のボーンを基準にする
-    first_bone = None
+    # 作ったBoneを名前で覚える
+    new_bone_names = []
 
     # セグメントごとにボーンを作成する
     for point_no in range(len(spline.points)-1):  # ボーンの数はセグメント数-1
@@ -119,7 +119,18 @@ def _create_curve_bones(context, armature, curve, spline_no):
         new_bone.align_roll(z_axis)
         new_bone.roll += spline.points[point_no].tilt*0.5  # tiltも反映(360度で半周してる？)
 
+        new_bone_names.append(bone_name)
+
+    # 回転モード設定
+    bpy.ops.object.mode_set(mode='POSE')
+
+    for bone_name in new_bone_names:
+        p_bone = armature.pose.bones[bone_name]
+        p_bone.rotation_mode = 'XYZ'
+
+    # OBJECTモードに戻して終了
     bpy.ops.object.mode_set(mode='OBJECT')
+
 
 def _create_curve_modifires(context, armature, curve, spline_no, point_offset):
     bpy.context.view_layer.objects.active = curve
